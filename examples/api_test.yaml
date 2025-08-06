@@ -1,0 +1,15 @@
+# API Load Test Configuration
+# Example configuration for testing REST APIs
+
+# Target API endpoint
+target: https://jsonplaceholder.typicode.com/posts
+
+# High load test for API
+vus: 100
+duration: 1m
+
+# Optional: Additional configuration options
+# These can be extended in future phases
+# timeout: 5s
+# ramp_up: 5s
+# think_time: 0.5s 

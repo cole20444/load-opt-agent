@@ -1,0 +1,15 @@
+# Load Test Configuration
+# Target URL to test (can be any web application: AEM, WordPress, React, etc.)
+target: https://example.com/contact
+
+# Number of virtual users (concurrent users)
+vus: 50
+
+# Test duration (supports: 30s, 1m, 5m, 1h, etc.)
+duration: 30s
+
+# Optional: Additional configuration options
+# These can be extended in future phases
+# timeout: 10s
+# ramp_up: 10s
+# think_time: 1s

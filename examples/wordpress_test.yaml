@@ -1,0 +1,15 @@
+# WordPress Load Test Configuration
+# Example configuration for testing WordPress sites
+
+# Target WordPress site
+target: https://wordpress.org/
+
+# Moderate load test
+vus: 25
+duration: 2m
+
+# Optional: Additional configuration options
+# These can be extended in future phases
+# timeout: 10s
+# ramp_up: 10s
+# think_time: 1s 
