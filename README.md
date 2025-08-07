@@ -226,8 +226,8 @@ load-opt-agent/
 │   ├── quick-start.mdx        # Quick start guide
 │   ├── configuration.mdx      # Configuration reference
 │   ├── _config.yml            # GitHub Pages configuration
-│   ├── README.md              # Documentation overview
-│   └── [legacy .md files]     # Moved from root
+│   └── [legacy .md files]     # Performance analysis docs
+├── 📄 docs.json               # Mintlify subdirectory config
 ├── 📋 configs/                # Load test configurations
 │   ├── test_config.yaml       # Basic test configuration
 │   ├── wordpress_test.yaml    # WordPress test config
