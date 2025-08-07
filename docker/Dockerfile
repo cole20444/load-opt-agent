@@ -1,4 +1,10 @@
-FROM grafana/k6:latest
+FROM alpine:latest
+
+# Install k6
+RUN apk add --no-cache ca-certificates && \
+    wget -qO- https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz | tar xz && \
+    mv k6-v0.47.0-linux-amd64/k6 /usr/local/bin/ && \
+    rm -rf k6-v0.47.0-linux-amd64
 
 # Set working directory
 WORKDIR /app
@@ -7,15 +13,11 @@ WORKDIR /app
 COPY tests/load_test.js /app/load_test.js
 
 # Create output directory
-RUN mkdir -p /output
+RUN mkdir -p /app/output
 
 # Set environment variables for k6
-ENV K6_OUT=json=/output/summary.json
+ENV K6_OUT=json=/app/output/summary.json
 ENV K6_NO_USAGE_REPORT=true
 
-# Health check to ensure k6 is working
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD k6 version || exit 1
-
 # Default k6 command with enhanced options
-ENTRYPOINT ["k6", "run", "--out", "json=/output/summary.json", "--out", "console", "/app/load_test.js"]
+ENTRYPOINT ["k6", "run", "--out", "json=/app/output/summary.json", "/app/load_test.js"]

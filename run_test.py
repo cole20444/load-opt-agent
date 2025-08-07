@@ -88,7 +88,7 @@ def run_k6_test(config):
             "-e", f"TARGET_URL={env_vars['TARGET_URL']}",
             "-e", f"VUS={env_vars['VUS']}",
             "-e", f"DURATION={env_vars['DURATION']}",
-            "-v", f"{os.getcwd()}/output:/output",
+            "-v", f"{os.getcwd()}/output:/app/output",
             "load-tester"
         ]
         
