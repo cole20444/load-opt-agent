@@ -1,3 +1,8 @@
+---
+title: Test Results Organization
+description: How test results are organized and navigated in the Load Testing & Optimization Agent
+---
+
 # 📊 Test Results Organization
 
 ## 🎯 **Organized Results Structure**

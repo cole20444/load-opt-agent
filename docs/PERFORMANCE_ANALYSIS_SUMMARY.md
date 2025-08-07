@@ -1,3 +1,8 @@
+---
+title: Performance Analysis Summary
+description: Enhanced performance analysis with detailed k6 metrics and page resource analysis
+---
+
 # 🚀 Enhanced Performance Analysis Summary
 
 ## 📊 **What We've Enhanced**

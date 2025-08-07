@@ -1,3 +1,8 @@
+---
+title: Repository Organization
+description: Clean repository structure and organization for the Load Testing & Optimization Agent
+---
+
 # 🗂️ Repository Organization
 
 ## 📁 **Clean Directory Structure**
