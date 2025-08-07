@@ -221,12 +221,12 @@ This system can test any web application:
 ```
 load-opt-agent/
 ├── 📖 docs/                    # Documentation
+│   ├── mint.json              # Mintlify configuration
 │   ├── index.mdx              # Landing page
 │   ├── quick-start.mdx        # Quick start guide
 │   ├── configuration.mdx      # Configuration reference
 │   ├── _config.yml            # GitHub Pages configuration
 │   └── [legacy .md files]     # Performance analysis docs
-├── 📄 mint.json               # Mintlify configuration
 ├── 📋 configs/                # Load test configurations
 │   ├── test_config.yaml       # Basic test configuration
 │   ├── wordpress_test.yaml    # WordPress test config

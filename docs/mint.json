@@ -1,6 +1,5 @@
 {
   "name": "Load Testing & Optimization Agent",
-  "subdirectory": "docs",
   "favicon": "/favicon.ico",
   "colors": {
     "primary": "#3B82F6",

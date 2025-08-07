@@ -1,0 +1,5 @@
+output/
+output_backup/
+*.log
+.venv/
+.git/ 
