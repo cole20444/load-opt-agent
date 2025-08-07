@@ -12,31 +12,13 @@
       "group": "Getting Started",
       "pages": [
         "index",
-        "quick-start",
-        "installation"
+        "quick-start"
       ]
     },
     {
       "group": "Configuration",
       "pages": [
-        "configuration",
-        "examples",
-        "test-results"
-      ]
-    },
-    {
-      "group": "Features",
-      "pages": [
-        "ai-analysis",
-        "performance-analysis",
-        "scripts"
-      ]
-    },
-    {
-      "group": "API Reference",
-      "pages": [
-        "api-reference",
-        "troubleshooting"
+        "configuration"
       ]
     }
   ]
