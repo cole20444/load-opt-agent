@@ -1,6 +1,12 @@
 # Load Testing & Optimization Agent - Phase 1
 
-A Dockerized load testing system using k6 with YAML configuration for repeatable performance testing of web applications (AEM, WordPress, React, APIs, etc.).
+A professional-grade load testing system that combines k6 performance testing with AI-powered optimization recommendations. Test any web application and get intelligent insights for performance improvements.
+
+## 📖 Documentation
+
+**[📖 Full Documentation](https://colespicer.github.io/load-opt-agent)** - Complete guides and reference  
+**[🚀 Quick Start Guide](https://colespicer.github.io/load-opt-agent/quick-start)** - Get up and running in minutes  
+**[⚙️ Configuration Reference](https://colespicer.github.io/load-opt-agent/configuration)** - YAML configuration options
 
 ## Features
 
@@ -27,31 +33,40 @@ A Dockerized load testing system using k6 with YAML configuration for repeatable
 pip install -r requirements.txt
 ```
 
-2. **Build Docker image** (automatically done on first run):
+2. **Configure environment** (for AI analysis):
+```bash
+cp env.example .env
+# Add your OpenAI API key to .env
+```
+
+3. **Build Docker image** (automatically done on first run):
 ```bash
 python run_test.py
 ```
 
-3. **Run a load test**:
+4. **Run a complete load test with analysis**:
 ```bash
-# Use default configuration
-python run_test.py
+# Use POP website configuration (includes AI analysis)
+python run_test.py configs/pop_website_test.yaml
 
 # Use custom configuration
-python run_test.py examples/wordpress_test.yaml
+python run_test.py configs/wordpress_test.yaml
 ```
 
-4. **Check results**:
+5. **Check results**:
 - View console output for real-time test progress
-- Check `output/summary.json` for raw k6 metrics
+- Check `output/summary.json` for raw k6 metrics (21 metrics, 38K+ data points)
 - Check `output/test_report.json` for formatted results
+- Check `output/page_resource_analysis.json` for page resource analysis
+- Check `output/enhanced_analysis_report.json` for enhanced performance analysis
+- Check `output/ai_analysis_report.json` for AI optimization recommendations
 - Check `load_test.log` for detailed logs
 
 ## Configuration
 
 ### Basic Configuration
 
-Edit `examples/test_config.yaml`:
+Edit `configs/test_config.yaml`:
 ```yaml
 # Target URL to test (any web application)
 target: https://example.com/contact
@@ -76,10 +91,10 @@ tags:
 
 The project includes several example configurations:
 
-- `examples/test_config.yaml` - Basic example
-- `examples/pop_website_test.yaml` - POP website (Svelte + Strapi)
-- `examples/wordpress_test.yaml` - WordPress site testing
-- `examples/api_test.yaml` - API endpoint testing
+- `configs/test_config.yaml` - Basic example
+- `configs/pop_website_test.yaml` - POP website (Svelte + Strapi)
+- `configs/wordpress_test.yaml` - WordPress site testing
+- `configs/api_test.yaml` - API endpoint testing
 
 ### Configuration Validation
 
@@ -110,8 +125,11 @@ Built-in performance thresholds (configurable):
 
 After running a test, the following files are generated:
 
-- `output/summary.json` - Raw k6 metrics in JSON format
+- `output/summary.json` - Raw k6 metrics in JSON format (21 metrics, 38K+ data points)
 - `output/test_report.json` - Formatted test summary with key metrics
+- `output/page_resource_analysis.json` - Page resource analysis results
+- `output/enhanced_analysis_report.json` - Enhanced performance analysis
+- `output/ai_analysis_report.json` - AI-generated optimization recommendations
 - `load_test.log` - Detailed execution logs
 
 ## Supported Applications
@@ -153,15 +171,33 @@ This system can test any web application:
 load-opt-agent/
 ├── docker/
 │   └── Dockerfile          # k6 container definition
-├── examples/
-│   ├── test_config.yaml    # Basic test configuration
-│   ├── wordpress_test.yaml # WordPress test config
-│   └── api_test.yaml       # API test config
 ├── tests/
 │   └── load_test.js        # k6 test script
-├── output/                 # Test results (auto-created)
+├── ai_analysis/
+│   ├── analysis_agent.py   # Rule-based analysis
+│   ├── openai_enhanced_agent.py  # AI-enhanced analysis
+│   └── technology_templates.yaml # Technology-specific patterns
+├── scripts/                # Utility and test scripts
+│   ├── page_resource_analyzer.py      # Page resource analysis
+│   ├── enhanced_performance_analyzer.py # Enhanced k6 analysis
+│   ├── analyze_k6_metrics.py          # k6 metrics analysis
+│   ├── test_system.py                 # System testing
+│   ├── test_ai_analysis.py            # AI analysis testing
+│   ├── test_openai_integration.py     # OpenAI integration testing
+│   ├── parse_results.py               # Results parsing
+│   ├── show_ai_prompts.py             # AI prompt display
+│   ├── show_template_usage.py         # Template usage demo
+│   └── README.md                      # Scripts documentation
+├── configs/                # 📋 Load test configurations
+│   ├── test_config.yaml    # Basic test configuration
+│   ├── wordpress_test.yaml # WordPress test config
+│   ├── api_test.yaml       # API test config
+│   └── pop_website_test.yaml # POP website test config
+├── output/                 # Test results and reports (auto-created)
 ├── run_test.py            # Python test runner
 ├── requirements.txt       # Python dependencies
+├── env.example            # Environment variables template
+├── .gitignore            # Git ignore rules
 └── README.md             # This file
 ```
 

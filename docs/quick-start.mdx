@@ -1,0 +1,201 @@
+---
+title: Quick Start Guide
+description: Get up and running with the Load Testing & Optimization Agent in minutes
+---
+
+# Quick Start Guide
+
+Get your first load test running with AI-powered analysis in under 5 minutes.
+
+## Prerequisites
+
+- **Python 3.7+** installed on your system
+- **Docker** installed and running
+- **Git** for cloning the repository
+- **OpenAI API key** (optional, for AI analysis)
+
+## 🚀 Step 1: Clone and Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/colespicer/load-opt-agent.git
+cd load-opt-agent
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+## 🔧 Step 2: Configure Environment
+
+```bash
+# Copy environment template
+cp env.example .env
+
+# Edit .env file and add your OpenAI API key
+# OPENAI_API_KEY=your-api-key-here
+```
+
+<Callout type="info">
+  **OpenAI API Key**: Required for AI-powered analysis. Get one from [OpenAI Platform](https://platform.openai.com/api-keys).
+</Callout>
+
+## 🎯 Step 3: Run Your First Test
+
+```bash
+# Test a sample API endpoint
+python run_test.py configs/api_test.yaml
+```
+
+This will:
+- ✅ Build the Docker image (first time only)
+- ✅ Run a 1-minute load test with 100 virtual users
+- ✅ Generate comprehensive performance metrics
+- ✅ Create organized results in `output/`
+
+## 📊 Step 4: View Results
+
+```bash
+# List all test results
+python scripts/list_test_results.py list
+
+# View latest results
+python scripts/list_test_results.py latest
+```
+
+Your results are organized by site and timestamp:
+```
+output/
+└── jsonplaceholder_typicode_com_posts/
+    ├── 20250807_111130/          # Latest test run
+    │   ├── summary.json          # Raw k6 metrics
+    │   ├── test_report.json      # Formatted summary
+    │   └── ai_analysis_report.json # AI recommendations
+    └── latest -> 20250807_111130/ # Symlink to latest
+```
+
+## 🤖 Step 5: AI Analysis (Optional)
+
+If you have an OpenAI API key configured, the system automatically:
+
+1. **Analyzes page resources** for performance issues
+2. **Processes detailed metrics** for insights
+3. **Generates AI recommendations** for optimization
+4. **Provides implementation guidance** for improvements
+
+<Callout type="success">
+  **Success!** You've completed your first load test with AI-powered analysis. 
+  Check the `output/` directory for detailed results and recommendations.
+</Callout>
+
+## 🎯 Next Steps
+
+### Test Your Own Application
+
+```bash
+# Create a custom configuration
+cp configs/test_config.yaml configs/my-app.yaml
+
+# Edit the configuration
+target: https://your-website.com
+vus: 25
+duration: 2m
+description: "My web application for load testing"
+tags: ["react", "nodejs", "aws"]
+```
+
+### Run Different Test Scenarios
+
+```bash
+# Test WordPress site
+python run_test.py configs/wordpress_test.yaml
+
+# Test POP website (Svelte + Strapi)
+python run_test.py configs/pop_website_test.yaml
+
+# Test your custom configuration
+python run_test.py configs/my-app.yaml
+```
+
+### Explore Advanced Features
+
+- **[Configuration Reference](/configuration)** - Learn all YAML options
+- **[Scripts Documentation](/scripts)** - Use individual analysis tools
+- **[Examples](/examples)** - See real-world use cases
+- **[Troubleshooting](/troubleshooting)** - Common issues and solutions
+
+## 🔍 What You Get
+
+After running a test, you'll have:
+
+### 📊 Performance Metrics
+- **21 k6 metrics** with 38K+ data points
+- **Response times** (average, median, P95, P99)
+- **Error rates** and failure analysis
+- **Throughput** and request rates
+- **Resource usage** and timing breakdown
+
+### 🤖 AI Analysis (with OpenAI)
+- **Technology-specific recommendations**
+- **Prioritized optimization actions**
+- **Implementation guidance**
+- **Expected performance improvements**
+
+### 📁 Organized Results
+- **Site-based organization** for multiple applications
+- **Timestamped test runs** for historical tracking
+- **Latest results** always accessible via symlinks
+- **Comprehensive file structure** for easy navigation
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+<Accordion>
+  <AccordionItem title="Docker not running">
+    ```bash
+    # Start Docker Desktop
+    open -a Docker  # macOS
+    # Or start Docker service on Linux
+    sudo systemctl start docker
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Permission errors">
+    ```bash
+    # Ensure Docker permissions
+    sudo usermod -aG docker $USER
+    # Log out and back in
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="OpenAI API errors">
+    ```bash
+    # Check your API key
+    cat .env | grep OPENAI_API_KEY
+    # Ensure key is valid and has credits
+    ```
+  </AccordionItem>
+</Accordion>
+
+### Need Help?
+
+- **[Troubleshooting Guide](/troubleshooting)** - Common issues and solutions
+- **[GitHub Issues](https://github.com/colespicer/load-opt-agent/issues)** - Report bugs or request features
+- **[Configuration Reference](/configuration)** - Detailed configuration options
+
+---
+
+<div className="cta">
+  <h3>Ready to optimize your application?</h3>
+  <p>Now that you're set up, explore the configuration options and start testing your applications.</p>
+  <a href="/configuration" className="btn btn-primary">Learn Configuration</a>
+</div> 

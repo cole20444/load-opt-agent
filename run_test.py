@@ -72,17 +72,40 @@ def load_config(config_path):
         logger.error(f"Configuration validation error: {e}")
         sys.exit(1)
 
-def ensure_output_directory():
-    """Ensure output directory exists"""
-    output_dir = Path("output")
-    output_dir.mkdir(exist_ok=True)
+def create_output_directory(config):
+    """Create organized output directory structure"""
+    from datetime import datetime
+    import re
+    
+    # Extract site name from URL
+    target_url = config.get('target', 'unknown')
+    site_name = re.sub(r'https?://(www\.)?', '', target_url)
+    site_name = re.sub(r'[^a-zA-Z0-9.-]', '_', site_name)
+    site_name = site_name.replace('.', '_')
+    
+    # Create timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Create organized directory structure
+    output_dir = f"output/{site_name}/{timestamp}"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Create a symlink to latest results for easy access
+    latest_dir = f"output/{site_name}/latest"
+    if os.path.exists(latest_dir):
+        os.remove(latest_dir)
+    os.symlink(timestamp, latest_dir)
+    
+    logger.info(f"📁 Created output directory: {output_dir}")
+    logger.info(f"🔗 Latest results available at: {latest_dir}")
+    
     return output_dir
 
 def run_k6_test(config):
     """Run k6 load test with the provided configuration"""
     try:
         # Ensure output directory exists
-        output_dir = ensure_output_directory()
+        output_dir = create_output_directory(config)
         
         # Prepare environment variables
         env_vars = {
@@ -97,7 +120,7 @@ def run_k6_test(config):
             "-e", f"TARGET_URL={env_vars['TARGET_URL']}",
             "-e", f"VUS={env_vars['VUS']}",
             "-e", f"DURATION={env_vars['DURATION']}",
-            "-v", f"{os.getcwd()}/output:/app/output",
+            "-v", f"{os.getcwd()}/{output_dir}:/app/output",
             "load-tester"
         ]
         
@@ -167,74 +190,167 @@ def build_docker_image():
         logger.error(f"Error building Docker image: {e}")
         return False
 
-def generate_test_report(config):
-    """Generate a summary report from the test results"""
+def generate_test_report(config, output_dir):
+    """Generate a comprehensive test report with metadata"""
+    import json
+    from datetime import datetime
+    
+    # Load test results
+    summary_path = os.path.join(output_dir, "summary.json")
+    if not os.path.exists(summary_path):
+        logger.error(f"Summary file not found: {summary_path}")
+        return None
+    
     try:
-        summary_file = Path("output/summary.json")
-        if summary_file.exists():
-            with open(summary_file, 'r') as f:
-                summary = json.load(f)
+        # Parse k6 summary data
+        metrics_data = []
+        with open(summary_path, 'r') as f:
+            for line in f:
+                try:
+                    data = json.loads(line.strip())
+                    if data.get('type') == 'Point':
+                        metrics_data.append(data)
+                except json.JSONDecodeError:
+                    continue
+        
+        # Calculate key metrics
+        http_req_duration = []
+        http_req_failed = []
+        http_reqs = []
+        response_size = []
+        
+        for data in metrics_data:
+            metric = data.get('metric', '')
+            value = data.get('data', {}).get('value', 0)
             
-            # Create a human-readable report
-            report = {
-                "timestamp": datetime.now().isoformat(),
-                "test_config": {
-                    "target": config.get("target", "Unknown"),
-                    "vus": config.get("vus", 0),
-                    "duration": config.get("duration", "Unknown"),
-                    "description": config.get("description", "No description provided"),
-                    "tags": config.get("tags", [])
-                },
-                "test_summary": {
-                    "total_requests": summary.get("metrics", {}).get("http_reqs", {}).get("count", 0),
-                    "failed_requests": summary.get("metrics", {}).get("http_req_failed", {}).get("rate", 0),
-                    "average_response_time": summary.get("metrics", {}).get("http_req_duration", {}).get("avg", 0),
-                    "p95_response_time": summary.get("metrics", {}).get("http_req_duration", {}).get("p(95)", 0),
-                    "requests_per_second": summary.get("metrics", {}).get("http_reqs", {}).get("rate", 0),
-                },
-                "thresholds": summary.get("thresholds", {}),
-                "raw_summary": summary
+            if metric == 'http_req_duration':
+                http_req_duration.append(value)
+            elif metric == 'http_req_failed':
+                http_req_failed.append(value)
+            elif metric == 'http_reqs':
+                http_reqs.append(value)
+            elif metric == 'response_size':
+                response_size.append(value)
+        
+        # Calculate statistics
+        def calculate_stats(values):
+            if not values:
+                return {"avg": 0, "min": 0, "max": 0}
+            return {
+                "avg": sum(values) / len(values),
+                "min": min(values),
+                "max": max(values)
             }
-            
-            # Save the report
-            report_file = Path("output/test_report.json")
-            with open(report_file, 'w') as f:
-                json.dump(report, f, indent=2)
-            
-            logger.info(f"Test report generated: {report_file}")
-            return report
-            
+        
+        # Create test report
+        test_report = {
+            "test_metadata": {
+                "site_name": config.get('target', 'Unknown'),
+                "test_timestamp": datetime.now().isoformat(),
+                "test_duration": config.get('duration', 'Unknown'),
+                "virtual_users": config.get('vus', 'Unknown'),
+                "description": config.get('description', 'No description'),
+                "tags": config.get('tags', []),
+                "output_directory": output_dir
+            },
+            "performance_metrics": {
+                "http_req_duration": calculate_stats(http_req_duration),
+                "http_req_failed": {"rate": sum(http_req_failed) / len(http_req_failed) if http_req_failed else 0},
+                "http_reqs": {
+                    "rate": sum(http_reqs) / len(http_reqs) if http_reqs else 0,
+                    "count": len(http_req_duration) if http_req_duration else 0
+                },
+                "response_size": calculate_stats(response_size)
+            },
+            "test_summary": {
+                "total_requests": len(http_req_duration) if http_req_duration else 0,
+                "successful_requests": len([x for x in http_req_failed if x == 0]) if http_req_failed else 0,
+                "failed_requests": len([x for x in http_req_failed if x > 0]) if http_req_failed else 0,
+                "average_response_time": calculate_stats(http_req_duration)["avg"],
+                "error_rate": (sum(http_req_failed) / len(http_req_failed) * 100) if http_req_failed else 0
+            }
+        }
+        
+        # Save test report
+        report_path = os.path.join(output_dir, "test_report.json")
+        with open(report_path, 'w') as f:
+            json.dump(test_report, f, indent=2)
+        
+        logger.info(f"📊 Test report generated: {report_path}")
+        return test_report
+        
     except Exception as e:
         logger.error(f"Error generating test report: {e}")
         return None
 
-def run_ai_analysis(config):
-    """Run AI analysis on test results"""
-    if not AI_ANALYSIS_AVAILABLE:
-        logger.warning("AI Analysis not available - skipping optimization recommendations")
-        return None
+def run_ai_analysis(config, output_dir):
+    """Run AI analysis with ALL available data"""
+    logger.info("=== Running Enhanced AI Analysis ===")
     
     try:
-        # Check if test report exists
-        test_report_path = Path("output/test_report.json")
-        if not test_report_path.exists():
-            logger.warning("Test report not found - skipping AI analysis")
+        # Import the enhanced AI analysis agent
+        from ai_analysis.openai_enhanced_agent import EnhancedAIAnalysisAgent
+        
+        # Initialize the enhanced agent
+        agent = EnhancedAIAnalysisAgent()
+        
+        # Run page resource analysis first
+        logger.info("Running page resource analysis...")
+        try:
+            import subprocess
+            result = subprocess.run([
+                'python', 'scripts/page_resource_analyzer.py', config['target']
+            ], capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                logger.info("✅ Page resource analysis completed")
+            else:
+                logger.warning(f"⚠️ Page resource analysis failed: {result.stderr}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not run page resource analysis: {e}")
+        
+        # Run enhanced performance analysis
+        logger.info("Running enhanced performance analysis...")
+        try:
+            result = subprocess.run([
+                'python', 'scripts/enhanced_performance_analyzer.py'
+            ], capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                logger.info("✅ Enhanced performance analysis completed")
+            else:
+                logger.warning(f"⚠️ Enhanced performance analysis failed: {result.stderr}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not run enhanced performance analysis: {e}")
+        
+        # Now run the comprehensive AI analysis with ALL data
+        logger.info("Running comprehensive AI analysis...")
+        test_report_path = os.path.join(output_dir, "test_report.json")
+        
+        if not os.path.exists(test_report_path):
+            logger.error(f"Test report not found: {test_report_path}")
             return None
         
-        # Run AI analysis
-        agent = AIAnalysisAgent()
-        ai_report = agent.analyze_test_results("output/test_report.json", config)
+        # Run the enhanced analysis that includes ALL available data
+        analysis_result = agent.analyze_test_results(test_report_path, config)
         
-        # Save AI analysis report
-        ai_report_path = Path("output/ai_analysis_report.json")
-        with open(ai_report_path, 'w') as f:
-            json.dump(ai_report, f, indent=2)
-        
-        logger.info(f"AI Analysis report saved to: {ai_report_path}")
-        return ai_report
-        
+        if analysis_result:
+            # Save the comprehensive analysis report
+            ai_report_path = os.path.join(output_dir, "ai_analysis_report.json")
+            with open(ai_report_path, 'w') as f:
+                json.dump(analysis_result, f, indent=2)
+            
+            logger.info(f"✅ AI analysis report saved to: {ai_report_path}")
+            return analysis_result
+        else:
+            logger.error("❌ AI analysis failed")
+            return None
+            
+    except ImportError as e:
+        logger.error(f"❌ Could not import AI analysis modules: {e}")
+        return None
     except Exception as e:
-        logger.error(f"Error running AI analysis: {e}")
+        logger.error(f"❌ Error in AI analysis: {e}")
         return None
 
 def main():
@@ -242,7 +358,7 @@ def main():
     logger.info("=== Load Testing & Optimization Agent - Phase 1 ===")
     
     # Load configuration
-    config_path = "examples/test_config.yaml"
+    config_path = "configs/test_config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     
@@ -258,17 +374,17 @@ def main():
     
     if success:
         # Generate test report
-        report = generate_test_report(config)
+        output_dir = create_output_directory(config)
+        report = generate_test_report(config, output_dir)
         if report:
             logger.info("=== Test Summary ===")
             logger.info(f"Total Requests: {report['test_summary']['total_requests']}")
-            logger.info(f"Failed Requests Rate: {report['test_summary']['failed_requests']:.2%}")
+            logger.info(f"Failed Requests: {report['test_summary']['failed_requests']}")
             logger.info(f"Average Response Time: {report['test_summary']['average_response_time']:.2f}ms")
-            logger.info(f"P95 Response Time: {report['test_summary']['p95_response_time']:.2f}ms")
-            logger.info(f"Requests/Second: {report['test_summary']['requests_per_second']:.2f}")
+            logger.info(f"Error Rate: {report['test_summary']['error_rate']:.2f}%")
         
         # Run AI Analysis
-        ai_report = run_ai_analysis(config)
+        ai_report = run_ai_analysis(config, output_dir)
         if ai_report:
             logger.info("=== AI Analysis Complete ===")
             logger.info(f"Performance Grade: {ai_report['performance_analysis']['performance_grade']}")
@@ -276,6 +392,8 @@ def main():
             logger.info(f"Recommendations: {len(ai_report['recommendations'])} generated")
         
         logger.info("Load test completed successfully!")
+        logger.info(f"📁 Results saved to: {output_dir}")
+        logger.info(f"🔗 Latest results: output/{config['target'].replace('https://', '').replace('http://', '').replace('.', '_')}/latest")
     else:
         logger.error("Load test failed!")
         sys.exit(1)

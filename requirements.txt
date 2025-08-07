@@ -1,1 +1,4 @@
 pyyaml
+openai
+python-dotenv
+requests
