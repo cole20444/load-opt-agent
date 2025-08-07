@@ -1,8 +1,6 @@
 name: Load Testing & Optimization Agent
-repo:
-  url: https://github.com/colespicer/load-opt-agent
-  subdirectory: docs
-  branch: main
+# This file is for local development and testing
+# The main mintlify.yaml is in the root directory
 
 # Navigation structure
 navigation:
