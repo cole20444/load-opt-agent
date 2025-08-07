@@ -61,6 +61,15 @@ vus: 50
 
 # Test duration (supports: 30s, 1m, 5m, 1h, etc.)
 duration: 30s
+
+# Site description for AI analysis (optional)
+description: "Example website for load testing"
+
+# Tags for categorization and AI analysis (optional)
+tags:
+  - "example"
+  - "contact-form"
+  - "static-site"
 ```
 
 ### Example Configurations
@@ -68,6 +77,7 @@ duration: 30s
 The project includes several example configurations:
 
 - `examples/test_config.yaml` - Basic example
+- `examples/pop_website_test.yaml` - POP website (Svelte + Strapi)
 - `examples/wordpress_test.yaml` - WordPress site testing
 - `examples/api_test.yaml` - API endpoint testing
 
@@ -77,6 +87,7 @@ The system validates:
 - Required fields (target, vus, duration)
 - Data types (string URL, positive integer VUs, string duration)
 - URL format validation
+- Optional fields (description, tags) with default values
 
 ## Test Metrics
 

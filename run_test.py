@@ -44,6 +44,12 @@ def load_config(config_path):
         if not isinstance(config['duration'], str):
             raise ValueError("duration must be a string (e.g., '30s', '5m')")
         
+        # Set default values for optional fields
+        if 'description' not in config:
+            config['description'] = "No description provided"
+        if 'tags' not in config:
+            config['tags'] = []
+        
         logger.info(f"Configuration loaded successfully: {config}")
         return config
         
@@ -152,7 +158,7 @@ def build_docker_image():
         logger.error(f"Error building Docker image: {e}")
         return False
 
-def generate_test_report():
+def generate_test_report(config):
     """Generate a summary report from the test results"""
     try:
         summary_file = Path("output/summary.json")
@@ -163,6 +169,13 @@ def generate_test_report():
             # Create a human-readable report
             report = {
                 "timestamp": datetime.now().isoformat(),
+                "test_config": {
+                    "target": config.get("target", "Unknown"),
+                    "vus": config.get("vus", 0),
+                    "duration": config.get("duration", "Unknown"),
+                    "description": config.get("description", "No description provided"),
+                    "tags": config.get("tags", [])
+                },
                 "test_summary": {
                     "total_requests": summary.get("metrics", {}).get("http_reqs", {}).get("count", 0),
                     "failed_requests": summary.get("metrics", {}).get("http_req_failed", {}).get("rate", 0),
@@ -207,7 +220,7 @@ def main():
     
     if success:
         # Generate test report
-        report = generate_test_report()
+        report = generate_test_report(config)
         if report:
             logger.info("=== Test Summary ===")
             logger.info(f"Total Requests: {report['test_summary']['total_requests']}")

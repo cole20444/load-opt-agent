@@ -8,6 +8,17 @@ target: https://wordpress.org/
 vus: 25
 duration: 2m
 
+# Site description for AI analysis
+description: "Official WordPress.org website - a popular content management system built with PHP"
+
+# Tags for categorization and AI analysis
+tags:
+  - "wordpress"
+  - "php"
+  - "cms"
+  - "content-management"
+  - "open-source"
+
 # Optional: Additional configuration options
 # These can be extended in future phases
 # timeout: 10s

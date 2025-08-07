@@ -8,6 +8,18 @@ target: https://jsonplaceholder.typicode.com/posts
 vus: 100
 duration: 1m
 
+# Site description for AI analysis
+description: "JSONPlaceholder API - a free fake API for testing and prototyping REST endpoints"
+
+# Tags for categorization and AI analysis
+tags:
+  - "api"
+  - "rest"
+  - "json"
+  - "testing"
+  - "prototype"
+  - "fake-api"
+
 # Optional: Additional configuration options
 # These can be extended in future phases
 # timeout: 5s
