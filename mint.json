@@ -1,4 +1,43 @@
 {
   "name": "Load Testing & Optimization Agent",
-  "subdirectory": "docs"
+  "subdirectory": "docs",
+  "favicon": "/favicon.ico",
+  "colors": {
+    "primary": "#3B82F6",
+    "light": "#60A5FA",
+    "dark": "#1E40AF"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "index",
+        "quick-start",
+        "installation"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "configuration",
+        "examples",
+        "test-results"
+      ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "ai-analysis",
+        "performance-analysis",
+        "scripts"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference",
+        "troubleshooting"
+      ]
+    }
+  ]
 } 
