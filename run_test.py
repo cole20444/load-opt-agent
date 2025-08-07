@@ -13,6 +13,15 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+# Import AI Analysis components
+try:
+    from ai_analysis.analysis_agent import AIAnalysisAgent
+    AI_ANALYSIS_AVAILABLE = True
+except ImportError:
+    AI_ANALYSIS_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("AI Analysis not available - skipping optimization recommendations")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -199,6 +208,35 @@ def generate_test_report(config):
         logger.error(f"Error generating test report: {e}")
         return None
 
+def run_ai_analysis(config):
+    """Run AI analysis on test results"""
+    if not AI_ANALYSIS_AVAILABLE:
+        logger.warning("AI Analysis not available - skipping optimization recommendations")
+        return None
+    
+    try:
+        # Check if test report exists
+        test_report_path = Path("output/test_report.json")
+        if not test_report_path.exists():
+            logger.warning("Test report not found - skipping AI analysis")
+            return None
+        
+        # Run AI analysis
+        agent = AIAnalysisAgent()
+        ai_report = agent.analyze_test_results("output/test_report.json", config)
+        
+        # Save AI analysis report
+        ai_report_path = Path("output/ai_analysis_report.json")
+        with open(ai_report_path, 'w') as f:
+            json.dump(ai_report, f, indent=2)
+        
+        logger.info(f"AI Analysis report saved to: {ai_report_path}")
+        return ai_report
+        
+    except Exception as e:
+        logger.error(f"Error running AI analysis: {e}")
+        return None
+
 def main():
     """Main function to orchestrate the load test"""
     logger.info("=== Load Testing & Optimization Agent - Phase 1 ===")
@@ -228,6 +266,14 @@ def main():
             logger.info(f"Average Response Time: {report['test_summary']['average_response_time']:.2f}ms")
             logger.info(f"P95 Response Time: {report['test_summary']['p95_response_time']:.2f}ms")
             logger.info(f"Requests/Second: {report['test_summary']['requests_per_second']:.2f}")
+        
+        # Run AI Analysis
+        ai_report = run_ai_analysis(config)
+        if ai_report:
+            logger.info("=== AI Analysis Complete ===")
+            logger.info(f"Performance Grade: {ai_report['performance_analysis']['performance_grade']}")
+            logger.info(f"Overall Score: {ai_report['performance_analysis']['overall_score']:.1f}/100")
+            logger.info(f"Recommendations: {len(ai_report['recommendations'])} generated")
         
         logger.info("Load test completed successfully!")
     else:

@@ -1,0 +1,134 @@
+# Technology Templates for AI Analysis
+# These templates provide context and optimization patterns for different tech stacks
+
+templates:
+  # Svelte + Strapi + Azure Template
+  svelte_strapi_azure:
+    name: "Svelte + Strapi + Azure"
+    description: "Modern JAMstack with Svelte frontend, Strapi headless CMS, and Azure hosting"
+    tags: ["svelte", "strapi", "azure", "headless-cms", "api-driven", "javascript"]
+    
+    performance_patterns:
+      frontend:
+        - name: "Svelte Bundle Optimization"
+          description: "Optimize Svelte bundle size and loading performance"
+          metrics: ["response_time", "bundle_size", "first_contentful_paint"]
+          recommendations:
+            - "Implement code splitting with dynamic imports"
+            - "Use Svelte's built-in tree-shaking"
+            - "Optimize component lazy loading"
+            - "Consider SSR/SSG for better initial load"
+        
+        - name: "Asset Optimization"
+          description: "Optimize static assets and media loading"
+          metrics: ["response_size", "http_req_duration"]
+          recommendations:
+            - "Implement image optimization and lazy loading"
+            - "Use WebP format with fallbacks"
+            - "Configure proper caching headers"
+            - "Minimize CSS and JavaScript bundles"
+      
+      backend:
+        - name: "Strapi API Performance"
+          description: "Optimize Strapi API response times and caching"
+          metrics: ["http_req_duration", "http_req_waiting"]
+          recommendations:
+            - "Implement API response caching"
+            - "Optimize database queries and indexes"
+            - "Use Strapi's built-in caching mechanisms"
+            - "Consider Redis for session storage"
+        
+        - name: "Database Optimization"
+          description: "Optimize database performance for Strapi"
+          metrics: ["http_req_duration", "iteration_duration"]
+          recommendations:
+            - "Review and optimize database indexes"
+            - "Implement connection pooling"
+            - "Consider read replicas for heavy traffic"
+            - "Monitor slow query performance"
+      
+      infrastructure:
+        - name: "Azure App Service Optimization"
+          description: "Optimize Azure App Service configuration"
+          metrics: ["http_req_duration", "http_req_failed"]
+          recommendations:
+            - "Configure auto-scaling rules"
+            - "Use Azure CDN for static assets"
+            - "Optimize App Service plan tier"
+            - "Implement health checks and monitoring"
+        
+        - name: "Network and CDN"
+          description: "Optimize network performance and CDN usage"
+          metrics: ["http_req_connecting", "http_req_tls_handshaking"]
+          recommendations:
+            - "Configure Azure CDN with proper caching"
+            - "Optimize TLS configuration"
+            - "Use HTTP/2 for better performance"
+            - "Implement proper CORS headers"
+
+  # WordPress Template
+  wordpress:
+    name: "WordPress"
+    description: "Traditional WordPress CMS with PHP backend"
+    tags: ["wordpress", "php", "cms", "content-management"]
+    
+    performance_patterns:
+      frontend:
+        - name: "WordPress Theme Optimization"
+          description: "Optimize WordPress theme performance"
+          metrics: ["response_time", "response_size"]
+          recommendations:
+            - "Use a lightweight, optimized theme"
+            - "Minimize plugin usage"
+            - "Implement page caching"
+            - "Optimize database queries"
+      
+      backend:
+        - name: "PHP and Database Optimization"
+          description: "Optimize PHP execution and database performance"
+          metrics: ["http_req_duration", "http_req_waiting"]
+          recommendations:
+            - "Enable OPcache for PHP"
+            - "Optimize MySQL configuration"
+            - "Use object caching (Redis/Memcached)"
+            - "Implement database query optimization"
+
+  # API Template
+  api:
+    name: "REST API"
+    description: "RESTful API endpoints"
+    tags: ["api", "rest", "json"]
+    
+    performance_patterns:
+      backend:
+        - name: "API Response Optimization"
+          description: "Optimize API response times and efficiency"
+          metrics: ["http_req_duration", "response_size"]
+          recommendations:
+            - "Implement response caching"
+            - "Use pagination for large datasets"
+            - "Optimize database queries"
+            - "Consider GraphQL for flexible queries"
+        
+        - name: "Rate Limiting and Throttling"
+          description: "Implement proper rate limiting"
+          metrics: ["http_req_failed", "http_req_duration"]
+          recommendations:
+            - "Implement rate limiting per user/IP"
+            - "Use exponential backoff"
+            - "Monitor API usage patterns"
+            - "Set appropriate rate limits"
+
+# Template Selection Rules
+selection_rules:
+  - name: "Exact Match"
+    description: "Use template if all primary tags match"
+    priority: 1
+  
+  - name: "Partial Match"
+    description: "Use template if majority of tags match"
+    priority: 2
+  
+  - name: "Fallback"
+    description: "Use generic optimization template"
+    priority: 3 
