@@ -1,0 +1,179 @@
+---
+title: Running Tests
+description: Complete guide to running load tests with the Load Testing & Optimization Agent
+---
+
+# Running Tests
+
+Learn how to run load tests and get comprehensive performance analysis.
+
+## 🚀 Basic Test Execution
+
+### Quick Test
+```bash
+# Run with default configuration
+python run_test.py
+
+# Run with specific configuration
+python run_test.py configs/pop_website_test.yaml
+```
+
+### Extended Test
+```bash
+# Run a 15-minute test with 50 virtual users
+python run_test.py configs/pop_website_15min_test.yaml
+```
+
+## 📊 What Happens During a Test
+
+1. **Configuration Loading** - YAML config is parsed and validated
+2. **Docker Build** - k6 container is built (first time only)
+3. **Load Test Execution** - k6 runs the performance test
+4. **Results Collection** - Metrics are collected and organized
+5. **Analysis Pipeline** - Page resources and performance are analyzed
+6. **AI Analysis** - OpenAI generates optimization recommendations
+
+## 🎯 Test Configurations
+
+### Available Configurations
+- **`configs/api_test.yaml`** - API endpoint testing
+- **`configs/pop_website_test.yaml`** - POP website (2 minutes)
+- **`configs/pop_website_15min_test.yaml`** - Extended POP test (15 minutes)
+- **`configs/wordpress_test.yaml`** - WordPress site testing
+
+### Custom Configuration
+```yaml
+# configs/my-app.yaml
+target: https://your-website.com
+vus: 25
+duration: 5m
+description: "My web application"
+tags: ["react", "nodejs", "aws"]
+```
+
+## 📈 Test Scenarios
+
+### Light Load Testing
+```yaml
+vus: 10
+duration: 1m
+```
+**Use Case**: Basic functionality testing
+
+### Medium Load Testing
+```yaml
+vus: 25
+duration: 2m
+```
+**Use Case**: Production validation
+
+### Heavy Load Testing
+```yaml
+vus: 50
+duration: 5m
+```
+**Use Case**: Stress testing
+
+### Extended Testing
+```yaml
+vus: 50
+duration: 15m
+```
+**Use Case**: Comprehensive analysis
+
+## 🔍 Monitoring Test Progress
+
+### Real-time Output
+```bash
+# Watch test progress in real-time
+python run_test.py configs/pop_website_test.yaml
+```
+
+**Output includes:**
+- Test initialization
+- k6 progress updates
+- Analysis pipeline status
+- Final results summary
+
+### Log Files
+- **`load_test.log`** - Detailed execution logs
+- **Console output** - Real-time progress
+
+## 📁 Results Organization
+
+### Automatic Organization
+Results are automatically organized by:
+- **Site name** (extracted from URL)
+- **Timestamp** (YYYYMMDD_HHMMSS format)
+- **Latest symlink** (always points to most recent)
+
+### Result Files
+Each test run creates:
+- `summary.json` - Raw k6 metrics
+- `test_report.json` - Formatted summary
+- `page_resource_analysis.json` - Page analysis
+- `enhanced_analysis_report.json` - Performance analysis
+- `ai_analysis_report.json` - AI recommendations
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Docker not running:**
+```bash
+# Start Docker Desktop
+open -a Docker  # macOS
+```
+
+**Permission errors:**
+```bash
+# Ensure Docker permissions
+sudo usermod -aG docker $USER
+```
+
+**OpenAI API errors:**
+```bash
+# Check API key
+cat .env | grep OPENAI_API_KEY
+```
+
+### Test Timeouts
+- **Default timeout**: 5 minutes
+- **Extended tests**: May need longer timeouts
+- **Monitor progress**: Watch console output
+
+## 🎯 Best Practices
+
+### 1. Start Small
+```bash
+# Begin with light load
+python run_test.py configs/api_test.yaml
+```
+
+### 2. Gradual Increase
+```bash
+# Test different load levels
+python run_test.py configs/pop_website_test.yaml      # 2 minutes
+python run_test.py configs/pop_website_15min_test.yaml # 15 minutes
+```
+
+### 3. Monitor Resources
+- **Docker memory usage**
+- **Network bandwidth**
+- **Target server capacity**
+
+### 4. Document Results
+```bash
+# List all test results
+python scripts/list_test_results.py list
+
+# View latest results
+python scripts/list_test_results.py latest
+```
+
+## 🔗 Next Steps
+
+After running tests:
+- **[Interpreting Results](/guides/interpreting-results)** - Understand your test data
+- **[Configuration Reference](/configuration)** - Learn all configuration options
+- **[Troubleshooting](/guides/troubleshooting)** - Solve common issues 

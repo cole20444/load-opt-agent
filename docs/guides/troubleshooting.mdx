@@ -1,0 +1,256 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for the Load Testing & Optimization Agent
+---
+
+# Troubleshooting
+
+Common issues and their solutions when using the Load Testing & Optimization Agent.
+
+## 🚨 Common Issues
+
+### Docker Issues
+
+**Docker not running:**
+```bash
+# Start Docker Desktop
+open -a Docker  # macOS
+# Or start Docker service on Linux
+sudo systemctl start docker
+```
+
+**Permission errors:**
+```bash
+# Ensure Docker permissions
+sudo usermod -aG docker $USER
+# Log out and back in
+```
+
+**Docker build failures:**
+```bash
+# Clean Docker cache
+docker system prune -a
+# Rebuild image
+docker build -t load-tester docker/
+```
+
+### Python Issues
+
+**Module not found errors:**
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+**OpenAI API errors:**
+```bash
+# Check API key
+cat .env | grep OPENAI_API_KEY
+
+# Ensure key is valid and has credits
+# Visit: https://platform.openai.com/api-keys
+```
+
+### Test Execution Issues
+
+**Test timeouts:**
+- **Default timeout**: 5 minutes
+- **Extended tests**: May need longer timeouts
+- **Monitor progress**: Watch console output
+
+**Network connectivity:**
+```bash
+# Test target URL accessibility
+curl -I https://your-target-url.com
+
+# Check DNS resolution
+nslookup your-target-url.com
+```
+
+## 🔧 Configuration Issues
+
+### YAML Configuration Errors
+
+**Invalid YAML syntax:**
+```yaml
+# Correct format
+target: https://example.com
+vus: 25
+duration: 2m
+description: "My website"
+tags:
+  - "react"
+  - "nodejs"
+```
+
+**Missing required fields:**
+- **`target`** - URL to test (required)
+- **`vus`** - Number of virtual users (required)
+- **`duration`** - Test duration (required)
+
+### Environment Variables
+
+**Missing .env file:**
+```bash
+# Copy template
+cp env.example .env
+
+# Add your OpenAI API key
+echo "OPENAI_API_KEY=your-key-here" >> .env
+```
+
+## 📊 Results Issues
+
+### Missing Result Files
+
+**No output directory:**
+```bash
+# Check if output directory exists
+ls -la output/
+
+# Create if missing
+mkdir -p output/
+```
+
+**Empty result files:**
+- Check if test completed successfully
+- Verify Docker container ran properly
+- Check `load_test.log` for errors
+
+### Result Navigation Issues
+
+**list_test_results.py errors:**
+```bash
+# Check script permissions
+chmod +x scripts/list_test_results.py
+
+# Run with Python explicitly
+python scripts/list_test_results.py list
+```
+
+## 🤖 AI Analysis Issues
+
+### OpenAI Integration Problems
+
+**API rate limits:**
+- Check OpenAI usage dashboard
+- Implement rate limiting in scripts
+- Use different API keys for heavy usage
+
+**Model access issues:**
+```python
+# Check model availability
+# Current model: gpt-4o-mini
+# Alternative: gpt-3.5-turbo
+```
+
+### Analysis Pipeline Errors
+
+**Page resource analysis failures:**
+- Check target URL accessibility
+- Verify network connectivity
+- Review analysis script logs
+
+**Enhanced analysis errors:**
+- Check k6 metrics file format
+- Verify JSON parsing
+- Review analysis script output
+
+## 🔍 Debugging Steps
+
+### 1. Check Logs
+```bash
+# View detailed logs
+tail -f load_test.log
+
+# Check Docker logs
+docker logs <container-id>
+```
+
+### 2. Verify Configuration
+```bash
+# Test configuration parsing
+python -c "import yaml; print(yaml.safe_load(open('configs/test_config.yaml')))"
+```
+
+### 3. Test Components Individually
+```bash
+# Test page resource analysis
+python scripts/page_resource_analyzer.py https://example.com
+
+# Test enhanced analysis
+python scripts/enhanced_performance_analyzer.py
+
+# Test AI analysis
+python scripts/test_openai_integration.py
+```
+
+### 4. Check System Resources
+```bash
+# Monitor Docker resources
+docker stats
+
+# Check disk space
+df -h
+
+# Monitor memory usage
+free -h
+```
+
+## 🚀 Performance Issues
+
+### Slow Test Execution
+
+**Docker performance:**
+- Increase Docker memory allocation
+- Use SSD storage for Docker
+- Optimize Docker settings
+
+**Network performance:**
+- Check internet connection speed
+- Use local Docker registry
+- Optimize target server location
+
+### High Resource Usage
+
+**Memory issues:**
+- Reduce virtual users (VUs)
+- Shorter test duration
+- Monitor system resources
+
+**CPU issues:**
+- Limit concurrent tests
+- Use resource limits in Docker
+- Monitor system load
+
+## 📞 Getting Help
+
+### Before Asking for Help
+
+1. **Check this troubleshooting guide**
+2. **Review the logs** (`load_test.log`)
+3. **Test with minimal configuration**
+4. **Verify system requirements**
+
+### Useful Information to Include
+
+- **Error messages** (exact text)
+- **Configuration files** (sanitized)
+- **System information** (OS, Python version, Docker version)
+- **Steps to reproduce** the issue
+
+### Community Resources
+
+- **GitHub Issues**: Report bugs and request features
+- **Documentation**: Check guides and reference
+- **Examples**: Review working configurations
+
+## 🔗 Related Resources
+
+- **[Running Tests](/guides/running-tests)** - Test execution guide
+- **[Interpreting Results](/guides/interpreting-results)** - Results analysis
+- **[Configuration Reference](/configuration)** - Configuration options 

@@ -1,0 +1,338 @@
+---
+title: Examples
+description: Example configurations and use cases for the Load Testing & Optimization Agent
+---
+
+# Examples
+
+Example configurations and use cases for different types of applications and testing scenarios.
+
+## 🚀 Quick Examples
+
+### Basic Website Test
+```yaml
+# configs/basic-test.yaml
+target: https://example.com
+vus: 25
+duration: 2m
+description: "Basic website performance testing"
+tags:
+  - "static-site"
+  - "html"
+```
+
+### API Endpoint Test
+```yaml
+# configs/api-test.yaml
+target: https://jsonplaceholder.typicode.com/posts
+vus: 100
+duration: 1m
+description: "JSONPlaceholder API - a free fake API for testing"
+tags:
+  - "api"
+  - "rest"
+  - "json"
+  - "testing"
+```
+
+## 🎯 Technology-Specific Examples
+
+### Svelte + Strapi + Azure
+```yaml
+# configs/pop-website-test.yaml
+target: https://pop-website-2024-dev.azurewebsites.net
+vus: 25
+duration: 2m
+description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
+tags:
+  - "svelte"
+  - "strapi"
+  - "azure"
+  - "app-service"
+  - "headless-cms"
+  - "javascript"
+  - "api-driven"
+```
+
+### WordPress Site
+```yaml
+# configs/wordpress-test.yaml
+target: https://wordpress.org/
+vus: 25
+duration: 2m
+description: "Official WordPress.org website - a popular content management system built with PHP"
+tags:
+  - "wordpress"
+  - "php"
+  - "cms"
+  - "content-management"
+  - "open-source"
+```
+
+### React Application
+```yaml
+# configs/react-app.yaml
+target: https://react-app.example.com
+vus: 30
+duration: 3m
+description: "React single-page application with API backend"
+tags:
+  - "react"
+  - "spa"
+  - "javascript"
+  - "api-driven"
+  - "nodejs"
+```
+
+## 📈 Load Testing Scenarios
+
+### Light Load Testing
+```yaml
+# configs/light-load.yaml
+target: https://your-app.com
+vus: 10
+duration: 1m
+description: "Light load testing for development"
+tags:
+  - "development"
+  - "light-load"
+```
+
+### Medium Load Testing
+```yaml
+# configs/medium-load.yaml
+target: https://your-app.com
+vus: 25
+duration: 2m
+description: "Medium load testing for staging"
+tags:
+  - "staging"
+  - "medium-load"
+```
+
+### Heavy Load Testing
+```yaml
+# configs/heavy-load.yaml
+target: https://your-app.com
+vus: 50
+duration: 5m
+description: "Heavy load testing for production validation"
+tags:
+  - "production"
+  - "heavy-load"
+```
+
+### Extended Testing
+```yaml
+# configs/extended-test.yaml
+target: https://your-app.com
+vus: 50
+duration: 15m
+description: "Extended testing for comprehensive analysis"
+tags:
+  - "comprehensive"
+  - "extended-test"
+```
+
+## 🎯 Application-Specific Examples
+
+### E-commerce Site
+```yaml
+# configs/ecommerce.yaml
+target: https://shop.example.com
+vus: 40
+duration: 3m
+description: "E-commerce site with product catalog and checkout"
+tags:
+  - "e-commerce"
+  - "shopify"
+  - "checkout"
+  - "catalog"
+```
+
+### Blog Platform
+```yaml
+# configs/blog.yaml
+target: https://blog.example.com
+vus: 20
+duration: 2m
+description: "Blog platform with content management"
+tags:
+  - "blog"
+  - "content"
+  - "cms"
+  - "publishing"
+```
+
+### Dashboard Application
+```yaml
+# configs/dashboard.yaml
+target: https://dashboard.example.com
+vus: 35
+duration: 4m
+description: "Analytics dashboard with real-time data"
+tags:
+  - "dashboard"
+  - "analytics"
+  - "real-time"
+  - "data-visualization"
+```
+
+## 🔧 Advanced Examples
+
+### Custom Headers
+```yaml
+# configs/custom-headers.yaml
+target: https://api.example.com
+vus: 25
+duration: 2m
+description: "API with custom authentication headers"
+tags:
+  - "api"
+  - "authentication"
+  - "custom-headers"
+```
+
+### Multiple Endpoints
+```yaml
+# configs/multi-endpoint.yaml
+target: https://api.example.com
+vus: 30
+duration: 3m
+description: "Testing multiple API endpoints"
+tags:
+  - "api"
+  - "multi-endpoint"
+  - "microservices"
+```
+
+## 📊 Performance Testing Examples
+
+### Baseline Performance
+```yaml
+# configs/baseline.yaml
+target: https://your-app.com
+vus: 10
+duration: 1m
+description: "Baseline performance measurement"
+tags:
+  - "baseline"
+  - "performance"
+```
+
+### Stress Testing
+```yaml
+# configs/stress-test.yaml
+target: https://your-app.com
+vus: 100
+duration: 10m
+description: "Stress testing to find breaking point"
+tags:
+  - "stress-test"
+  - "breaking-point"
+```
+
+### Spike Testing
+```yaml
+# configs/spike-test.yaml
+target: https://your-app.com
+vus: 200
+duration: 2m
+description: "Spike testing for sudden load increases"
+tags:
+  - "spike-test"
+  - "sudden-load"
+```
+
+## 🎯 Best Practices Examples
+
+### Production Testing
+```yaml
+# configs/production.yaml
+target: https://your-app.com
+vus: 25
+duration: 5m
+description: "Production environment testing"
+tags:
+  - "production"
+  - "monitoring"
+```
+
+### Development Testing
+```yaml
+# configs/development.yaml
+target: http://localhost:3000
+vus: 5
+duration: 30s
+description: "Local development testing"
+tags:
+  - "development"
+  - "local"
+```
+
+### Staging Testing
+```yaml
+# configs/staging.yaml
+target: https://staging.your-app.com
+vus: 15
+duration: 2m
+description: "Staging environment testing"
+tags:
+  - "staging"
+  - "pre-production"
+```
+
+## 🔗 Running Examples
+
+### Execute Examples
+```bash
+# Run basic example
+python run_test.py configs/basic-test.yaml
+
+# Run technology-specific example
+python run_test.py configs/pop-website-test.yaml
+
+# Run load testing scenario
+python run_test.py configs/heavy-load.yaml
+```
+
+### Customize Examples
+```bash
+# Copy and modify
+cp configs/basic-test.yaml configs/my-app.yaml
+
+# Edit configuration
+nano configs/my-app.yaml
+
+# Run custom test
+python run_test.py configs/my-app.yaml
+```
+
+## 📈 Expected Results
+
+### Light Load Test (10 VUs, 1m)
+- **Requests**: ~600
+- **Data Points**: ~1,200
+- **Analysis Time**: 30 seconds
+
+### Medium Load Test (25 VUs, 2m)
+- **Requests**: ~3,000
+- **Data Points**: ~6,000
+- **Analysis Time**: 1 minute
+
+### Heavy Load Test (50 VUs, 5m)
+- **Requests**: ~7,500
+- **Data Points**: ~15,000
+- **Analysis Time**: 2 minutes
+
+### Extended Test (50 VUs, 15m)
+- **Requests**: ~22,500
+- **Data Points**: ~45,000
+- **Analysis Time**: 5 minutes
+
+## 🔗 Related Documentation
+
+- **[Configuration Reference](/configuration)** - Complete configuration options
+- **[Running Tests](/guides/running-tests)** - How to execute tests
+- **[Interpreting Results](/guides/interpreting-results)** - Understanding results
+- **[API Reference](/reference/api-reference)** - Script documentation 

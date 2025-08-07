@@ -1,0 +1,178 @@
+---
+title: Interpreting Results
+description: How to understand and analyze your load test results
+---
+
+# Interpreting Results
+
+Learn how to understand and analyze your load test results for actionable insights.
+
+## 📊 Understanding Your Results
+
+### Result Files Overview
+Each test run generates multiple files with different types of analysis:
+
+- **`summary.json`** - Raw k6 metrics (21 metrics, 38K+ data points)
+- **`test_report.json`** - Formatted summary with key metrics
+- **`page_resource_analysis.json`** - Page resource performance analysis
+- **`enhanced_analysis_report.json`** - Detailed performance breakdown
+- **`ai_analysis_report.json`** - AI-generated optimization recommendations
+
+## 🔍 Key Metrics Explained
+
+### Response Time Metrics
+- **Average Response Time** - Mean response time across all requests
+- **Median Response Time** - 50th percentile response time
+- **P95 Response Time** - 95% of requests completed within this time
+- **P99 Response Time** - 99% of requests completed within this time
+
+### Throughput Metrics
+- **Requests per Second (RPS)** - Number of requests processed per second
+- **Total Requests** - Total number of requests made during the test
+- **Successful Requests** - Requests that returned 2xx status codes
+- **Failed Requests** - Requests that returned 4xx/5xx status codes
+
+### Error Metrics
+- **Error Rate** - Percentage of failed requests
+- **HTTP Error Codes** - Breakdown of specific error types
+- **Timeout Errors** - Requests that exceeded timeout limits
+
+## 📈 Performance Analysis
+
+### HTTP Timing Breakdown
+```
+🎯 PERFORMANCE SCORE: 100/100
+📊 HTTP Timing Breakdown:
+  • DNS/Connection Pool: 6.4ms (excellent)
+  • TCP Connection: 1.4ms (excellent)  
+  • TLS Handshake: 3.6ms (excellent)
+  • Server Processing: 494.8ms (main bottleneck)
+  • Response Receiving: 58.5ms (good)
+  • Data Transfer: 75.8KB average response
+```
+
+### What Each Metric Means
+- **DNS/Connection Pool** - Time to resolve domain and get connection
+- **TCP Connection** - Time to establish TCP connection
+- **TLS Handshake** - Time for SSL/TLS negotiation
+- **Server Processing** - Time server takes to process request
+- **Response Receiving** - Time to download response data
+
+## 🎯 Performance Scoring
+
+### Overall Performance Score
+- **90-100**: Excellent performance
+- **80-89**: Good performance with minor issues
+- **70-79**: Acceptable performance with optimization opportunities
+- **60-69**: Performance needs improvement
+- **Below 60**: Critical performance issues
+
+### Component Scores
+- **k6 Load Test Score** - Based on response times and error rates
+- **Page Resource Score** - Based on asset optimization
+- **AI Analysis Score** - Based on optimization recommendations
+
+## 📱 Page Resource Analysis
+
+### Resource Performance
+```
+🎯 PERFORMANCE SCORE: 35/100
+📊 RESOURCES ANALYZED: 10
+📦 TOTAL SIZE: 0.5MB
+⏱️  TOTAL LOAD TIME: 5.2 seconds
+📈 ISSUES FOUND: 15
+   🔴 High Priority: 0
+   🟡 Medium Priority: 4
+   🟢 Low Priority: 11
+```
+
+### Resource Categories
+- **Images** - PNG, JPG, WebP files
+- **Stylesheets** - CSS files
+- **Scripts** - JavaScript files
+- **Fonts** - Web font files
+- **APIs** - External API calls
+
+## 🤖 AI Analysis Insights
+
+### Optimization Recommendations
+The AI analysis provides:
+- **Prioritized recommendations** (High/Medium/Low priority)
+- **Technology-specific insights** based on your stack
+- **Implementation guidance** with specific steps
+- **Expected improvements** in performance metrics
+
+### Example AI Output
+```
+🔴 High Priority (Server Processing)
+1. Optimize Server Processing (494.8ms average)
+   - Implement server-side caching (Redis, Memcached)
+   - Optimize Strapi database queries and add indexes
+   - Consider database connection pooling
+   - Implement API response caching
+
+🟡 Medium Priority (Resource Optimization)
+1. Convert Large PNG to WebP
+   - 178KB PNG image can be reduced by ~60-80%
+   - Implement WebP conversion in Strapi media pipeline
+```
+
+## 📁 Navigating Results
+
+### Using the Results Navigator
+```bash
+# List all test results
+python scripts/list_test_results.py list
+
+# View latest results
+python scripts/list_test_results.py latest
+
+# View results for specific site
+python scripts/list_test_results.py latest pop-website-2024-dev.azurewebsites.net
+```
+
+### Result Organization
+```
+output/
+└── pop-website-2024-dev_azurewebsites_net/
+    ├── 20250807_123318/          # Test run timestamp
+    │   ├── summary.json          # Raw metrics
+    │   ├── test_report.json      # Formatted summary
+    │   ├── page_resource_analysis.json
+    │   ├── enhanced_analysis_report.json
+    │   └── ai_analysis_report.json
+    └── latest -> 20250807_123318/ # Symlink to latest
+```
+
+## 🎯 Actionable Insights
+
+### Performance Bottlenecks
+1. **Server Processing** - Usually the biggest bottleneck
+2. **Large Resources** - Unoptimized images and assets
+3. **Network Issues** - DNS, CDN, or connection problems
+4. **Database Queries** - Slow database operations
+
+### Optimization Priorities
+1. **High Priority** - Critical issues affecting user experience
+2. **Medium Priority** - Significant optimization opportunities
+3. **Low Priority** - Minor improvements and best practices
+
+## 📊 Trend Analysis
+
+### Comparing Test Runs
+- **Historical data** - Compare performance over time
+- **Before/After** - Measure optimization impact
+- **Load patterns** - Understand performance under different loads
+
+### Key Trends to Watch
+- **Response time degradation** under increased load
+- **Error rate increases** at higher concurrency
+- **Resource loading patterns** across different pages
+- **Performance improvements** after optimizations
+
+## 🔗 Next Steps
+
+After interpreting results:
+- **[Running Tests](/guides/running-tests)** - Run additional tests
+- **[Troubleshooting](/guides/troubleshooting)** - Address performance issues
+- **[Configuration Reference](/configuration)** - Optimize test parameters 

@@ -1,0 +1,170 @@
+---
+title: Metrics Reference
+description: Complete reference for all k6 metrics and performance indicators
+---
+
+# Metrics Reference
+
+Complete reference for all k6 metrics, performance indicators, and analysis data points.
+
+## 📊 k6 Core Metrics
+
+### HTTP Request Metrics
+
+| Metric | Description | Unit | Example |
+|--------|-------------|------|---------|
+| `http_req_duration` | Total request duration | ms | 529ms |
+| `http_req_failed` | Failed request rate | % | 0.30% |
+| `http_reqs` | Total requests | count | 1,963 |
+| `http_req_rate` | Requests per second | req/s | 16.4 |
+
+### HTTP Timing Breakdown
+
+| Metric | Description | Unit | Example |
+|--------|-------------|------|---------|
+| `http_req_dns` | DNS resolution time | ms | 6.4ms |
+| `http_req_connecting` | TCP connection time | ms | 1.4ms |
+| `http_req_tls_handshaking` | TLS handshake time | ms | 3.6ms |
+| `http_req_sending` | Request sending time | ms | 0.8ms |
+| `http_req_waiting` | Server processing time | ms | 494.8ms |
+| `http_req_receiving` | Response receiving time | ms | 58.5ms |
+
+### Data Transfer Metrics
+
+| Metric | Description | Unit | Example |
+|--------|-------------|------|---------|
+| `data_sent` | Total bytes sent | bytes | 1,234,567 |
+| `data_received` | Total bytes received | bytes | 5,678,901 |
+| `http_req_size` | Request size | bytes | 1,234 |
+| `http_resp_size` | Response size | bytes | 5,678 |
+
+## 🎯 Performance Indicators
+
+### Response Time Percentiles
+
+| Percentile | Description | Target | Example |
+|------------|-------------|--------|---------|
+| P50 (Median) | 50% of requests | < 500ms | 245ms |
+| P75 | 75% of requests | < 750ms | 412ms |
+| P90 | 90% of requests | < 1000ms | 678ms |
+| P95 | 95% of requests | < 2000ms | 1,234ms |
+| P99 | 99% of requests | < 5000ms | 3,456ms |
+
+### Error Rate Thresholds
+
+| Error Rate | Severity | Action Required |
+|------------|----------|-----------------|
+| < 1% | Excellent | Monitor |
+| 1-5% | Good | Investigate |
+| 5-10% | Warning | Optimize |
+| > 10% | Critical | Immediate action |
+
+## 📈 Analysis Metrics
+
+### Performance Scoring
+
+| Score Range | Grade | Description |
+|-------------|-------|-------------|
+| 90-100 | A | Excellent performance |
+| 80-89 | B | Good performance |
+| 70-79 | C | Acceptable performance |
+| 60-69 | D | Needs improvement |
+| < 60 | F | Critical issues |
+
+### Component Scores
+
+- **k6 Load Test Score**: Based on response times and error rates
+- **Page Resource Score**: Based on asset optimization
+- **AI Analysis Score**: Based on optimization recommendations
+
+## 🔍 HTTP Status Codes
+
+### Success Codes (2xx)
+
+| Code | Description | Impact |
+|------|-------------|--------|
+| 200 | OK | Success |
+| 201 | Created | Success |
+| 204 | No Content | Success |
+
+### Client Errors (4xx)
+
+| Code | Description | Impact |
+|------|-------------|--------|
+| 400 | Bad Request | Client error |
+| 401 | Unauthorized | Authentication error |
+| 403 | Forbidden | Authorization error |
+| 404 | Not Found | Resource not found |
+| 429 | Too Many Requests | Rate limiting |
+
+### Server Errors (5xx)
+
+| Code | Description | Impact |
+|------|-------------|--------|
+| 500 | Internal Server Error | Server error |
+| 502 | Bad Gateway | Gateway error |
+| 503 | Service Unavailable | Service unavailable |
+| 504 | Gateway Timeout | Timeout error |
+
+## 📊 Page Resource Metrics
+
+### Resource Categories
+
+| Category | File Types | Optimization Focus |
+|----------|------------|-------------------|
+| Images | PNG, JPG, WebP, SVG | Compression, format |
+| Stylesheets | CSS | Minification, delivery |
+| Scripts | JS | Minification, bundling |
+| Fonts | WOFF, WOFF2, TTF | Subsetting, format |
+| APIs | JSON, XML | Caching, optimization |
+
+### Performance Indicators
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| Total Size | Combined resource size | < 2MB |
+| Load Time | Total resource load time | < 3s |
+| Compression Ratio | Gzip/Brotli efficiency | > 70% |
+| Cache Hit Rate | CDN cache efficiency | > 80% |
+
+## 🤖 AI Analysis Metrics
+
+### Recommendation Categories
+
+| Priority | Description | Impact |
+|----------|-------------|--------|
+| High | Critical performance issues | Immediate |
+| Medium | Significant optimizations | High |
+| Low | Best practices | Medium |
+
+### Analysis Coverage
+
+- **21 k6 metrics** analyzed
+- **38K+ data points** processed
+- **10+ resource types** examined
+- **Technology-specific** patterns applied
+
+## 📁 Data Collection
+
+### Metrics Collection
+
+- **Real-time collection** during test execution
+- **Streaming JSON** output for efficiency
+- **Comprehensive coverage** of all k6 metrics
+- **Automatic aggregation** and analysis
+
+### Data Points per Test
+
+| Test Duration | Virtual Users | Data Points |
+|---------------|---------------|-------------|
+| 1 minute | 25 | ~1,500 |
+| 2 minutes | 25 | ~3,000 |
+| 5 minutes | 50 | ~7,500 |
+| 15 minutes | 50 | ~22,500 |
+
+## 🔗 Related Documentation
+
+- **[API Reference](/reference/api-reference)** - Script documentation
+- **[Interpreting Results](/guides/interpreting-results)** - How to use metrics
+- **[Configuration Reference](/configuration)** - Test configuration
+- **[Running Tests](/guides/running-tests)** - Test execution 

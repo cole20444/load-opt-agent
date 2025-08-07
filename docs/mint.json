@@ -19,6 +19,31 @@
       "pages": [
         "configuration"
       ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "features/ai-analysis",
+        "features/performance-analysis",
+        "features/test-results",
+        "features/repository-structure"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/running-tests",
+        "guides/interpreting-results",
+        "guides/troubleshooting"
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        "reference/api-reference",
+        "reference/metrics-reference",
+        "reference/examples"
+      ]
     }
   ]
 } 

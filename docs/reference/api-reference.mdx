@@ -1,0 +1,224 @@
+---
+title: API Reference
+description: Reference documentation for all scripts and components
+---
+
+# API Reference
+
+Complete reference for all scripts, components, and utilities in the Load Testing & Optimization Agent.
+
+## 🚀 Main Scripts
+
+### `run_test.py`
+
+The main entry point for running load tests.
+
+**Usage:**
+```bash
+python run_test.py [config_file]
+```
+
+**Arguments:**
+- `config_file` (optional): Path to YAML configuration file
+
+**Functions:**
+- `load_config(config_path)` - Load and validate YAML configuration
+- `create_output_directory(config)` - Create organized output structure
+- `run_k6_test(config, output_dir)` - Execute k6 load test
+- `generate_test_report(config, output_dir)` - Create formatted test report
+- `run_ai_analysis(config, output_dir)` - Execute AI analysis pipeline
+
+### `scripts/list_test_results.py`
+
+Navigate and view test results.
+
+**Usage:**
+```bash
+python scripts/list_test_results.py [command] [site_name]
+```
+
+**Commands:**
+- `list` - List all test results by site and timestamp
+- `latest` - Show latest results for all sites
+- `latest <site>` - Show latest results for specific site
+
+**Functions:**
+- `list_test_results()` - List all test results
+- `show_latest_results(site_name)` - Show latest results
+- `show_test_run_details(test_run_path)` - Show detailed test run info
+
+## 🔧 Analysis Scripts
+
+### `scripts/page_resource_analyzer.py`
+
+Analyze page resources for performance issues.
+
+**Usage:**
+```bash
+python scripts/page_resource_analyzer.py <url>
+```
+
+**Arguments:**
+- `url` - Target URL to analyze
+
+**Features:**
+- Resource discovery (images, CSS, JS, fonts, APIs)
+- Performance analysis (size, load time, compression)
+- Technology-specific recommendations
+- Detailed reporting
+
+### `scripts/enhanced_performance_analyzer.py`
+
+Enhanced k6 metrics analysis.
+
+**Usage:**
+```bash
+python scripts/enhanced_performance_analyzer.py
+```
+
+**Features:**
+- HTTP timing breakdown analysis
+- Data transfer analysis
+- Load distribution patterns
+- Error pattern analysis
+
+### `scripts/analyze_k6_metrics.py`
+
+Analyze raw k6 metrics data.
+
+**Usage:**
+```bash
+python scripts/analyze_k6_metrics.py
+```
+
+**Features:**
+- 21 k6 metrics analysis
+- 38K+ data points processing
+- Performance threshold checking
+- Statistical analysis
+
+## 🤖 AI Analysis Components
+
+### `ai_analysis/openai_enhanced_agent.py`
+
+AI-powered analysis and recommendations.
+
+**Classes:**
+- `EnhancedAIAnalysisAgent` - Main AI analysis agent
+
+**Methods:**
+- `analyze_performance(test_data, site_info)` - Analyze performance data
+- `generate_recommendations(analysis_results)` - Generate optimization recommendations
+- `_combine_recommendations(ai_recommendations)` - Combine AI insights
+
+### `ai_analysis/technology_templates.yaml`
+
+Technology-specific optimization patterns.
+
+**Templates:**
+- `svelte_strapi_azure` - Svelte + Strapi + Azure patterns
+- `wordpress` - WordPress optimization patterns
+- `api` - API endpoint patterns
+
+## 📊 Configuration Reference
+
+### YAML Configuration Schema
+
+```yaml
+# Required fields
+target: string          # Target URL to test
+vus: integer           # Number of virtual users
+duration: string       # Test duration (e.g., "2m", "15m")
+
+# Optional fields
+description: string    # Site description for AI analysis
+tags: array           # Technology tags for AI analysis
+```
+
+### Environment Variables
+
+```bash
+# Required for AI analysis
+OPENAI_API_KEY=your-api-key-here
+
+# Optional overrides
+TARGET_URL=https://example.com
+VUS=25
+DURATION=2m
+```
+
+## 📁 Output Structure
+
+### Result Files
+
+Each test run generates:
+
+- **`summary.json`** - Raw k6 metrics (streaming JSON)
+- **`test_report.json`** - Formatted test summary
+- **`page_resource_analysis.json`** - Page resource analysis
+- **`enhanced_analysis_report.json`** - Enhanced performance analysis
+- **`ai_analysis_report.json`** - AI recommendations
+
+### Directory Structure
+
+```
+output/
+└── site_name/
+    ├── timestamp/
+    │   ├── summary.json
+    │   ├── test_report.json
+    │   ├── page_resource_analysis.json
+    │   ├── enhanced_analysis_report.json
+    │   └── ai_analysis_report.json
+    └── latest -> timestamp/
+```
+
+## 🔍 k6 Metrics Reference
+
+### Core Metrics
+
+- **`http_req_duration`** - Response time metrics
+- **`http_req_failed`** - Error rate metrics
+- **`http_reqs`** - Request count metrics
+
+### HTTP Timing Metrics
+
+- **`http_req_dns`** - DNS resolution time
+- **`http_req_connecting`** - TCP connection time
+- **`http_req_tls_handshaking`** - TLS handshake time
+- **`http_req_sending`** - Request sending time
+- **`http_req_waiting`** - Server processing time
+- **`http_req_receiving`** - Response receiving time
+
+### Data Transfer Metrics
+
+- **`data_sent`** - Bytes sent
+- **`data_received`** - Bytes received
+- **`http_req_size`** - Request size
+- **`http_resp_size`** - Response size
+
+## 🎯 Performance Thresholds
+
+### Default Thresholds
+
+```javascript
+// Built into k6 test script
+http_req_duration: ['p(95)<2000'],  // 95% under 2 seconds
+http_req_failed: ['rate<0.1'],      // Error rate under 10%
+```
+
+### Custom Thresholds
+
+```yaml
+# Future configuration option
+thresholds:
+  http_req_duration: ["p(95)<1000"]
+  http_req_failed: ["rate<0.05"]
+```
+
+## 🔗 Related Documentation
+
+- **[Running Tests](/guides/running-tests)** - How to use these scripts
+- **[Interpreting Results](/guides/interpreting-results)** - Understanding output
+- **[Configuration Reference](/configuration)** - Configuration options
+- **[Troubleshooting](/guides/troubleshooting)** - Common issues 
