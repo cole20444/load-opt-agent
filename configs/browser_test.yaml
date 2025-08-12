@@ -1,0 +1,49 @@
+# Browser-based Load Test Configuration
+# Uses xk6-browser for realistic front-end performance testing
+
+target: https://pop-website-2024-dev.azurewebsites.net
+vus: 3  # Lower VUs for browser tests (resource-intensive)
+duration: 2m  # Shorter duration for browser tests
+test_type: browser  # Indicates this is a browser test
+
+# Site description for AI analysis
+description: "Frontend is built with Svelte and the Backend is built with Strapi. Browser-based testing for front-end performance and Core Web Vitals."
+
+# Technology tags for AI analysis
+tags:
+  - "svelte"
+  - "strapi"
+  - "azure"
+  - "app-service"
+  - "headless-cms"
+  - "javascript"
+  - "api-driven"
+  - "browser-test"
+  - "core-web-vitals"
+  - "frontend-performance"
+
+# Browser-specific settings
+browser_settings:
+  viewport:
+    width: 1920
+    height: 1080
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  wait_until: "networkidle"
+  timeout: "30s"
+
+# Performance thresholds for browser metrics
+browser_thresholds:
+  first_contentful_paint: 1800  # 1.8s
+  largest_contentful_paint: 2500  # 2.5s
+  first_input_delay: 100  # 100ms
+  cumulative_layout_shift: 0.1
+  time_to_interactive: 3800  # 3.8s
+  dom_content_loaded: 2000  # 2s
+  load_complete: 3000  # 3s
+
+# User interaction simulation
+user_interactions:
+  enabled: true
+  click_elements: true
+  scroll_page: true
+  wait_between_actions: 1000  # ms

@@ -1,16 +1,16 @@
-# POP Website Load Test Configuration
-# Updated with latest features - 10-minute test with 50 virtual users
-# Technical analysis only (no AI insights)
+# Comprehensive Load Test Configuration
+# Runs both protocol-level (k6) and browser-level (xk6-browser) tests
+# Provides complete performance insights from both perspectives
 
 target: https://pop-website-2024-dev.azurewebsites.net
-vus: 20  # 20 virtual users for quick test
-duration: 2m  # Quick 2-minute test
+vus: 10  # Protocol test VUs
+duration: 3m  # Test duration
 test_type: both  # Run both protocol and browser tests
 
-# Site description
-description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
+# Site description for AI analysis
+description: "Frontend is built with Svelte and the Backend is built with Strapi. Comprehensive testing including both protocol-level load testing and browser-level front-end performance analysis."
 
-# Technology tags for analysis
+# Technology tags for AI analysis
 tags:
   - "svelte"
   - "strapi"
@@ -19,29 +19,32 @@ tags:
   - "headless-cms"
   - "javascript"
   - "api-driven"
-  - "pop-website"
   - "comprehensive-test"
+  - "protocol-testing"
+  - "browser-testing"
+  - "core-web-vitals"
+  - "frontend-performance"
 
-# Analysis settings - Technical only, no AI
+# Analysis settings
 analysis_settings:
   run_page_resource_analysis: true
   run_enhanced_performance_analysis: true
-  run_ai_analysis: false  # Disabled for technical analysis only
+  run_ai_analysis: true  # Set to false to skip AI analysis
   generate_readable_reports: true
   combine_results: true
 
 # Protocol test settings (k6)
 protocol_settings:
-  vus: 20  # 20 virtual users for quick test
-  duration: 2m
+  vus: 10  # Higher VUs for protocol testing
+  duration: 3m
   thresholds:
-    http_req_duration: ['p(95)<5000']  # Increased to 5s to account for timeouts
-    http_req_failed: ['rate<0.2']      # Increased error rate tolerance
+    http_req_duration: ['p(95)<2000']  # 95% under 2s
+    http_req_failed: ['rate<0.1']      # Error rate under 10%
 
 # Browser test settings (xk6-browser)
 browser_settings:
-  vus: 5  # 5 virtual users for browser test
-  duration: 1m  # Quick 1-minute browser test
+  vus: 3  # Lower VUs for browser testing (resource-intensive)
+  duration: 2m  # Shorter duration for browser tests
   viewport:
     width: 1920
     height: 1080
@@ -64,4 +67,4 @@ user_interactions:
   enabled: true
   click_elements: true
   scroll_page: true
-  wait_between_actions: 1000  # ms 
+  wait_between_actions: 1000  # ms

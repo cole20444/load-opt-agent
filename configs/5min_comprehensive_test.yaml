@@ -1,12 +1,12 @@
-# POP Website 15-Minute Load Test Configuration
+# 5-Minute Comprehensive Test Configuration
 # Target URL to test
 target: https://pop-website-2024-dev.azurewebsites.net
 
 # Number of virtual users (concurrent users)
-vus: 50
+vus: 25
 
-# Test duration - 15 minutes
-duration: 15m
+# Test duration - 5 minutes
+duration: 5m
 
 # Site description for AI analysis
 description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
@@ -20,4 +20,4 @@ tags:
   - "headless-cms"
   - "javascript"
   - "api-driven"
-  - "extended-test" 
+  - "comprehensive-test" 

@@ -7,6 +7,7 @@ Identifies specific page performance issues from k6 load test data
 import json
 import sys
 import os
+import statistics
 from collections import defaultdict
 from typing import Dict, List, Any
 import re
@@ -19,21 +20,32 @@ class EnhancedPerformanceAnalyzer:
         self.issues = []
         
     def load_data(self):
-        """Load k6 metrics data"""
+        """Load k6 metrics data from JSONL format"""
         try:
             with open(self.summary_file, 'r') as f:
                 for line in f:
-                    try:
-                        data = json.loads(line.strip())
-                        if data.get('type') == 'Point':
-                            self.metrics_data.append(data)
-                    except json.JSONDecodeError:
-                        continue
+                    line = line.strip()
+                    if line:  # Skip empty lines
+                        try:
+                            data = json.loads(line)
+                            if data.get('type') == 'Point':
+                                self.metrics_data.append(data)
+                        except json.JSONDecodeError:
+                            continue
+            
+            if not self.metrics_data:
+                print(f"⚠️  No valid data points found in {self.summary_file}")
+                return False
+                
             print(f"✅ Loaded {len(self.metrics_data)} data points from k6 summary")
+            return True
+            
         except FileNotFoundError:
             print(f"❌ Summary file not found: {self.summary_file}")
             return False
-        return True
+        except Exception as e:
+            print(f"❌ Error loading data: {e}")
+            return False
     
     def analyze_performance_issues(self):
         """Analyze performance issues from k6 data"""
@@ -224,6 +236,9 @@ class EnhancedPerformanceAnalyzer:
         total_issues = len(issues)
         score = max(0, 100 - (len(high_issues) * 20) - (len(medium_issues) * 10) - (len(low_issues) * 5))
         
+        # Generate detailed metrics
+        detailed_metrics = self._generate_detailed_metrics()
+        
         report = {
             'summary': {
                 'total_issues': total_issues,
@@ -237,10 +252,108 @@ class EnhancedPerformanceAnalyzer:
                 'medium': medium_issues,
                 'low': low_issues
             },
-            'recommendations': self._generate_prioritized_recommendations(issues)
+            'recommendations': self._generate_prioritized_recommendations(issues),
+            'detailed_metrics': detailed_metrics
         }
         
         return report
+    
+    def _generate_detailed_metrics(self) -> Dict:
+        """Generate detailed metrics for the enhanced analysis"""
+        metrics_by_name = defaultdict(list)
+        for data in self.metrics_data:
+            metric_name = data.get('metric', 'unknown')
+            metrics_by_name[metric_name].append(data)
+        
+        detailed_metrics = {}
+        
+        # HTTP Request Duration metrics
+        if 'http_req_duration' in metrics_by_name:
+            durations = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['http_req_duration']]
+            if durations:
+                detailed_metrics['http_duration'] = {
+                    'avg': statistics.mean(durations),
+                    'min': min(durations),
+                    'max': max(durations),
+                    'p50': sorted(durations)[int(len(durations) * 0.50)],
+                    'p75': sorted(durations)[int(len(durations) * 0.75)],
+                    'p90': sorted(durations)[int(len(durations) * 0.90)],
+                    'p95': sorted(durations)[int(len(durations) * 0.95)],
+                    'p99': sorted(durations)[int(len(durations) * 0.99)]
+                }
+        
+        # Connection breakdown metrics
+        connection_metrics = ['http_req_blocked', 'http_req_connecting', 'http_req_tls_handshaking', 
+                            'http_req_sending', 'http_req_waiting', 'http_req_receiving']
+        
+        connection_breakdown = {}
+        for metric in connection_metrics:
+            if metric in metrics_by_name:
+                values = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name[metric]]
+                if values:
+                    connection_breakdown[metric] = {
+                        'avg': statistics.mean(values),
+                        'min': min(values),
+                        'max': max(values),
+                        'p95': sorted(values)[int(len(values) * 0.95)]
+                    }
+        
+        if connection_breakdown:
+            detailed_metrics['connection_breakdown'] = connection_breakdown
+        
+        # Data transfer metrics
+        if 'data_received' in metrics_by_name and 'data_sent' in metrics_by_name:
+            received_data = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['data_received']]
+            sent_data = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['data_sent']]
+            
+            if received_data and sent_data:
+                detailed_metrics['data_transfer'] = {
+                    'data_received_mb': sum(received_data) / (1024 * 1024),
+                    'data_sent_mb': sum(sent_data) / (1024 * 1024),
+                    'avg_received_kb': statistics.mean(received_data) / 1024,
+                    'avg_sent_kb': statistics.mean(sent_data) / 1024
+                }
+        
+        # Status code distribution
+        if 'http_req_duration' in metrics_by_name:
+            status_codes = defaultdict(int)
+            for data in metrics_by_name['http_req_duration']:
+                tags = data.get('data', {}).get('tags', {})
+                status = tags.get('status', 'unknown')
+                status_codes[status] += 1
+            
+            if status_codes:
+                detailed_metrics['status_code_distribution'] = dict(status_codes)
+        
+        # Virtual user metrics
+        if 'vus' in metrics_by_name:
+            vus_data = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['vus']]
+            if vus_data:
+                detailed_metrics['virtual_users'] = {
+                    'avg_vus': statistics.mean(vus_data),
+                    'max_vus': max(vus_data),
+                    'min_vus': min(vus_data)
+                }
+        
+        # Iteration metrics
+        if 'iterations' in metrics_by_name:
+            iteration_data = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['iterations']]
+            if iteration_data:
+                detailed_metrics['iterations'] = {
+                    'total_iterations': sum(iteration_data),
+                    'avg_iterations_per_vu': statistics.mean(iteration_data) if iteration_data else 0
+                }
+        
+        if 'iteration_duration' in metrics_by_name:
+            duration_data = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['iteration_duration']]
+            if duration_data:
+                detailed_metrics['iteration_timing'] = {
+                    'avg_iteration_duration': statistics.mean(duration_data),
+                    'min_iteration_duration': min(duration_data),
+                    'max_iteration_duration': max(duration_data)
+                }
+        
+        return detailed_metrics
     
     def _generate_prioritized_recommendations(self, issues: List[Dict]) -> List[Dict]:
         """Generate prioritized recommendations based on issues"""
@@ -333,8 +446,19 @@ class EnhancedPerformanceAnalyzer:
 
 def main():
     """Main function to run enhanced performance analysis"""
-    summary_file = "output/summary.json"
-    test_report_file = "output/test_report.json"
+    import sys
+    
+    # Accept command line argument for summary file
+    if len(sys.argv) > 1:
+        summary_file = sys.argv[1]
+    else:
+        summary_file = "output/summary.json"
+    
+    # Determine test report file based on summary file
+    if "browser_summary.json" in summary_file:
+        test_report_file = summary_file.replace("browser_summary.json", "test_report.json")
+    else:
+        test_report_file = summary_file.replace("summary.json", "test_report.json")
     
     if not os.path.exists(summary_file):
         print(f"❌ Summary file not found: {summary_file}")
@@ -347,10 +471,15 @@ def main():
     if report:
         analyzer.print_report(report)
         
-        # Save detailed report
-        with open("output/enhanced_analysis_report.json", 'w') as f:
+        # Save detailed report in the same directory as the summary file
+        output_dir = os.path.dirname(summary_file)
+        if not output_dir:
+            output_dir = "output"
+        
+        report_path = os.path.join(output_dir, "enhanced_analysis_report.json")
+        with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
-        print(f"\n💾 Detailed report saved to: output/enhanced_analysis_report.json")
+        print(f"\n💾 Detailed report saved to: {report_path}")
     else:
         print("❌ Failed to generate analysis report")
 

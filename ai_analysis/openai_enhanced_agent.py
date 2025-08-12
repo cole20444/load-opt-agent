@@ -8,6 +8,7 @@ import os
 import yaml
 import json
 import logging
+import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from pathlib import Path
@@ -32,11 +33,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class OpenAIEnhancedAnalysis:
-    """Enhanced analysis using OpenAI GPT-4"""
+    """Enhanced analysis using OpenAI GPT-4 with fallback models"""
+    
+    # Available models in order of preference (best to fallback)
+    AVAILABLE_MODELS = [
+        "gpt-4o-mini",      # Best performance, lower cost ← DEFAULT
+        "gpt-4o",           # Best performance, highest cost
+        "gpt-4-turbo",      # Good performance, high cost
+        "gpt-4-turbo-preview", # Latest GPT-4 variant
+        "gpt-3.5-turbo",    # Good performance, lower cost
+        "gpt-3.5-turbo-16k" # Good performance, higher context
+    ]
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.client = None
+        self.current_model_index = 0  # Start with the first model
         
         if self.api_key and OPENAI_AVAILABLE:
             try:
@@ -48,26 +60,79 @@ class OpenAIEnhancedAnalysis:
         else:
             logger.warning("OpenAI not available - using rule-based analysis only")
     
+    def _get_current_model(self) -> str:
+        """Get the current model to use"""
+        if self.current_model_index < len(self.AVAILABLE_MODELS):
+            return self.AVAILABLE_MODELS[self.current_model_index]
+        else:
+            # If we've tried all models, go back to the first one
+            self.current_model_index = 0
+            return self.AVAILABLE_MODELS[0]
+    
+    def _try_next_model(self) -> Optional[str]:
+        """Try the next available model"""
+        self.current_model_index += 1
+        if self.current_model_index < len(self.AVAILABLE_MODELS):
+            next_model = self.AVAILABLE_MODELS[self.current_model_index]
+            logger.info(f"🔄 Switching to fallback model: {next_model}")
+            return next_model
+        else:
+            logger.error("❌ All available models have been tried")
+            return None
+    
+    def _handle_openai_error(self, error: Exception) -> bool:
+        """Handle OpenAI API errors and determine if we should retry with a different model"""
+        error_str = str(error).lower()
+        
+        # Rate limit errors - try next model
+        if "rate limit" in error_str or "tpm" in error_str or "rpm" in error_str:
+            logger.warning(f"⚠️ Rate limit hit on {self._get_current_model()}: {error}")
+            return self._try_next_model() is not None
+        
+        # Quota exceeded - this affects all models, don't retry
+        elif "quota" in error_str or "billing" in error_str or "insufficient_quota" in error_str:
+            logger.error(f"❌ Quota exceeded on {self._get_current_model()}: {error}")
+            logger.error("💡 Solution: Add payment method at https://platform.openai.com/account/billing")
+            return False
+        
+        # Model not found or access denied - try next model
+        elif "does not exist" in error_str or "not have access" in error_str:
+            logger.warning(f"⚠️ Model access issue on {self._get_current_model()}: {error}")
+            return self._try_next_model() is not None
+        
+        # Other errors - don't retry
+        else:
+            logger.error(f"❌ OpenAI API error: {error}")
+            return False
+    
     def generate_ai_insights(self, 
                            performance_data: Dict[str, Any],
                            site_config: Dict[str, Any],
                            technology_template: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Generate AI-powered insights using GPT-4"""
+        """Generate AI-powered insights using OpenAI with fallback models"""
         
         if not self.client:
             return {"ai_insights": "OpenAI not available", "ai_recommendations": []}
         
-        try:
-            # Build comprehensive prompt
-            prompt = self._build_ai_prompt(performance_data, site_config, technology_template)
+        # Build comprehensive prompt
+        prompt = self._build_ai_prompt(performance_data, site_config, technology_template)
+        
+        # Try each model until one works
+        max_retries = len(self.AVAILABLE_MODELS)
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            current_model = self._get_current_model()
+            logger.info(f"🤖 Attempting AI analysis with model: {current_model}")
             
-            # Generate AI response
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are an expert web performance optimization consultant with deep knowledge of modern web technologies, cloud platforms, and performance best practices. 
+            try:
+                # Generate AI response
+                response = self.client.chat.completions.create(
+                    model=current_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": """You are an expert web performance optimization consultant with deep knowledge of modern web technologies, cloud platforms, and performance best practices. 
 
 Your role is to analyze performance test results and provide:
 1. Detailed insights about what the metrics mean
@@ -76,36 +141,98 @@ Your role is to analyze performance test results and provide:
 4. Prioritized action items with impact and effort estimates
 
 Be specific, technical, and actionable. Focus on practical improvements that can be implemented."""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.3,  # Lower temperature for more consistent, technical responses
-                max_tokens=1500
-            )
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.3,  # Lower temperature for more consistent, technical responses
+                    max_tokens=1500
+                )
+                
+                ai_response = response.choices[0].message.content
+                logger.info(f"✅ AI analysis completed successfully with {current_model}")
+                
+                # Parse AI response into structured format
+                structured_insights = self._parse_ai_response(ai_response)
+                
+                return {
+                    "ai_insights": ai_response,
+                    "ai_recommendations": structured_insights.get("recommendations", []),
+                    "ai_analysis": structured_insights.get("analysis", {}),
+                    "ai_priorities": structured_insights.get("priorities", []),
+                    "model_used": current_model
+                }
+                
+            except Exception as e:
+                retry_count += 1
+                logger.warning(f"⚠️ Attempt {retry_count} failed with {current_model}: {e}")
+                
+                # Check if we should try the next model
+                if not self._handle_openai_error(e):
+                    logger.error("❌ All retry attempts failed")
+                    break
+                
+                # Small delay before retrying
+                time.sleep(1)
+        
+        # If all models failed, return fallback response
+        logger.error("❌ All OpenAI models failed - using fallback analysis")
+        return {
+            "ai_insights": "OpenAI analysis unavailable due to API issues. Using rule-based analysis.",
+            "ai_recommendations": self._generate_fallback_recommendations(performance_data),
+            "ai_analysis": {},
+            "ai_priorities": [],
+            "model_used": "fallback"
+        }
+    
+    def _generate_fallback_recommendations(self, performance_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate basic recommendations when AI is unavailable"""
+        recommendations = []
+        
+        # Basic performance recommendations based on metrics
+        if 'test_summary' in performance_data:
+            summary = performance_data['test_summary']
             
-            ai_response = response.choices[0].message.content
+            avg_response_time = summary.get('average_response_time', 0)
+            error_rate = summary.get('error_rate', 0)
             
-            # Parse AI response into structured format
-            structured_insights = self._parse_ai_response(ai_response)
+            if avg_response_time > 1000:
+                recommendations.append({
+                    "title": "Optimize Server Response Time",
+                    "priority": "high",
+                    "impact": "High",
+                    "effort": "Medium",
+                    "description": f"Average response time of {avg_response_time:.0f}ms is above recommended threshold. Consider server-side optimizations.",
+                    "implementation": [
+                        "Review database queries and add indexes",
+                        "Implement caching strategies",
+                        "Optimize server-side code",
+                        "Consider CDN for static assets"
+                    ],
+                    "expected_improvement": "Reduce response time by 30-50%",
+                    "data_support": f"Current average response time: {avg_response_time:.0f}ms"
+                })
             
-            return {
-                "ai_insights": ai_response,
-                "ai_recommendations": structured_insights.get("recommendations", []),
-                "ai_analysis": structured_insights.get("analysis", {}),
-                "ai_priorities": structured_insights.get("priorities", [])
-            }
-            
-        except Exception as e:
-            logger.error(f"Error generating AI insights: {e}")
-            return {
-                "ai_insights": f"AI analysis failed: {str(e)}",
-                "ai_recommendations": [],
-                "ai_analysis": {},
-                "ai_priorities": []
-            }
+            if error_rate > 5:
+                recommendations.append({
+                    "title": "Reduce Error Rate",
+                    "priority": "high",
+                    "impact": "High",
+                    "effort": "Medium",
+                    "description": f"Error rate of {error_rate:.2f}% is above acceptable threshold. Investigate and fix errors.",
+                    "implementation": [
+                        "Review server logs for error patterns",
+                        "Implement proper error handling",
+                        "Add monitoring and alerting",
+                        "Test error scenarios"
+                    ],
+                    "expected_improvement": "Reduce error rate to below 1%",
+                    "data_support": f"Current error rate: {error_rate:.2f}%"
+                })
+        
+        return recommendations
     
     def _build_ai_prompt(self, 
                         performance_data: Dict[str, Any],
@@ -220,110 +347,83 @@ Be specific, technical, and actionable. Focus on practical improvements that can
                     prompt += f"- {issue.get('issue', 'Unknown')}\n"
                     prompt += f"  Recommendation: {issue.get('recommendation', 'None')}\n"
 
-        # Include load distribution analysis
-        if 'load_distribution' in performance_data:
-            load = performance_data['load_distribution']
+        # Include browser analysis if available
+        if 'browser_analysis' in performance_data:
+            browser = performance_data['browser_analysis']
             prompt += f"""
-## Load Distribution Analysis
-- **Average VUs**: {load.get('average_vus', 'Unknown')}
-- **Max VUs**: {load.get('max_vus', 'Unknown')}
-- **Load Distribution**: {load.get('distribution_quality', 'Unknown')}
-"""
+## Browser Performance Analysis (Core Web Vitals)
+- **Overall Score**: {browser.get('overall_score', 'Unknown')}/100
+- **Overall Grade**: {browser.get('overall_grade', 'Unknown')}
 
-        # Include error pattern analysis
-        if 'error_analysis' in performance_data:
-            errors = performance_data['error_analysis']
-            prompt += f"""
-## Error Pattern Analysis
-- **Error Rate**: {errors.get('error_rate', 'Unknown')}%
-- **Error Types**: {', '.join(errors.get('error_types', []))}
-- **Failure Patterns**: {errors.get('failure_patterns', 'None detected')}
-"""
-
-        prompt += f"""
-## Technology Context
-"""
-        
-        if technology_template:
-            prompt += f"""
-- **Template**: {technology_template.get('name', 'Unknown')}
-- **Template Description**: {technology_template.get('description', 'No description')}
-- **Relevant Patterns**: {len(technology_template.get('performance_patterns', {}))} categories
-
-## Technology-Specific Optimization Patterns
+### Core Web Vitals:
 """
             
-            # Include detailed optimization patterns from the template
-            performance_patterns = technology_template.get('performance_patterns', {})
-            for category, patterns in performance_patterns.items():
-                prompt += f"\n### {category.title()} Optimizations:\n"
-                for pattern in patterns:
-                    prompt += f"- **{pattern.get('name', 'Unknown')}**: {pattern.get('description', 'No description')}\n"
-                    recommendations = pattern.get('recommendations', [])
-                    if recommendations:
-                        prompt += f"  - Key recommendations: {', '.join(recommendations[:3])}\n"
-                        if len(recommendations) > 3:
-                            prompt += f"  - Additional: {len(recommendations) - 3} more recommendations available\n"
-        
-        prompt += f"""
-## Comprehensive Analysis Request
+            core_vitals = browser.get('core_web_vitals', {})
+            for metric, data in core_vitals.items():
+                prompt += f"- **{data.get('name', metric)}**: {data.get('average', 'Unknown')}ms (Grade: {data.get('grade', 'Unknown')})\n"
+            
+            # Navigation timing
+            navigation = browser.get('navigation_timing', {})
+            if navigation:
+                prompt += "\n### Navigation Timing:\n"
+                for metric, data in navigation.items():
+                    prompt += f"- **{data.get('name', metric)}**: {data.get('average', 'Unknown')}ms (Grade: {data.get('grade', 'Unknown')})\n"
+            
+            # Resource loading
+            resources = browser.get('resource_loading', {})
+            if resources:
+                prompt += f"\n### Resource Loading:\n"
+                prompt += f"- **Total Size**: {resources.get('resource_sizes', {}).get('total', 0)/1024/1024:.1f}MB\n"
+                prompt += f"- **Average Size**: {resources.get('resource_sizes', {}).get('average', 0)/1024:.1f}KB\n"
+                
+                resource_counts = resources.get('resource_counts', {})
+                if resource_counts:
+                    prompt += "- **Resource Counts**:\n"
+                    for resource_type, count in resource_counts.items():
+                        prompt += f"  - {resource_type}: {count}\n"
+            
+            # User interactions
+            interactions = browser.get('user_interactions', {})
+            if interactions:
+                prompt += "\n### User Interactions:\n"
+                if 'script_execution' in interactions:
+                    script_data = interactions['script_execution']
+                    prompt += f"- **Script Execution**: {script_data.get('average', 'Unknown')}ms average\n"
+                if 'layout_shifts' in interactions:
+                    prompt += f"- **Layout Shifts**: {interactions['layout_shifts']} detected\n"
+            
+            # Browser performance insights
+            insights = browser.get('performance_insights', [])
+            if insights:
+                prompt += "\n### Browser Performance Issues:\n"
+                for insight in insights[:5]:  # Limit to top 5
+                    prompt += f"- **{insight.get('severity', 'Unknown').upper()}**: {insight.get('issue', 'Unknown issue')}\n"
 
-You now have access to ALL available performance data including:
-1. **Basic k6 metrics** (response time, error rate, throughput)
-2. **Detailed HTTP timing breakdown** (DNS, TCP, TLS, server processing, data transfer)
-3. **Page resource analysis** (images, scripts, CSS, fonts, APIs with specific issues)
-4. **Enhanced performance analysis** (detailed issue categorization)
-5. **Load distribution patterns** (VU scaling and distribution)
-6. **Error pattern analysis** (failure types and patterns)
-7. **Technology-specific optimization patterns** (Svelte, Strapi, Azure specific)
+        # Include technology template if available
+        if technology_template:
+            prompt += f"""
+## Technology-Specific Context
+- **Technology**: {technology_template.get('name', 'Unknown')}
+- **Description**: {technology_template.get('description', 'No description')}
+- **Performance Patterns**: {', '.join(technology_template.get('performance_patterns', []))}
+- **Optimization Strategies**: {', '.join(technology_template.get('optimization_strategies', []))}
+"""
+
+        prompt += f"""
+## Analysis Request
 
 Please provide a comprehensive performance analysis including:
 
-1. **Performance Assessment**: What do ALL these metrics tell us about the site's performance?
-2. **Root Cause Analysis**: Based on the detailed timing breakdown and resource analysis, what are the specific bottlenecks?
-3. **Technology-Specific Recommendations**: 
-   - Build upon the optimization patterns provided above
-   - Prioritize recommendations that align with the specific technology stack
-   - Consider ALL the performance data when selecting which patterns to focus on
-   - Address specific resource issues identified (large images, missing compression, etc.)
-4. **Priority Actions**: List 5-7 high-impact, actionable recommendations in order of priority
-5. **Implementation Guidance**: For each recommendation, provide specific implementation steps
-6. **Expected Impact**: Estimate the performance improvement for each recommendation
+1. **Overall Performance Assessment**: Grade the site's performance (A-F) with detailed reasoning
+2. **Key Performance Issues**: Identify the most critical performance problems
+3. **Technology-Specific Recommendations**: Provide targeted optimization suggestions based on the technology stack
+4. **Priority Actions**: List the top 5-10 actionable improvements in order of impact
+5. **Performance Insights**: Explain what the metrics mean and their business impact
+6. **Front-end vs Back-end Analysis**: Separate server-side and client-side optimization opportunities
+7. **Resource Optimization**: Specific recommendations for images, scripts, CSS, and other resources
+8. **Core Web Vitals Optimization**: If browser data is available, provide specific CWV improvements
 
-**Important**: Use ALL the data provided above. The detailed HTTP timing, resource analysis, and technology patterns should guide your analysis. Be specific about which metrics indicate which issues.
-
-Format your response as JSON with the following structure:
-{{
-    "analysis": {{
-        "performance_assessment": "Overall assessment based on ALL metrics",
-        "root_causes": ["Specific bottlenecks identified from timing and resource analysis"],
-        "strengths": ["What's working well based on the data"],
-        "weaknesses": ["What needs improvement based on specific metrics"],
-        "key_insights": ["Important findings from the detailed analysis"]
-    }},
-    "recommendations": [
-        {{
-            "title": "Recommendation title",
-            "description": "Detailed description",
-            "priority": "High/Medium/Low",
-            "impact": "High/Medium/Low",
-            "effort": "High/Medium/Low",
-            "implementation": ["Step 1", "Step 2", "Step 3"],
-            "technology_focus": "Frontend/Backend/Infrastructure",
-            "expected_improvement": "Estimated performance gain",
-            "data_support": "Which specific metrics support this recommendation"
-        }}
-    ],
-    "priorities": ["Priority 1", "Priority 2", "Priority 3"],
-    "summary": {{
-        "overall_score": "Current performance score",
-        "target_score": "Expected score after optimizations",
-        "biggest_impact": "Which optimization will have the biggest impact",
-        "quick_wins": ["Low effort, high impact improvements"]
-    }}
-}}
-
-Be specific, technical, and actionable. Reference specific metrics and data points in your analysis. Focus on practical improvements that can be implemented based on the detailed data provided.
+Focus on practical, implementable recommendations that will have the greatest impact on user experience and performance.
 """
         
         return prompt
@@ -393,32 +493,53 @@ class EnhancedAIAnalysisAgent:
                 'duration': config.get('duration', 'Unknown'),
                 'virtual_users': config.get('vus', 'Unknown'),
                 'target_url': config.get('target', 'Unknown'),
-                'total_requests': test_results.get('http_reqs', {}).get('count', 'Unknown')
+                'total_requests': test_results.get('test_summary', {}).get('total_requests', 'Unknown')
             },
             'metrics_analysis': {
                 'response_time': {
-                    'value': test_results.get('http_req_duration', {}).get('avg', 'Unknown'),
-                    'grade': self._grade_response_time(test_results.get('http_req_duration', {}).get('avg', 0))
+                    'value': test_results.get('performance_metrics', {}).get('http_req_duration', {}).get('avg', 'Unknown'),
+                    'grade': self._grade_response_time(test_results.get('performance_metrics', {}).get('http_req_duration', {}).get('avg', 0))
                 },
                 'error_rate': {
-                    'value': test_results.get('http_req_failed', {}).get('rate', 0) * 100,
-                    'grade': self._grade_error_rate(test_results.get('http_req_failed', {}).get('rate', 0))
+                    'value': test_results.get('performance_metrics', {}).get('http_req_failed', {}).get('rate', 0) * 100,
+                    'grade': self._grade_error_rate(test_results.get('performance_metrics', {}).get('http_req_failed', {}).get('rate', 0))
                 },
                 'throughput': {
-                    'value': test_results.get('http_reqs', {}).get('rate', 'Unknown'),
-                    'grade': self._grade_throughput(test_results.get('http_reqs', {}).get('rate', 0))
+                    'value': test_results.get('performance_metrics', {}).get('http_reqs', {}).get('rate', 'Unknown'),
+                    'grade': self._grade_throughput(test_results.get('performance_metrics', {}).get('http_reqs', {}).get('rate', 0))
                 }
             }
         }
         
-        # Collect enhanced k6 metrics from summary.json if available
-        summary_path = test_results_path.replace('test_report.json', 'summary.json')
-        if os.path.exists(summary_path):
-            try:
-                enhanced_metrics = self._collect_enhanced_k6_metrics(summary_path)
-                performance_data.update(enhanced_metrics)
-            except Exception as e:
-                logger.warning(f"Could not collect enhanced k6 metrics: {e}")
+        # Collect enhanced k6 metrics from protocol_summary.json if available
+        test_type = config.get('test_type', 'protocol')
+        if test_type in ['protocol', 'both']:
+            protocol_summary_path = test_results_path.replace('test_report.json', 'protocol_summary.json')
+            if os.path.exists(protocol_summary_path):
+                try:
+                    enhanced_metrics = self._collect_enhanced_k6_metrics(protocol_summary_path)
+                    performance_data.update(enhanced_metrics)
+                except Exception as e:
+                    logger.warning(f"Could not collect enhanced k6 metrics: {e}")
+        
+        # Collect browser analysis data if available
+        if test_type in ['browser', 'both']:
+            browser_analysis_path = test_results_path.replace('test_report.json', 'browser_analysis_report.json')
+            if os.path.exists(browser_analysis_path):
+                try:
+                    with open(browser_analysis_path, 'r') as f:
+                        browser_analysis = json.load(f)
+                        performance_data['browser_analysis'] = {
+                            'overall_score': browser_analysis.get('overall_score', 'Unknown'),
+                            'overall_grade': browser_analysis.get('overall_grade', 'Unknown'),
+                            'core_web_vitals': browser_analysis.get('core_web_vitals', {}),
+                            'navigation_timing': browser_analysis.get('navigation_timing', {}),
+                            'resource_loading': browser_analysis.get('resource_loading', {}),
+                            'user_interactions': browser_analysis.get('user_interactions', {}),
+                            'performance_insights': browser_analysis.get('performance_insights', [])
+                        }
+                except Exception as e:
+                    logger.warning(f"Could not load browser analysis: {e}")
         
         # Collect page resource analysis if available
         resource_analysis_path = test_results_path.replace('test_report.json', 'page_resource_analysis.json')
@@ -470,7 +591,11 @@ class EnhancedAIAnalysisAgent:
                 'key_metrics': performance_data.get('metrics_analysis', {}),
                 'detailed_analysis': performance_data
             },
-            'ai_analysis': ai_insights,
+            'ai_analysis': {
+                'insights': ai_insights.get('ai_insights', ''),
+                'model_used': ai_insights.get('model_used', 'unknown'),
+                'analysis_timestamp': datetime.now().isoformat()
+            },
             'technology_template': technology_template,
             'recommendations': self._combine_recommendations(performance_data, ai_insights),
             'analysis_timestamp': datetime.now().isoformat()

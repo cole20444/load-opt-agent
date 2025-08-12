@@ -27,6 +27,9 @@ export const options = {
     { duration: '10s', target: 0 }, // Ramp down
   ],
   thresholds,
+  // Global timeout settings
+  http_debug: false, // Disable debug to reduce noise
+  no_usage_report: true, // Disable usage reporting
 };
 
 // Setup function - runs once before the test
@@ -39,16 +42,37 @@ export function setup() {
 export default function(data) {
   const targetUrl = __ENV.TARGET_URL || 'https://example.com';
   
-  // Main page request with detailed timing analysis
-  const mainResponse = http.get(targetUrl, {
-    headers: {
-      'User-Agent': 'k6-load-test-agent/1.0',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Accept-Language': 'en-US,en;q=0.5',
-      'Cache-Control': 'no-cache',
-    },
-  });
+  // Main page request with detailed timing analysis and retry logic
+  let mainResponse;
+  let retryCount = 0;
+  const maxRetries = 2;
+  
+  while (retryCount <= maxRetries) {
+    try {
+      mainResponse = http.get(targetUrl, {
+        headers: {
+          'User-Agent': 'k6-load-test-agent/1.0',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Cache-Control': 'no-cache',
+        },
+        timeout: '30s', // Increased timeout for main page
+      });
+      
+      // If we get here, the request was successful
+      break;
+    } catch (error) {
+      retryCount++;
+      if (retryCount <= maxRetries) {
+        console.log(`⚠️  Request failed, retrying (${retryCount}/${maxRetries}): ${error.message}`);
+        sleep(1); // Wait 1 second before retry
+      } else {
+        console.log(`❌ Request failed after ${maxRetries} retries: ${error.message}`);
+        return; // Exit the function if all retries failed
+      }
+    }
+  }
 
   // Record main page metrics
   check(mainResponse, {
@@ -119,7 +143,15 @@ function analyzePageResources(htmlContent, baseUrl) {
       let match;
       while ((match = pattern.exec(htmlContent)) !== null) {
         const url = match[1];
-        const fullUrl = url.startsWith('http') ? url : new URL(url, baseUrl).href;
+        let fullUrl = url;
+        if (!url.startsWith('http')) {
+          // Simple URL construction for k6 environment
+          if (url.startsWith('/')) {
+            fullUrl = baseUrl.replace(/\/$/, '') + url;
+          } else {
+            fullUrl = baseUrl.replace(/\/$/, '') + '/' + url;
+          }
+        }
         resources.add({ type, url: fullUrl });
       }
     });
@@ -134,7 +166,7 @@ function analyzePageResources(htmlContent, baseUrl) {
             'User-Agent': 'k6-load-test-agent/1.0',
             'Accept-Encoding': 'gzip, deflate, br',
           },
-          timeout: '10s',
+          timeout: '20s', // Increased timeout for resources
         });
 
         if (resourceResponse.status === 200) {

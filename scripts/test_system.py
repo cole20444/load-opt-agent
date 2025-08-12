@@ -14,7 +14,7 @@ def test_yaml_parsing():
     print("Testing YAML configuration parsing...")
     
     try:
-        with open("examples/test_config.yaml", 'r') as f:
+        with open("configs/test_config.yaml", 'r') as f:
             config = yaml.safe_load(f)
         
         required_fields = ['target', 'vus', 'duration']
@@ -61,7 +61,7 @@ def test_file_structure():
         "tests/load_test.js",
         "run_test.py",
         "requirements.txt",
-        "examples/test_config.yaml"
+        "configs/test_config.yaml"
     ]
     
     all_exist = True
