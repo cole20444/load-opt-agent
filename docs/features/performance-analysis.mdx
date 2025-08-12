@@ -1,192 +1,410 @@
 ---
-title: "Performance Analysis Summary"
-description: "Enhanced performance analysis with detailed k6 metrics and page resource analysis"
+title: Performance Analysis
+description: Comprehensive performance analysis with protocol testing, browser testing, and detailed metrics
 ---
 
-# 🚀 Enhanced Performance Analysis Summary
+# Performance Analysis
 
-## 📊 **What We've Enhanced**
+The Load Testing & Optimization Agent provides comprehensive performance analysis through multiple testing approaches and detailed metrics collection.
 
-### **1. k6 Metrics Collection (21 metrics, 38,928 data points)**
+## 🔌 Protocol-Level Testing
 
-**Previously Used (3 metrics):**
-- `http_req_duration` ✅
-- `http_req_failed` ✅  
-- `http_reqs` ✅
+### k6 Performance Testing
 
-**Now Available (18 additional metrics):**
-- **HTTP Timing Breakdown**: DNS, TCP, TLS, sending, waiting, receiving
-- **Data Transfer**: bytes sent/received, compression analysis
-- **Load Distribution**: VU patterns, iteration timing
-- **Custom Metrics**: Resource loading, error tracking, performance checks
+Our system uses k6 for protocol-level load testing, providing detailed HTTP performance metrics:
 
-### **2. Page Resource Analysis**
-
-**New Capabilities:**
-- **Resource Discovery**: Automatically finds images, scripts, CSS, fonts, APIs
-- **Performance Issues**: Identifies large files, slow loads, missing compression
-- **Technology-Specific**: WebP conversion, minification, caching analysis
-- **Detailed Reporting**: Size, load time, headers, specific recommendations
-
-## 🎯 **Your POP Website Analysis Results**
-
-### **Load Test Performance (k6)**
-```
-🎯 PERFORMANCE SCORE: 100/100
-📊 HTTP Timing Breakdown:
-  • DNS/Connection Pool: 6.4ms (excellent)
-  • TCP Connection: 1.4ms (excellent)  
-  • TLS Handshake: 3.6ms (excellent)
-  • Server Processing: 494.8ms (main bottleneck)
-  • Response Receiving: 58.5ms (good)
-  • Data Transfer: 75.8KB average response
+```javascript
+// Enhanced k6 test with comprehensive metrics
+export const options = {
+  stages: [
+    { duration: '2m', target: 50 },   // Ramp up
+    { duration: '5m', target: 200 },  // Sustained load
+    { duration: '2m', target: 0 },    // Ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<5000'],
+    http_req_failed: ['rate<0.1'],
+  },
+  discardResponseBodies: true,  // Memory optimization
+};
 ```
 
-### **Page Resource Analysis**
-```
-🎯 PERFORMANCE SCORE: 35/100
-📊 RESOURCES ANALYZED: 10
-📦 TOTAL SIZE: 0.5MB
-⏱️  TOTAL LOAD TIME: 5.2 seconds
-📈 ISSUES FOUND: 15
-   🔴 High Priority: 0
-   🟡 Medium Priority: 4
-   🟢 Low Priority: 11
-```
+### Key Protocol Metrics
 
-## 🔍 **Specific Issues Identified**
+<Accordion>
+  <AccordionItem title="HTTP Request Metrics">
+    - **Total Requests**: Number of HTTP requests made
+    - **Requests per Second**: Throughput measurement
+    - **Response Times**: Average, median, P50, P75, P90, P95, P99
+    - **Error Rate**: Percentage of failed requests
+    - **Success Rate**: Percentage of successful requests
+  </AccordionItem>
+  
+  <AccordionItem title="HTTP Timing Breakdown">
+    - **DNS Lookup**: Time to resolve domain names
+    - **TCP Connection**: Time to establish TCP connections
+    - **TLS Handshake**: Time for SSL/TLS negotiation
+    - **Request Sending**: Time to send request data
+    - **Server Processing**: Time server takes to process
+    - **Response Receiving**: Time to receive response data
+  </AccordionItem>
+  
+  <AccordionItem title="Data Transfer Metrics">
+    - **Data Sent**: Total bytes sent to server
+    - **Data Received**: Total bytes received from server
+    - **Compression Ratio**: Effectiveness of compression
+    - **Transfer Rates**: Bytes per second sent/received
+  </AccordionItem>
+  
+  <AccordionItem title="Load Distribution">
+    - **Virtual Users**: Number of concurrent users
+    - **Max Virtual Users**: Peak concurrent users
+    - **Iterations**: Number of test iterations
+    - **Duration**: Total test duration
+  </AccordionItem>
+</Accordion>
 
-### **1. Image Optimization Issues**
-- **Large PNG Image**: 178KB PNG that should be converted to WebP
-- **Slow Image Loading**: One image took 1.2 seconds to load
-- **Missing Compression**: 5 images lack gzip/brotli compression
-- **No Caching Headers**: 6 resources lack proper caching
+## 🌐 Browser-Level Testing
 
-### **2. Stylesheet Performance**
-- **Slow CSS Loading**: Two stylesheets took 411ms and 352ms
-- **Good News**: Svelte assets are properly compressed (brotli) and cached
+### xk6-browser Performance Testing
 
-### **3. Network Optimization**
-- **CDN Usage**: Good use of Azure Front Door CDN
-- **Cache Hits**: Some resources are being cached (TCP_HIT)
-- **Cache Misses**: Some resources need better caching strategy
+Real browser testing with Chromium provides front-end performance insights:
 
-## 💡 **Prioritized Recommendations**
-
-### **🔴 High Priority (Server Processing)**
-1. **Optimize Server Processing** (494.8ms average)
-   - Implement server-side caching (Redis, Memcached)
-   - Optimize Strapi database queries and add indexes
-   - Consider database connection pooling
-   - Implement API response caching
-
-### **🟡 Medium Priority (Resource Optimization)**
-1. **Convert Large PNG to WebP**
-   - 178KB PNG image can be reduced by ~60-80%
-   - Implement WebP conversion in Strapi media pipeline
-
-2. **Optimize Image Loading**
-   - Implement lazy loading for images
-   - Use responsive images with srcset
-   - Consider image optimization service
-
-3. **Enable Compression for Images**
-   - Configure gzip/brotli compression for image assets
-   - Optimize Azure CDN compression settings
-
-### **🟢 Low Priority (Caching & Headers)**
-1. **Implement Proper Caching**
-   - Set Cache-Control headers for static assets
-   - Use ETags for cache validation
-   - Configure Azure CDN caching rules
-
-2. **Optimize CSS Loading**
-   - Consider critical CSS inlining
-   - Optimize CSS delivery order
-
-## 🛠️ **Tools Created**
-
-### **1. Enhanced k6 Test Script (`tests/load_test.js`)**
-- **Resource Analysis**: Automatically analyzes page resources
-- **Custom Metrics**: Tracks resource loading times and sizes
-- **Performance Thresholds**: Monitors compression, caching, load times
-- **Detailed Timing**: DNS, TLS, server processing breakdown
-
-### **2. Enhanced Performance Analyzer (`enhanced_performance_analyzer.py`)**
-- **HTTP Timing Analysis**: Identifies network bottlenecks
-- **Data Transfer Analysis**: Monitors payload sizes and compression
-- **Load Distribution Analysis**: Analyzes VU patterns
-- **Error Pattern Analysis**: Tracks failure rates and types
-
-### **3. Page Resource Analyzer (`page_resource_analyzer.py`)**
-- **Resource Discovery**: Finds all page resources automatically
-- **Performance Issues**: Identifies specific optimization opportunities
-- **Technology-Specific**: WebP conversion, minification, caching
-- **Detailed Reporting**: Size, timing, headers, recommendations
-
-## 📈 **Performance Impact Potential**
-
-### **Server Processing Optimization** (Biggest Impact)
-- **Current**: 494.8ms average
-- **Target**: <200ms
-- **Potential Improvement**: 60% faster response times
-
-### **Image Optimization**
-- **Current**: 178KB PNG + slow loading
-- **Target**: 50KB WebP + lazy loading
-- **Potential Improvement**: 70% smaller, 50% faster loading
-
-### **Caching Implementation**
-- **Current**: No caching headers
-- **Target**: Proper cache configuration
-- **Potential Improvement**: 80% faster repeat visits
-
-## 🎯 **Next Steps**
-
-### **Immediate Actions (High Impact)**
-1. **Optimize Strapi Backend**
-   - Add database indexes for common queries
-   - Implement Redis caching for API responses
-   - Optimize media handling pipeline
-
-2. **Image Optimization**
-   - Convert large PNG to WebP
-   - Implement lazy loading
-   - Configure CDN compression
-
-### **Medium-term Improvements**
-1. **Caching Strategy**
-   - Implement proper cache headers
-   - Configure Azure CDN rules
-   - Add ETags for validation
-
-2. **Monitoring & Alerting**
-   - Set up performance monitoring
-   - Create alerts for performance degradation
-   - Track optimization improvements
-
-## 🔧 **How to Use These Tools**
-
-### **Run Enhanced Load Test**
-```bash
-python run_test.py configs/pop_website_test.yaml
+```javascript
+// Browser test with Core Web Vitals
+export default function() {
+  const page = browser.newPage();
+  
+  // Navigate and measure performance
+  page.goto('https://example.com');
+  
+  // Measure Core Web Vitals
+  const metrics = page.evaluate(() => {
+    return {
+      fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime,
+      lcp: performance.getEntriesByName('largest-contentful-paint')[0]?.startTime,
+      fid: performance.getEntriesByName('first-input-delay')[0]?.processingStart,
+      cls: performance.getEntriesByName('layout-shift')[0]?.value,
+    };
+  });
+}
 ```
 
-### **Analyze Page Resources**
-```bash
-python page_resource_analyzer.py https://pop-website-2024-dev.azurewebsites.net
+### Core Web Vitals
+
+<Accordion>
+  <AccordionItem title="First Contentful Paint (FCP)">
+    - **Definition**: Time until first content appears
+    - **Target**: < 1.8 seconds
+    - **Grade**: A (0-1.8s), B (1.8-3s), C (3-4s), D (>4s)
+    - **Impact**: User perception of page load speed
+  </AccordionItem>
+  
+  <AccordionItem title="Largest Contentful Paint (LCP)">
+    - **Definition**: Time until largest content element loads
+    - **Target**: < 2.5 seconds
+    - **Grade**: A (0-2.5s), B (2.5-4s), C (4-6s), D (>6s)
+    - **Impact**: Perceived loading performance
+  </AccordionItem>
+  
+  <AccordionItem title="First Input Delay (FID)">
+    - **Definition**: Time from first interaction to response
+    - **Target**: < 100 milliseconds
+    - **Grade**: A (0-100ms), B (100-300ms), C (300-500ms), D (>500ms)
+    - **Impact**: Interactivity and responsiveness
+  </AccordionItem>
+  
+  <AccordionItem title="Cumulative Layout Shift (CLS)">
+    - **Definition**: Visual stability measurement
+    - **Target**: < 0.1
+    - **Grade**: A (0-0.1), B (0.1-0.25), C (0.25-0.35), D (>0.35)
+    - **Impact**: Visual stability and user experience
+  </AccordionItem>
+  
+  <AccordionItem title="Time to Interactive (TTI)">
+    - **Definition**: Time until page is fully interactive
+    - **Target**: < 3.8 seconds
+    - **Grade**: A (0-3.8s), B (3.8-7.3s), C (7.3-11.2s), D (>11.2s)
+    - **Impact**: User ability to interact with page
+  </AccordionItem>
+  
+  <AccordionItem title="Total Blocking Time (TBT)">
+    - **Definition**: Total time main thread is blocked
+    - **Target**: < 200 milliseconds
+    - **Grade**: A (0-200ms), B (200-600ms), C (600-1000ms), D (>1000ms)
+    - **Impact**: Main thread responsiveness
+  </AccordionItem>
+</Accordion>
+
+### Resource Analysis
+
+<Accordion>
+  <AccordionItem title="Page Weight">
+    - **Total Page Size**: Combined size of all resources
+    - **Resource Count**: Number of resources loaded
+    - **Resource Types**: JS, CSS, images, fonts, APIs
+    - **Compression**: Effectiveness of gzip/brotli compression
+  </AccordionItem>
+  
+  <AccordionItem title="Resource Performance">
+    - **Load Times**: Individual resource load times
+    - **Blocking Resources**: Resources that delay rendering
+    - **Slow Resources**: Resources taking >500ms to load
+    - **Resource Optimization**: Opportunities for improvement
+  </AccordionItem>
+  
+  <AccordionItem title="Third-Party Impact">
+    - **Third-Party Scripts**: External scripts and their impact
+    - **Analytics**: Performance impact of tracking scripts
+    - **Ads**: Advertising script performance
+    - **Social Media**: Social media widget performance
+  </AccordionItem>
+</Accordion>
+
+## 📊 Enhanced Performance Analysis
+
+### Detailed Metrics Calculation
+
+Our enhanced performance analyzer provides comprehensive insights:
+
+```python
+# Enhanced performance analysis
+def analyze_performance(metrics):
+    return {
+        'http_timing': {
+            'dns_avg': calculate_dns_timing(metrics),
+            'tcp_avg': calculate_tcp_timing(metrics),
+            'tls_avg': calculate_tls_timing(metrics),
+            'server_avg': calculate_server_timing(metrics),
+        },
+        'data_transfer': {
+            'sent_avg': calculate_data_sent(metrics),
+            'received_avg': calculate_data_received(metrics),
+            'compression_ratio': calculate_compression(metrics),
+        },
+        'load_distribution': {
+            'avg_vus': calculate_average_vus(metrics),
+            'max_vus': calculate_max_vus(metrics),
+            'load_pattern': analyze_load_pattern(metrics),
+        },
+        'performance_score': calculate_performance_score(metrics),
+    }
 ```
 
-### **Generate Performance Report**
-```bash
-python enhanced_performance_analyzer.py
+### Performance Scoring
+
+<Accordion>
+  <AccordionItem title="Protocol Performance Score">
+    **Scoring Algorithm**:
+    - **Response Time**: 40% weight (P95 response time)
+    - **Error Rate**: 30% weight (HTTP error percentage)
+    - **Throughput**: 20% weight (requests per second)
+    - **Data Efficiency**: 10% weight (compression ratio)
+    
+    **Score Ranges**:
+    - **90-100**: Excellent performance
+    - **80-89**: Good performance
+    - **70-79**: Fair performance
+    - **60-69**: Poor performance
+    - **0-59**: Critical issues
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Performance Score">
+    **Scoring Algorithm**:
+    - **Core Web Vitals**: 50% weight (FCP, LCP, FID, CLS)
+    - **Page Weight**: 25% weight (total resource size)
+    - **Resource Efficiency**: 15% weight (optimization opportunities)
+    - **User Experience**: 10% weight (interactivity metrics)
+    
+    **Score Ranges**:
+    - **90-100**: Excellent front-end performance
+    - **80-89**: Good front-end performance
+    - **70-79**: Fair front-end performance
+    - **60-69**: Poor front-end performance
+    - **0-59**: Critical front-end issues
+  </AccordionItem>
+</Accordion>
+
+## 📈 HTML Report Generation
+
+### Interactive Visualizations
+
+Our HTML reports include interactive charts and visualizations:
+
+```html
+<!-- Response Time Distribution Chart -->
+<div id="response-time-chart"></div>
+<script>
+  Plotly.newPlot('response-time-chart', data, layout, {
+    responsive: true,
+    displayModeBar: false
+  });
+</script>
 ```
 
-## 📊 **Expected Results After Optimization**
+### Report Sections
 
-- **Server Response Time**: 494ms → 200ms (60% improvement)
-- **Image Loading**: 1.2s → 300ms (75% improvement)
-- **Total Page Load**: 5.2s → 2.1s (60% improvement)
-- **Performance Score**: 35/100 → 85/100
+<Accordion>
+  <AccordionItem title="Executive Summary">
+    - **Overall Performance Grade**: Combined protocol + browser score
+    - **Key Metrics**: Total requests, success rate, response times
+    - **Performance Score**: Numerical score out of 100
+    - **Navigation**: Jump links to detailed sections
+  </AccordionItem>
+  
+  <AccordionItem title="Protocol Test Results">
+    - **Key Metrics**: Requests, success rate, response times
+    - **Detailed Metrics**: P50, P75, P90, P95, P99 percentiles
+    - **Data Transfer**: Bytes sent/received, compression
+    - **Interactive Charts**: Response time distribution, connection breakdown
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Test Results">
+    - **Core Web Vitals**: FCP, LCP, FID, CLS, TTI, TBT
+    - **Resource Analysis**: Page weight, resource counts
+    - **Performance Issues**: Detected problems and severity
+    - **Visual Charts**: Core Web Vitals timeline, resource waterfall
+  </AccordionItem>
+  
+  <AccordionItem title="Enhanced Analysis">
+    - **Performance Issues**: Detailed problem analysis
+    - **Recommendations**: Prioritized optimization actions
+    - **Insights Panel**: Key findings and observations
+    - **Implementation Guidance**: Step-by-step improvement steps
+  </AccordionItem>
+</Accordion>
 
-This enhanced analysis gives you **specific, actionable insights** into exactly what's causing performance issues and how to fix them! 
+## ⚡ High-Load Optimizations
+
+### Ramp-up Strategy
+
+For high-load testing (200+ VUs), we implement intelligent ramp-up:
+
+```javascript
+// Automatic ramp-up for high-load tests
+export const options = {
+  stages: [
+    { duration: '2m', target: 50 },   // Gentle start
+    { duration: '3m', target: 100 },  // Gradual increase
+    { duration: '5m', target: 200 },  // Peak load
+    { duration: '15m', target: 200 }, // Sustained load
+    { duration: '2m', target: 100 },  // Gradual decrease
+    { duration: '2m', target: 50 },   // Gentle ramp-down
+    { duration: '1m', target: 0 },    // Complete shutdown
+  ],
+};
+```
+
+### Resource Management
+
+<Accordion>
+  <AccordionItem title="Docker Resource Limits">
+    ```bash
+    # Protocol test container
+    --memory=4g          # 4GB memory limit
+    --cpus=2             # 2 CPU cores
+    --ulimit nofile=65536:65536  # File descriptor limit
+    
+    # Browser test container
+    --memory=6g          # 6GB memory limit
+    --cpus=2             # 2 CPU cores
+    --shm-size=2g        # Shared memory for browser
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="k6 Optimizations">
+    ```javascript
+    // Memory optimizations
+    discardResponseBodies: true,  // Reduce memory usage
+    http_debug: false,            // Disable debug output
+    no_usage_report: true,        // Disable usage reporting
+    
+    // Performance optimizations
+    K6_DISABLE_COMPRESSION: true, // Disable compression
+    K6_DISABLE_HTTP2: true,       // Disable HTTP/2
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Timeout Handling">
+    ```javascript
+    // Increased timeouts for high load
+    http_req_duration: ['p(95)<10000'],  // 10s timeout
+    http_req_failed: ['rate<0.3'],       // 30% error tolerance
+    
+    // Request-level timeouts
+    timeout: '30s',  // Main page timeout
+    timeout: '20s',  // Resource timeout
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🔍 Performance Issue Detection
+
+### Automated Problem Identification
+
+Our system automatically detects and categorizes performance issues:
+
+<Accordion>
+  <AccordionItem title="High Priority Issues">
+    - **Slow Server Processing**: >5s average response time
+    - **High Error Rate**: >10% HTTP failures
+    - **Poor First Input Delay**: >300ms FID
+    - **Large Page Weight**: >5MB total size
+    - **Memory Issues**: Container memory limits exceeded
+  </AccordionItem>
+  
+  <AccordionItem title="Medium Priority Issues">
+    - **Suboptimal Response Times**: P95 >3s
+    - **Poor Core Web Vitals**: CLS >0.1, TTI >3.8s
+    - **Slow Resources**: Resources >500ms load time
+    - **Inefficient Compression**: <50% compression ratio
+    - **High Resource Count**: >100 resources per page
+  </AccordionItem>
+  
+  <AccordionItem title="Low Priority Issues">
+    - **Minor Optimizations**: Image compression, caching
+    - **Code Splitting**: Large JavaScript bundles
+    - **Third-Party Impact**: External script performance
+    - **Caching Headers**: Missing cache-control headers
+    - **Resource Optimization**: Uncompressed assets
+  </AccordionItem>
+</Accordion>
+
+## 📊 Metrics Reference
+
+### Protocol Metrics
+
+| Metric | Description | Unit | Target |
+|--------|-------------|------|--------|
+| `http_reqs` | Total HTTP requests | count | - |
+| `http_req_duration` | Response time | ms | <2000ms |
+| `http_req_failed` | Failed requests | rate | <0.1 |
+| `http_req_connecting` | Connection time | ms | <100ms |
+| `http_req_tls_handshaking` | TLS handshake time | ms | <200ms |
+| `http_req_waiting` | Server processing time | ms | <1000ms |
+| `http_req_receiving` | Response receiving time | ms | <500ms |
+| `data_sent` | Bytes sent | bytes | - |
+| `data_received` | Bytes received | bytes | - |
+| `vus` | Virtual users | count | - |
+| `vus_max` | Max virtual users | count | - |
+
+### Browser Metrics
+
+| Metric | Description | Unit | Target |
+|--------|-------------|------|--------|
+| `FCP` | First Contentful Paint | ms | <1800ms |
+| `LCP` | Largest Contentful Paint | ms | <2500ms |
+| `FID` | First Input Delay | ms | <100ms |
+| `CLS` | Cumulative Layout Shift | score | <0.1 |
+| `TTI` | Time to Interactive | ms | <3800ms |
+| `TBT` | Total Blocking Time | ms | <200ms |
+| `Page Weight` | Total resource size | MB | <2MB |
+| `Resource Count` | Number of resources | count | <50 |
+
+---
+
+<div className="cta">
+  <h3>Ready to analyze your application performance?</h3>
+  <p>Start with our quick start guide and get comprehensive performance insights.</p>
+  <a href="/quick-start" className="btn btn-primary">Get Started</a>
+</div> 

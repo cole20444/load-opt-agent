@@ -1,248 +1,442 @@
 ---
-title: Test Results Organization
-description: How test results are organized and navigated in the Load Testing & Optimization Agent
+title: Test Results
+description: Comprehensive test results with HTML reports, browser analysis, and detailed metrics
 ---
 
-# 📊 Test Results Organization
+# Test Results
 
-## 🎯 **Organized Results Structure**
+The Load Testing & Optimization Agent generates comprehensive test results with multiple output formats and detailed analysis.
 
-The Load Testing & Optimization Agent now organizes test results in a clean, hierarchical structure that makes it easy to find and compare results from multiple sites and test runs.
+## 📁 Output Structure
 
-### **📁 Directory Structure**
+### Directory Organization
+
+Test results are organized by site and timestamp for easy navigation:
 
 ```
 output/
-├── site1_domain_com/
-│   ├── 20250807_105124/          # Test run from Aug 7, 10:51:24
-│   │   ├── summary.json          # Raw k6 metrics
-│   │   ├── test_report.json      # Formatted test summary
-│   │   ├── page_resource_analysis.json # Page resource analysis
-│   │   ├── enhanced_analysis_report.json # Enhanced performance analysis
-│   │   └── ai_analysis_report.json # AI optimization recommendations
-│   ├── 20250807_105327/          # Test run from Aug 7, 10:53:27
-│   │   ├── summary.json
-│   │   ├── test_report.json
-│   │   ├── page_resource_analysis.json
-│   │   ├── enhanced_analysis_report.json
-│   │   └── ai_analysis_report.json
-│   └── latest -> 20250807_105327/ # Symlink to most recent test
-├── site2_domain_com/
-│   ├── 20250807_110000/
-│   │   └── ...
-│   └── latest -> 20250807_110000/
-└── site3_domain_com/
-    ├── 20250807_111500/
-    │   └── ...
-    └── latest -> 20250807_111500/
+└── site_name/
+    ├── 20250811_223723/                    # Timestamped test run
+    │   ├── protocol_summary.json          # Raw k6 metrics (JSONL)
+    │   ├── browser_summary.json           # Raw browser metrics
+    │   ├── enhanced_analysis_report.json  # Protocol analysis
+    │   ├── browser_summary_analysis.json  # Browser analysis
+    │   ├── load_test_report.html          # Interactive HTML report
+    │   └── manual_load_test_report.html   # Fallback report
+    └── latest -> 20250811_223723/         # Symlink to latest
 ```
 
-## 🔧 **How It Works**
+### File Types
 
-### **1. Site Name Extraction**
-- **URL**: `https://pop-website-2024-dev.azurewebsites.net`
-- **Site Name**: `pop-website-2024-dev_azurewebsites_net`
-- **Process**: Removes protocol, www, and replaces dots with underscores
+<Accordion>
+  <AccordionItem title="Raw Data Files">
+    - **`protocol_summary.json`**: Raw k6 metrics in JSONL format
+    - **`browser_summary.json`**: Raw xk6-browser metrics
+    - **Size**: 50MB-1GB depending on test duration and VUs
+  </AccordionItem>
+  
+  <AccordionItem title="Analysis Files">
+    - **`enhanced_analysis_report.json`**: Processed protocol metrics
+    - **`browser_summary_analysis.json`**: Processed browser metrics
+    - **Size**: 1-10MB depending on analysis depth
+  </AccordionItem>
+  
+  <AccordionItem title="HTML Reports">
+    - **`load_test_report.html`**: Comprehensive interactive report
+    - **`manual_load_test_report.html`**: Fallback report
+    - **Size**: 100-500KB with embedded visualizations
+  </AccordionItem>
+</Accordion>
 
-### **2. Timestamp Organization**
-- **Format**: `YYYYMMDD_HHMMSS`
-- **Example**: `20250807_105327` = August 7, 2025 at 10:53:27
-- **Benefits**: Chronological sorting, easy to find specific test runs
+## 📊 HTML Report Overview
 
-### **3. Latest Results Symlink**
-- **Path**: `output/site_name/latest`
-- **Target**: Points to most recent test run
-- **Usage**: Always access the latest results easily
+### Interactive HTML Report
 
-## 📋 **Available Files Per Test Run**
+Our primary HTML report provides a comprehensive view of test results:
 
-Each test run directory contains:
-
-### **Core Test Files**
-- **`summary.json`** - Raw k6 metrics (21 metrics, 38K+ data points)
-- **`test_report.json`** - Formatted test summary with metadata
-
-### **Analysis Files**
-- **`page_resource_analysis.json`** - Page resource analysis results
-- **`enhanced_analysis_report.json`** - Enhanced performance analysis
-- **`ai_analysis_report.json`** - AI-generated optimization recommendations
-
-## 🚀 **Using the Results Navigator**
-
-### **List All Test Results**
-```bash
-python scripts/list_test_results.py list
+```html
+<!-- Executive Summary Section -->
+<div class="executive-summary">
+  <div class="performance-grade">
+    <div class="label">Overall Performance Grade</div>
+    <div class="score">B+</div>
+  </div>
+  <div class="navigation-links">
+    <a href="#protocol-results">Protocol Test Results</a>
+    <a href="#browser-results">Browser Test Results</a>
+    <a href="#enhanced-analysis">Enhanced Analysis</a>
+  </div>
+</div>
 ```
 
-**Output**:
-```
-📊 Test Results Directory Structure
-==================================================
+### Report Sections
 
-🌐 Site: pop-website-2024-dev_azurewebsites_net
-------------------------------
-🔗 Latest: 20250807_105327
-  📅 2025-08-07 10:53:27
-    📄 Files: summary.json, test_report.json, ai_analysis_report.json
-    📊 Requests: 1963
-    ⏱️  Avg Response: 529ms
-    ❌ Error Rate: 0.30%
-    👥 VUs: 25
-    ⏰ Duration: 2m
+<Accordion>
+  <AccordionItem title="Executive Summary">
+    - **Performance Grade**: Overall score (A+ to F)
+    - **Key Metrics**: Total requests, success rate, response times
+    - **Navigation**: Jump links to detailed sections
+    - **Timestamp**: Test execution time
+  </AccordionItem>
+  
+  <AccordionItem title="Protocol Test Results">
+    - **Key Metrics**: Requests, success rate, response times
+    - **Detailed Metrics**: P50, P75, P90, P95, P99 percentiles
+    - **Data Transfer**: Bytes sent/received, compression
+    - **Interactive Charts**: Response time distribution, connection breakdown
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Test Results">
+    - **Core Web Vitals**: FCP, LCP, FID, CLS, TTI, TBT
+    - **Resource Analysis**: Page weight, resource counts
+    - **Performance Issues**: Detected problems and severity
+    - **Visual Charts**: Core Web Vitals timeline, resource waterfall
+  </AccordionItem>
+  
+  <AccordionItem title="Enhanced Performance Analysis">
+    - **Performance Issues**: Detailed problem analysis
+    - **Recommendations**: Prioritized optimization actions
+    - **Insights Panel**: Key findings and observations
+    - **Implementation Guidance**: Step-by-step improvement steps
+  </AccordionItem>
+  
+  <AccordionItem title="Enhanced Browser Performance Analysis">
+    - **Core Web Vitals**: Detailed breakdown of each metric
+    - **Resource Analysis**: Detailed resource loading insights
+    - **Performance Issues**: Browser-specific problems
+    - **Optimization Opportunities**: Front-end improvements
+  </AccordionItem>
+</Accordion>
 
-  📅 2025-08-07 10:51:24
-    📄 Files: summary.json, test_report.json
-    📊 Requests: 1947
-    ⏱️  Avg Response: 1573ms
-    ❌ Error Rate: 0.87%
-    👥 VUs: 25
-    ⏰ Duration: 2m
-```
+## 🔌 Protocol Test Results
 
-### **Show Latest Results**
-```bash
-# Latest results for all sites
-python scripts/list_test_results.py latest
+### Key Metrics Display
 
-# Latest results for specific site
-python scripts/list_test_results.py latest pop-website-2024-dev_azurewebsites_net
-```
+The HTML report displays comprehensive protocol metrics:
 
-**Output**:
-```
-🌐 Latest Results for: pop-website-2024-dev_azurewebsites_net
-========================================
-
-📅 Test Date: 2025-08-07T10:53:27
-🌐 Target: https://pop-website-2024-dev.azurewebsites.net
-👥 Virtual Users: 25
-⏰ Duration: 2m
-📝 Description: Frontend is built with Svelte and the Backend is built with Strapi...
-🏷️  Tags: svelte, strapi, azure, app-service, headless-cms, javascript, api-driven
-
-📊 Performance Summary:
-  📈 Total Requests: 1963
-  ✅ Successful: 1957
-  ❌ Failed: 6
-  ⏱️  Avg Response Time: 529ms
-  📊 Error Rate: 0.30%
-
-⏱️  Response Time Details:
-  📊 Average: 529ms
-  📉 Minimum: 403ms
-  📈 Maximum: 2380ms
-
-📄 Available Files:
-  📄 summary.json (9.1MB)
-  📄 test_report.json (1.2KB)
-  📄 ai_analysis_report.json (44KB)
+```json
+{
+  "total_requests": 7116,
+  "requests_per_second": 3.95,
+  "success_rate": 97.50,
+  "error_rate": 2.50,
+  "avg_response_time": 166.2,
+  "p95_response_time": 14978.1,
+  "p99_response_time": 30038.2,
+  "data_sent_mb": 2.2,
+  "data_received_mb": 682.5
+}
 ```
 
-## 🎯 **Benefits of Organized Results**
+### Detailed Performance Metrics
 
-### **1. Multiple Sites Support**
-- **Separate directories** for each site
-- **No conflicts** between different test targets
-- **Easy comparison** across sites
+<Accordion>
+  <AccordionItem title="Response Time Percentiles">
+    - **P50 (Median)**: 50th percentile response time
+    - **P75**: 75th percentile response time
+    - **P90**: 90th percentile response time
+    - **P95**: 95th percentile response time
+    - **P99**: 99th percentile response time
+  </AccordionItem>
+  
+  <AccordionItem title="HTTP Timing Breakdown">
+    - **DNS Lookup**: Average time to resolve domain names
+    - **TCP Connection**: Average time to establish connections
+    - **TLS Handshake**: Average SSL/TLS negotiation time
+    - **Request Sending**: Average time to send request data
+    - **Server Processing**: Average server processing time
+    - **Response Receiving**: Average time to receive response data
+  </AccordionItem>
+  
+  <AccordionItem title="Data Transfer Analysis">
+    - **Data Sent**: Total bytes sent to server
+    - **Data Received**: Total bytes received from server
+    - **Compression Ratio**: Effectiveness of compression
+    - **Transfer Efficiency**: Bytes per request
+  </AccordionItem>
+</Accordion>
 
-### **2. Historical Tracking**
-- **All test runs preserved** with timestamps
-- **Performance trends** over time
-- **Before/after optimization** comparisons
+### Interactive Visualizations
 
-### **3. Easy Navigation**
-- **Latest results** always accessible via symlink
-- **Chronological organization** for easy browsing
-- **Detailed summaries** for quick assessment
+<Accordion>
+  <AccordionItem title="Response Time Distribution">
+    ```javascript
+    // Plotly chart showing response time distribution
+    const data = [{
+      x: responseTimes,
+      type: 'histogram',
+      nbinsx: 50,
+      name: 'Response Times'
+    }];
+    
+    const layout = {
+      title: 'Response Time Distribution',
+      xaxis: { title: 'Response Time (ms)' },
+      yaxis: { title: 'Frequency' }
+    };
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Connection Breakdown">
+    ```javascript
+    // Stacked bar chart showing timing breakdown
+    const data = [
+      { name: 'DNS', value: dnsTime },
+      { name: 'TCP', value: tcpTime },
+      { name: 'TLS', value: tlsTime },
+      { name: 'Server', value: serverTime },
+      { name: 'Response', value: responseTime }
+    ];
+    ```
+  </AccordionItem>
+</Accordion>
 
-### **4. File Organization**
-- **All related files** in one directory per test
-- **Clear file naming** for easy identification
-- **Size information** for storage management
+## 🌐 Browser Test Results
 
-## 📊 **Example Workflow**
+### Core Web Vitals Display
 
-### **Running Multiple Tests**
-```bash
-# Test POP website
-python run_test.py configs/pop_website_test.yaml
+The HTML report shows detailed Core Web Vitals metrics:
 
-# Test WordPress site
-python run_test.py configs/wordpress_test.yaml
-
-# Test API endpoint
-python run_test.py configs/api_test.yaml
+```json
+{
+  "core_web_vitals": {
+    "fcp": { "avg": 470.6, "p75": 563.5, "p95": 967.0, "grade": "A" },
+    "lcp": { "avg": 705.9, "p75": 845.3, "p95": 1450.4, "grade": "A" },
+    "fid": { "avg": 588.3, "p75": 704.4, "p95": 1208.7, "grade": "C" },
+    "cls": { "avg": 0.1, "p75": 0.1, "p95": 0.2, "grade": "B" },
+    "tti": { "avg": 882.5, "p75": 1056.6, "p95": 1813.0, "grade": "A" },
+    "tbt": { "avg": 65.8, "p75": 70.4, "p95": 120.9, "grade": "A" }
+  },
+  "resource_analysis": {
+    "total_requests": 1298,
+    "total_page_weight_mb": 86.42,
+    "resource_types": {
+      "image": 886,
+      "css": 325
+    }
+  }
+}
 ```
 
-### **Reviewing Results**
-```bash
-# See all test results
-python scripts/list_test_results.py list
+### Resource Analysis
 
-# Check latest results for each site
-python scripts/list_test_results.py latest
+<Accordion>
+  <AccordionItem title="Page Weight Analysis">
+    - **Total Page Weight**: Combined size of all resources
+    - **Resource Count**: Number of resources loaded
+    - **Resource Types**: Breakdown by type (JS, CSS, images, etc.)
+    - **Average Resource Size**: Mean size per resource
+    - **Largest Resource**: Biggest single resource
+  </AccordionItem>
+  
+  <AccordionItem title="Performance Issues">
+    - **High Priority**: Poor FID, large page weight
+    - **Medium Priority**: Suboptimal CLS, slow resources
+    - **Low Priority**: Caching issues, optimization opportunities
+    - **Issue Count**: Total number of detected issues
+  </AccordionItem>
+  
+  <AccordionItem title="Performance Score">
+    - **Browser Score**: 0-100 based on Core Web Vitals
+    - **Grade**: A+ to F based on score
+    - **Recommendations**: Specific improvement actions
+    - **Expected Impact**: Potential performance gains
+  </AccordionItem>
+</Accordion>
 
-# Get detailed info for specific site
-python scripts/list_test_results.py latest pop-website-2024-dev_azurewebsites_net
+## 📈 Enhanced Analysis Results
+
+### Performance Issues
+
+The enhanced analysis identifies and categorizes performance problems:
+
+```json
+{
+  "issues": {
+    "high": [
+      {
+        "type": "timing",
+        "severity": "high",
+        "category": "Server Processing",
+        "issue": "Slow server processing (avg: 8496.3ms)",
+        "recommendation": "Optimize server processing, database queries, or caching"
+      }
+    ],
+    "medium": [],
+    "low": []
+  },
+  "summary": {
+    "total_issues": 1,
+    "high_priority": 1,
+    "medium_priority": 0,
+    "low_priority": 0,
+    "performance_score": 80
+  }
+}
 ```
 
-### **Accessing Specific Files**
-```bash
-# Latest test report for POP website
-cat output/pop-website-2024-dev_azurewebsites_net/latest/test_report.json
+### Recommendations
 
-# AI analysis from specific test run
-cat output/pop-website-2024-dev_azurewebsites_net/20250807_105327/ai_analysis_report.json
+<Accordion>
+  <AccordionItem title="High Priority Actions">
+    - **Server Optimization**: Database queries, caching, CDN
+    - **Infrastructure**: Scaling, load balancing, resource allocation
+    - **Critical Issues**: Error handling, timeout management
+    - **Performance Bottlenecks**: Identify and resolve major issues
+  </AccordionItem>
+  
+  <AccordionItem title="Medium Priority Actions">
+    - **Code Optimization**: Algorithm improvements, caching
+    - **Resource Optimization**: Image compression, minification
+    - **Configuration**: Server settings, database tuning
+    - **Monitoring**: Performance tracking, alerting
+  </AccordionItem>
+  
+  <AccordionItem title="Low Priority Actions">
+    - **Minor Optimizations**: Code cleanup, documentation
+    - **Best Practices**: Coding standards, architecture
+    - **Future Improvements**: Long-term optimization plans
+    - **Maintenance**: Regular performance reviews
+  </AccordionItem>
+</Accordion>
 
-# Raw metrics from specific test
-cat output/pop-website-2024-dev_azurewebsites_net/20250807_105327/summary.json
+## 🔧 Manual Report Generation
+
+### Fallback Report
+
+When the primary HTML generation fails, a manual report is created:
+
+```python
+# Manual report generation
+def generate_manual_report(output_dir):
+    enhanced_analysis = load_analysis_file('enhanced_analysis_report.json')
+    browser_analysis = load_analysis_file('browser_summary_analysis.json')
+    
+    # Generate simple HTML from analysis files
+    html = generate_html_from_analysis(enhanced_analysis, browser_analysis)
+    
+    # Save as manual_load_test_report.html
+    write_html_file(output_dir, 'manual_load_test_report.html', html)
 ```
 
-## 🔍 **Finding Results**
+### Manual Report Features
 
-### **By Site**
-- **Path**: `output/site_name/`
-- **Example**: `output/pop-website-2024-dev_azurewebsites_net/`
+<Accordion>
+  <AccordionItem title="Executive Summary">
+    - **Performance Grade**: Overall score display
+    - **Issue Count**: Total issues by priority
+    - **Simple Layout**: Clean, readable design
+    - **No Dependencies**: Self-contained HTML
+  </AccordionItem>
+  
+  <AccordionItem title="Analysis Sections">
+    - **Enhanced Performance Analysis**: Protocol issues and recommendations
+    - **Browser Performance Analysis**: Core Web Vitals and resource analysis
+    - **Issue Details**: Problem descriptions and solutions
+    - **Recommendations**: Actionable improvement steps
+  </AccordionItem>
+</Accordion>
 
-### **By Date**
-- **Format**: `YYYYMMDD_HHMMSS`
-- **Example**: `20250807_105327` = August 7, 2025 at 10:53:27
+## 📊 Data Formats
 
-### **Latest Results**
-- **Path**: `output/site_name/latest`
-- **Always points to most recent test run**
+### JSONL Format (Protocol Data)
 
-### **All Sites**
-- **Path**: `output/`
-- **Lists all tested sites**
+Protocol summary data uses JSONL format for efficient processing:
 
-## 📈 **Performance Tracking**
+```json
+{"type":"Metric","data":{"name":"vus","type":"gauge","contains":"default","thresholds":[],"submetrics":null},"metric":"vus"}
+{"metric":"vus","type":"Point","data":{"time":"2025-08-12T05:37:27.201614783Z","value":0,"tags":{}}}
+{"metric":"http_reqs","type":"Point","data":{"time":"2025-08-12T05:37:27.201614783Z","value":1,"tags":{}}}
+```
 
-### **Trend Analysis**
-- **Compare multiple test runs** for the same site
-- **Track performance improvements** over time
-- **Identify regression** in performance
+### JSON Format (Analysis Data)
 
-### **Cross-Site Comparison**
-- **Compare performance** across different sites
-- **Benchmark** against similar applications
-- **Identify patterns** in performance issues
+Analysis results use standard JSON format:
 
-### **Optimization Impact**
-- **Before/after** optimization comparisons
-- **Quantify improvements** from recommendations
-- **Track ROI** of performance optimizations
+```json
+{
+  "summary": {
+    "performance_score": 80,
+    "total_issues": 1,
+    "high_priority": 1
+  },
+  "issues": {
+    "high": [...],
+    "medium": [...],
+    "low": [...]
+  },
+  "recommendations": [...]
+}
+```
 
-## 🎉 **Summary**
+## 🚀 Performance Considerations
 
-The organized results structure provides:
+### Report Generation
 
-✅ **Clean organization** by site and timestamp  
-✅ **Easy navigation** with latest results symlinks  
-✅ **Historical tracking** of all test runs  
-✅ **Multiple site support** without conflicts  
-✅ **Comprehensive file organization** per test  
-✅ **Quick access** to detailed summaries  
-✅ **Professional structure** for team collaboration  
+<Accordion>
+  <AccordionItem title="HTML Report Generation">
+    - **Primary Report**: Comprehensive with all data and visualizations
+    - **Manual Report**: Fallback using analysis files only
+    - **Generation Time**: 10-30 seconds depending on data size
+    - **File Size**: 100-500KB with embedded charts
+  </AccordionItem>
+  
+  <AccordionItem title="Data Processing">
+    - **Protocol Data**: JSONL parsing for large datasets
+    - **Browser Data**: JSON parsing for browser metrics
+    - **Analysis Time**: 1-3 minutes depending on data volume
+    - **Memory Usage**: Optimized for large datasets
+  </AccordionItem>
+  
+  <AccordionItem title="Storage Requirements">
+    - **Raw Data**: 50MB-1GB per test
+    - **Analysis Files**: 1-10MB per test
+    - **HTML Reports**: 100-500KB per test
+    - **Total per Test**: 200-1200MB
+  </AccordionItem>
+</Accordion>
 
-This makes it easy to manage multiple sites, track performance over time, and find specific test results quickly and efficiently. 
+## 🔍 Troubleshooting Results
+
+### Common Issues
+
+<Accordion>
+  <AccordionItem title="Missing Data">
+    ```bash
+    # Check if files exist
+    ls -la output/site_name/latest/
+    
+    # Regenerate analysis if needed
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    python scripts/browser_metrics_analyzer.py output/site_name/latest/browser_summary.json
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="HTML Generation Failures">
+    ```bash
+    # Try manual report generation
+    python scripts/generate_manual_report.py output/site_name/latest/
+    
+    # Check for corrupted data
+    head -10 output/site_name/latest/protocol_summary.json
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Large File Sizes">
+    ```bash
+    # Check file sizes
+    du -h output/site_name/latest/
+    
+    # Consider reducing test duration or VUs
+    # for more manageable file sizes
+    ```
+  </AccordionItem>
+</Accordion>
+
+---
+
+<div className="cta">
+  <h3>Ready to analyze your test results?</h3>
+  <p>Run a test and explore the comprehensive HTML reports and analysis.</p>
+  <a href="/quick-start" className="btn btn-primary">Run Your First Test</a>
+</div> 

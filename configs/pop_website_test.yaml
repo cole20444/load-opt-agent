@@ -3,8 +3,8 @@
 # Technical analysis only (no AI insights)
 
 target: https://pop-website-2024-dev.azurewebsites.net
-vus: 20  # 20 virtual users for quick test
-duration: 2m  # Quick 2-minute test
+vus: 200  # 200 virtual users for comprehensive test
+duration: 30m  # 30-minute comprehensive test
 test_type: both  # Run both protocol and browser tests
 
 # Site description
@@ -32,16 +32,16 @@ analysis_settings:
 
 # Protocol test settings (k6)
 protocol_settings:
-  vus: 20  # 20 virtual users for quick test
-  duration: 2m
+  vus: 200  # 200 virtual users for comprehensive test
+  duration: 30m
   thresholds:
-    http_req_duration: ['p(95)<5000']  # Increased to 5s to account for timeouts
-    http_req_failed: ['rate<0.2']      # Increased error rate tolerance
+    http_req_duration: ['p(95)<10000']  # Increased to 10s for high load
+    http_req_failed: ['rate<0.3']       # Increased error rate tolerance for ramp-up
 
 # Browser test settings (xk6-browser)
 browser_settings:
-  vus: 5  # 5 virtual users for browser test
-  duration: 1m  # Quick 1-minute browser test
+  vus: 50  # 50 virtual users for browser test (reduced from 200 for browser stability)
+  duration: 10m  # 10-minute browser test
   viewport:
     width: 1920
     height: 1080

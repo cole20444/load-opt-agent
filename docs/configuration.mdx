@@ -1,11 +1,11 @@
 ---
 title: Configuration Reference
-description: Complete guide to YAML configuration options for load testing
+description: Complete guide to YAML configuration options for load testing with browser testing and high-load optimizations
 ---
 
 # Configuration Reference
 
-Learn how to configure your load tests using YAML configuration files.
+Learn how to configure your load tests using YAML configuration files with support for protocol testing, browser testing, and high-load optimizations.
 
 ## Basic Configuration
 
@@ -15,11 +15,28 @@ All load tests are configured using YAML files in the `configs/` directory. Here
 # Target URL to test (any web application)
 target: https://example.com/contact
 
+# Test type: protocol, browser, or both
+test_type: both
+
 # Number of virtual users (concurrent users)
 vus: 50
 
 # Test duration (supports: 30s, 1m, 5m, 1h, etc.)
 duration: 30s
+
+# Protocol-specific settings
+protocol_settings:
+  vus: 50
+  duration: 30s
+  thresholds:
+    http_req_duration: ["p(95)<5000"]
+    http_req_failed: ["rate<0.1"]
+
+# Browser-specific settings
+browser_settings:
+  vus: 5
+  duration: 1m
+  timeout: "30s"
 
 # Site description for AI analysis (optional)
 description: "Example website for load testing"
@@ -48,6 +65,18 @@ tags:
     ```
   </AccordionItem>
   
+  <AccordionItem title="test_type">
+    **Type**: `string`  
+    **Required**: No (defaults to "both")  
+    **Description**: Type of test to run
+    
+    ```yaml
+    test_type: protocol    # Protocol-level testing only
+    test_type: browser     # Browser-level testing only
+    test_type: both        # Both protocol and browser testing
+    ```
+  </AccordionItem>
+  
   <AccordionItem title="vus">
     **Type**: `integer`  
     **Required**: Yes  
@@ -57,7 +86,7 @@ tags:
     vus: 10    # Light load
     vus: 50    # Medium load
     vus: 100   # Heavy load
-    vus: 500   # Stress test
+    vus: 200   # High-load test
     ```
   </AccordionItem>
   
@@ -70,7 +99,116 @@ tags:
     duration: 30s    # 30 seconds
     duration: 1m     # 1 minute
     duration: 5m     # 5 minutes
-    duration: 1h     # 1 hour
+    duration: 30m    # 30 minutes
+    ```
+  </AccordionItem>
+</Accordion>
+
+### Protocol Testing Configuration
+
+<Accordion>
+  <AccordionItem title="protocol_settings">
+    **Type**: `object`  
+    **Required**: No  
+    **Description**: Protocol-specific test configuration
+    
+    ```yaml
+    protocol_settings:
+      vus: 50                    # Protocol virtual users
+      duration: 30s              # Protocol test duration
+      thresholds:
+        http_req_duration: ["p(95)<5000"]    # Response time threshold
+        http_req_failed: ["rate<0.1"]        # Error rate threshold
+      timeout: "30s"             # Request timeout
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="thresholds">
+    **Type**: `object`  
+    **Required**: No  
+    **Description**: Performance thresholds for protocol tests
+    
+    ```yaml
+    thresholds:
+      http_req_duration: ["p(95)<5000"]    # 95th percentile < 5s
+      http_req_failed: ["rate<0.1"]        # Error rate < 10%
+      http_req_duration: ["p(99)<10000"]   # 99th percentile < 10s
+    ```
+  </AccordionItem>
+</Accordion>
+
+### Browser Testing Configuration
+
+<Accordion>
+  <AccordionItem title="browser_settings">
+    **Type**: `object`  
+    **Required**: No  
+    **Description**: Browser-specific test configuration
+    
+    ```yaml
+    browser_settings:
+      vus: 5                     # Browser virtual users (lower than protocol)
+      duration: 1m               # Browser test duration
+      timeout: "30s"             # Page load timeout
+      headless: true             # Run in headless mode
+      viewport:
+        width: 1920
+        height: 1080
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="browser_timeout">
+    **Type**: `string`  
+    **Required**: No  
+    **Description**: Timeout for browser page loads
+    
+    ```yaml
+    browser_settings:
+      timeout: "30s"    # 30 seconds
+      timeout: "1m"     # 1 minute
+      timeout: "2m"     # 2 minutes
+    ```
+  </AccordionItem>
+</Accordion>
+
+### High-Load Testing Configuration
+
+<Accordion>
+  <AccordionItem title="High-Load Example">
+    **Description**: Configuration for high-load testing (200+ VUs)
+    
+    ```yaml
+    target: https://example.com
+    test_type: both
+    vus: 200
+    duration: 30m
+    
+    protocol_settings:
+      vus: 200
+      duration: 30m
+      thresholds:
+        http_req_duration: ["p(95)<10000"]  # Increased timeout
+        http_req_failed: ["rate<0.3"]       # Higher error tolerance
+    
+    browser_settings:
+      vus: 50                    # Lower VUs for browser tests
+      duration: 10m              # Shorter duration
+      timeout: "60s"             # Increased timeout
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Ramp-up Strategy">
+    **Description**: Automatic ramp-up strategy for high-load tests
+    
+    ```yaml
+    # The system automatically implements ramp-up:
+    # 0-2m:   Ramp up to 50 VUs
+    # 2-5m:   Ramp up to 100 VUs  
+    # 5-10m:  Ramp up to 200 VUs
+    # 10-25m: Stay at 200 VUs
+    # 25-27m: Ramp down to 100 VUs
+    # 27-29m: Ramp down to 50 VUs
+    # 29-30m: Ramp down to 0 VUs
     ```
   </AccordionItem>
 </Accordion>
@@ -98,255 +236,226 @@ tags:
       - "svelte"
       - "strapi"
       - "azure"
-      - "app-service"
-      - "headless-cms"
-      - "javascript"
-      - "api-driven"
+      - "react"
+      - "nodejs"
     ```
   </AccordionItem>
 </Accordion>
 
-## Example Configurations
+## Configuration Examples
 
-### Basic Website Test
+### Quick Protocol Test
 
 ```yaml
-# configs/basic-test.yaml
-target: https://example.com/contact
-vus: 25
+target: https://api.example.com/v1/users
+test_type: protocol
+vus: 20
 duration: 2m
-description: "Basic website contact form testing"
-tags:
-  - "static-site"
-  - "contact-form"
-  - "html"
+description: "Quick API load test"
+tags: ["api", "rest", "nodejs"]
 ```
 
-### WordPress Site
+### Browser-Only Test
 
 ```yaml
-# configs/wordpress-test.yaml
-target: https://wordpress.org/
-vus: 25
-duration: 2m
-description: "Official WordPress.org website - a popular content management system built with PHP"
-tags:
-  - "wordpress"
-  - "php"
-  - "cms"
-  - "content-management"
-  - "open-source"
+target: https://example.com
+test_type: browser
+browser_settings:
+  vus: 5
+  duration: 1m
+  timeout: "30s"
+description: "Front-end performance test"
+tags: ["react", "spa", "frontend"]
 ```
 
-### API Endpoint
+### Comprehensive Test
 
 ```yaml
-# configs/api-test.yaml
-target: https://jsonplaceholder.typicode.com/posts
+target: https://example.com
+test_type: both
 vus: 100
-duration: 1m
-description: "JSONPlaceholder API - a free fake API for testing and prototyping REST endpoints"
-tags:
-  - "api"
-  - "rest"
-  - "json"
-  - "testing"
-  - "prototype"
-  - "fake-api"
+duration: 5m
+
+protocol_settings:
+  vus: 100
+  duration: 5m
+  thresholds:
+    http_req_duration: ["p(95)<3000"]
+    http_req_failed: ["rate<0.05"]
+
+browser_settings:
+  vus: 10
+  duration: 2m
+  timeout: "45s"
+
+description: "Comprehensive performance test"
+tags: ["full-stack", "production", "ecommerce"]
 ```
 
-### Modern Web Application
+### High-Load Stress Test
 
 ```yaml
-# configs/pop-website-test.yaml
-target: https://pop-website-2024-dev.azurewebsites.net
-vus: 25
+target: https://example.com
+test_type: both
+vus: 200
+duration: 30m
+
+protocol_settings:
+  vus: 200
+  duration: 30m
+  thresholds:
+    http_req_duration: ["p(95)<10000"]  # 10s timeout for high load
+    http_req_failed: ["rate<0.3"]       # 30% error tolerance
+
+browser_settings:
+  vus: 50
+  duration: 10m
+  timeout: "60s"
+
+description: "High-load stress test"
+tags: ["stress-test", "production", "scalability"]
+```
+
+## Pre-configured Templates
+
+The system includes several pre-configured templates:
+
+### Quick Test (`configs/quick_test.yaml`)
+```yaml
+test_type: protocol
+vus: 20
 duration: 2m
-description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
-tags:
-  - "svelte"
-  - "strapi"
-  - "azure"
-  - "app-service"
-  - "headless-cms"
-  - "javascript"
-  - "api-driven"
 ```
 
-## Load Testing Scenarios
-
-### Light Load Testing
-
+### Browser Test (`configs/browser_test.yaml`)
 ```yaml
-vus: 10
-duration: 1m
+test_type: browser
+browser_settings:
+  vus: 5
+  duration: 1m
 ```
 
-**Use Case**: Basic functionality testing, development environments
-
-### Medium Load Testing
-
+### Comprehensive Test (`configs/comprehensive_test.yaml`)
 ```yaml
-vus: 25
-duration: 2m
-```
-
-**Use Case**: Production testing, performance validation
-
-### Heavy Load Testing
-
-```yaml
-vus: 100
+test_type: both
+vus: 50
 duration: 5m
 ```
 
-**Use Case**: Stress testing, capacity planning
-
-### Stress Testing
-
+### High-Load Test (`configs/pop_website_test.yaml`)
 ```yaml
-vus: 500
-duration: 10m
+test_type: both
+vus: 200
+duration: 30m
 ```
 
-**Use Case**: Breaking point testing, infrastructure validation
+## Performance Considerations
 
-## Duration Formats
+### Resource Usage Guidelines
 
-k6 supports various duration formats:
+<Accordion>
+  <AccordionItem title="Protocol Tests">
+    - **Light Load**: 10-25 VUs, 1-2 minutes
+    - **Medium Load**: 50-100 VUs, 2-5 minutes
+    - **Heavy Load**: 100-200 VUs, 5-15 minutes
+    - **Stress Test**: 200+ VUs, 15-30 minutes
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Tests">
+    - **Light Load**: 3-5 VUs, 1-2 minutes
+    - **Medium Load**: 5-10 VUs, 2-5 minutes
+    - **Heavy Load**: 10-25 VUs, 5-10 minutes
+    - **Stress Test**: 25-50 VUs, 10-15 minutes
+  </AccordionItem>
+  
+  <AccordionItem title="Memory Requirements">
+    - **Protocol Tests**: ~50-200MB per test
+    - **Browser Tests**: ~100-1000MB per test
+    - **Analysis**: ~1-10MB per test
+    - **HTML Reports**: ~100-500KB per test
+  </AccordionItem>
+</Accordion>
 
-| Format | Example | Description |
-|--------|---------|-------------|
-| Seconds | `30s` | 30 seconds |
-| Minutes | `2m` | 2 minutes |
-| Hours | `1h` | 1 hour |
-| Combined | `1h30m` | 1 hour 30 minutes |
+### Optimization Tips
 
-## Best Practices
-
-### 1. Start Small
-
-```yaml
-# Start with light load
-vus: 10
-duration: 30s
-```
-
-### 2. Gradual Increase
-
-```yaml
-# Test different load levels
-vus: 10   # Light
-vus: 25   # Medium  
-vus: 50   # Heavy
-vus: 100  # Stress
-```
-
-### 3. Realistic Duration
-
-```yaml
-# Short for development
-duration: 30s
-
-# Medium for testing
-duration: 2m
-
-# Long for production
-duration: 5m
-```
-
-### 4. Descriptive Tags
-
-```yaml
-tags:
-  - "react"           # Frontend framework
-  - "nodejs"          # Backend technology
-  - "aws"             # Infrastructure
-  - "e-commerce"      # Application type
-  - "api-driven"      # Architecture pattern
-```
-
-### 5. Clear Descriptions
-
-```yaml
-description: "E-commerce site built with React frontend and Node.js API backend, hosted on AWS with CDN and database optimization."
-```
-
-## Configuration Validation
-
-The system validates your configuration:
-
-- ✅ **Required fields** present
-- ✅ **Data types** correct (string URL, integer VUs, string duration)
-- ✅ **URL format** valid
-- ✅ **Positive values** for VUs and duration
-- ✅ **Optional fields** with defaults
-
-## Running Tests
-
-```bash
-# Use default configuration
-python run_test.py
-
-# Use specific configuration
-python run_test.py configs/my-app.yaml
-
-# Use custom configuration
-python run_test.py /path/to/custom-config.yaml
-```
+<Accordion>
+  <AccordionItem title="For High-Load Tests">
+    ```yaml
+    # Use ramp-up strategy
+    vus: 200
+    duration: 30m
+    
+    # Increase timeouts
+    protocol_settings:
+      thresholds:
+        http_req_duration: ["p(95)<10000"]
+        http_req_failed: ["rate<0.3"]
+    
+    # Reduce browser VUs
+    browser_settings:
+      vus: 50  # Instead of 200
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="For Quick Tests">
+    ```yaml
+    # Use protocol-only for speed
+    test_type: protocol
+    vus: 20
+    duration: 2m
+    
+    # Lower thresholds
+    protocol_settings:
+      thresholds:
+        http_req_duration: ["p(95)<3000"]
+        http_req_failed: ["rate<0.1"]
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="For Browser Tests">
+    ```yaml
+    # Focus on front-end performance
+    test_type: browser
+    browser_settings:
+      vus: 5
+      duration: 1m
+      timeout: "30s"
+    ```
+  </AccordionItem>
+</Accordion>
 
 ## Environment Variables
 
-You can also use environment variables for dynamic configuration:
+The system supports environment variables for configuration:
 
 ```bash
-# Override configuration values
-export TARGET_URL="https://my-app.com"
-export VUS=50
-export DURATION="5m"
+# Set target URL
+export TARGET_URL=https://example.com
 
-# Run test
-python run_test.py configs/template.yaml
+# Set virtual users
+export K6_VUS=50
+
+# Set test duration
+export K6_DURATION=5m
+
+# Set OpenAI API key (optional)
+export OPENAI_API_KEY=your-api-key-here
 ```
 
-## Advanced Configuration
+## Validation
 
-### Custom k6 Options
+The system validates your configuration and provides helpful error messages for:
 
-Future versions will support additional k6 configuration options:
-
-```yaml
-# Coming soon
-timeout: 10s
-ramp_up: 10s
-think_time: 1s
-thresholds:
-  http_req_duration: ["p(95)<2000"]
-  http_req_failed: ["rate<0.1"]
-```
-
-### Multiple Scenarios
-
-```yaml
-# Coming soon
-scenarios:
-  - name: "Ramp up"
-    vus: 0
-    target: 50
-    duration: 2m
-  - name: "Sustained load"
-    vus: 50
-    duration: 5m
-  - name: "Ramp down"
-    vus: 50
-    target: 0
-    duration: 1m
-```
+- **Invalid URLs**: Must be valid HTTP/HTTPS URLs
+- **Invalid durations**: Must be in k6 format (30s, 1m, 5m, etc.)
+- **Invalid VUs**: Must be positive integers
+- **Missing required fields**: Target, VUs, and duration are required
+- **Resource constraints**: Warns about high VU counts or long durations
 
 ---
 
 <div className="cta">
-  <h3>Ready to create your configuration?</h3>
-  <p>Start with one of our examples and customize it for your application.</p>
-  <a href="/examples" className="btn btn-primary">View Examples</a>
+  <h3>Ready to configure your tests?</h3>
+  <p>Now that you understand the configuration options, create your own test configurations.</p>
+  <a href="/quick-start" className="btn btn-primary">Run Your First Test</a>
 </div> 

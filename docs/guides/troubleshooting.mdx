@@ -5,252 +5,711 @@ description: Common issues and solutions for the Load Testing & Optimization Age
 
 # Troubleshooting
 
-Common issues and their solutions when using the Load Testing & Optimization Agent.
+Find solutions to common issues and problems when using the Load Testing & Optimization Agent.
 
 ## 🚨 Common Issues
 
 ### Docker Issues
 
-**Docker not running:**
-```bash
-# Start Docker Desktop
-open -a Docker  # macOS
-# Or start Docker service on Linux
-sudo systemctl start docker
-```
-
-**Permission errors:**
-```bash
-# Ensure Docker permissions
-sudo usermod -aG docker $USER
-# Log out and back in
-```
-
-**Docker build failures:**
-```bash
-# Clean Docker cache
-docker system prune -a
-# Rebuild image
-docker build -t load-tester docker/
-```
-
-### Python Issues
-
-**Module not found errors:**
-```bash
-# Activate virtual environment
-source .venv/bin/activate  # macOS/Linux
-.venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-**OpenAI API errors:**
-```bash
-# Check API key
-cat .env | grep OPENAI_API_KEY
-
-# Ensure key is valid and has credits
-# Visit: https://platform.openai.com/api-keys
-```
+<Accordion>
+  <AccordionItem title="Docker Not Running">
+    **Symptoms**: `docker: command not found` or `Cannot connect to the Docker daemon`
+    
+    **Solutions**:
+    ```bash
+    # macOS - Start Docker Desktop
+    open -a Docker
+    
+    # Linux - Start Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Windows - Start Docker Desktop
+    # Open Docker Desktop application
+    
+    # Verify Docker is running
+    docker ps
+    ```
+    
+    **Prevention**: Ensure Docker is installed and running before tests
+  </AccordionItem>
+  
+  <AccordionItem title="Docker Permission Errors">
+    **Symptoms**: `Got permission denied while trying to connect to the Docker daemon`
+    
+    **Solutions**:
+    ```bash
+    # Add user to docker group
+    sudo usermod -aG docker $USER
+    
+    # Log out and back in, or restart session
+    newgrp docker
+    
+    # Alternative: Run with sudo (not recommended)
+    sudo docker ps
+    ```
+    
+    **Prevention**: Add user to docker group during installation
+  </AccordionItem>
+  
+  <AccordionItem title="Docker Build Failures">
+    **Symptoms**: `failed to build Docker image` or build timeouts
+    
+    **Solutions**:
+    ```bash
+    # Clean Docker cache
+    docker system prune -f
+    docker builder prune -f
+    
+    # Check available disk space
+    df -h
+    
+    # Increase Docker resources
+    # In Docker Desktop: Settings > Resources > Advanced
+    ```
+    
+    **Prevention**: Regular Docker maintenance, adequate disk space
+  </AccordionItem>
+</Accordion>
 
 ### Test Execution Issues
 
-**Test timeouts:**
-- **Default timeout**: 5 minutes
-- **Extended tests**: May need longer timeouts
-- **Monitor progress**: Watch console output
+<Accordion>
+  <AccordionItem title="Protocol Test Timeouts">
+    **Symptoms**: `Protocol test timed out` or `k6 container timeout`
+    
+    **Solutions**:
+    ```bash
+    # Increase Docker timeout
+    # In run_test.py, increase timeout parameter
+    timeout=2400  # 40 minutes for 30m test
+    
+    # Reduce test load
+    vus: 50  # Instead of 200
+    duration: 5m  # Instead of 30m
+    
+    # Check target site availability
+    curl -I https://your-target-site.com
+    ```
+    
+    **Configuration**:
+    ```yaml
+    protocol_settings:
+      thresholds:
+        http_req_duration: ["p(95)<10000"]  # Increase timeout
+        http_req_failed: ["rate<0.3"]       # Higher error tolerance
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Test Timeouts">
+    **Symptoms**: `Browser test timed out` or `xk6-browser container timeout`
+    
+    **Solutions**:
+    ```bash
+    # Increase browser timeout
+    browser_settings:
+      timeout: "60s"  # Instead of 30s
+      vus: 3          # Reduce VUs for browser tests
+    
+    # Check network connectivity
+    curl -I https://your-target-site.com
+    
+    # Increase Docker memory for browser tests
+    --memory=8g  # Instead of 6g
+    ```
+    
+    **Configuration**:
+    ```yaml
+    browser_settings:
+      vus: 5
+      duration: 1m
+      timeout: "60s"
+      headless: true
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Memory Issues">
+    **Symptoms**: `Out of memory` or `container killed`
+    
+    **Solutions**:
+    ```bash
+    # Check available memory
+    free -h
+    
+    # Reduce test load
+    vus: 25  # Instead of 200
+    duration: 2m  # Instead of 30m
+    
+    # Increase Docker memory limits
+    --memory=8g  # Instead of 4g
+    
+    # Clean up system memory
+    sudo sync && sudo sysctl -w vm.drop_caches=3
+    ```
+    
+    **Prevention**: Monitor system resources, use appropriate VU counts
+  </AccordionItem>
+  
+  <AccordionItem title="Network Issues">
+    **Symptoms**: `Connection refused` or `Network timeout`
+    
+    **Solutions**:
+    ```bash
+    # Check target site accessibility
+    curl -I https://your-target-site.com
+    
+    # Test DNS resolution
+    nslookup your-target-site.com
+    
+    # Check firewall settings
+    sudo ufw status
+    
+    # Use different network
+    # Try from different location/network
+    ```
+    
+    **Prevention**: Verify target site availability before testing
+  </AccordionItem>
+</Accordion>
 
-**Network connectivity:**
-```bash
-# Test target URL accessibility
-curl -I https://your-target-url.com
+### Analysis Issues
 
-# Check DNS resolution
-nslookup your-target-url.com
-```
+<Accordion>
+  <AccordionItem title="HTML Report Generation Failures">
+    **Symptoms**: `Error loading browser_summary.json` or missing HTML reports
+    
+    **Solutions**:
+    ```bash
+    # Try manual report generation
+    python scripts/generate_manual_report.py output/site_name/latest/
+    
+    # Check for corrupted data
+    head -10 output/site_name/latest/protocol_summary.json
+    
+    # Regenerate analysis files
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    python scripts/browser_metrics_analyzer.py output/site_name/latest/browser_summary.json
+    ```
+    
+    **Fallback**: Manual report provides basic analysis even with data issues
+  </AccordionItem>
+  
+  <AccordionItem title="Missing Analysis Files">
+    **Symptoms**: `enhanced_analysis_report.json not found`
+    
+    **Solutions**:
+    ```bash
+    # Check what files exist
+    ls -la output/site_name/latest/
+    
+    # Manually run analysis
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    python scripts/browser_metrics_analyzer.py output/site_name/latest/browser_summary.json
+    
+    # Check file permissions
+    chmod 644 output/site_name/latest/*.json
+    ```
+    
+    **Prevention**: Ensure sufficient disk space and proper permissions
+  </AccordionItem>
+  
+  <AccordionItem title="Data Corruption">
+    **Symptoms**: `JSON decode error` or `Extra data: line 1`
+    
+    **Solutions**:
+    ```bash
+    # Check file integrity
+    tail -5 output/site_name/latest/protocol_summary.json
+    
+    # Try parsing with Python
+    python -c "import json; json.load(open('output/site_name/latest/protocol_summary.json'))"
+    
+    # Remove corrupted files and re-run test
+    rm output/site_name/latest/protocol_summary.json
+    python run_test.py configs/your-config.yaml
+    ```
+    
+    **Prevention**: Ensure stable network and sufficient disk space
+  </AccordionItem>
+</Accordion>
 
-## 🔧 Configuration Issues
+### Configuration Issues
 
-### YAML Configuration Errors
+<Accordion>
+  <AccordionItem title="Invalid YAML Configuration">
+    **Symptoms**: `YAML parsing error` or `Invalid configuration`
+    
+    **Solutions**:
+    ```bash
+    # Validate YAML syntax
+    python -c "import yaml; yaml.safe_load(open('configs/your-config.yaml'))"
+    
+    # Check required fields
+    # Ensure target, vus, and duration are present
+    
+    # Use example configuration
+    cp configs/quick_test.yaml configs/my-config.yaml
+    # Edit my-config.yaml with your settings
+    ```
+    
+    **Example Valid Configuration**:
+    ```yaml
+    target: https://example.com
+    test_type: both
+    vus: 50
+    duration: 5m
+    protocol_settings:
+      vus: 50
+      duration: 5m
+    browser_settings:
+      vus: 5
+      duration: 1m
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Invalid URLs">
+    **Symptoms**: `Invalid URL` or `Connection refused`
+    
+    **Solutions**:
+    ```bash
+    # Test URL accessibility
+    curl -I https://your-target-site.com
+    
+    # Check URL format
+    # Must start with http:// or https://
+    # Must be accessible from your network
+    
+    # Use different URL
+    target: https://httpbin.org/get  # Test with reliable endpoint
+    ```
+    
+    **Prevention**: Verify URLs before testing, use accessible endpoints
+  </AccordionItem>
+  
+  <AccordionItem title="Environment Variable Issues">
+    **Symptoms**: `Environment variable not found` or incorrect values
+    
+    **Solutions**:
+    ```bash
+    # Check environment variables
+    echo $TARGET_URL
+    echo $K6_VUS
+    echo $K6_DURATION
+    
+    # Set environment variables
+    export TARGET_URL=https://example.com
+    export K6_VUS=50
+    export K6_DURATION=5m
+    
+    # Use .env file
+    cp env.example .env
+    # Edit .env with your values
+    ```
+    
+    **Prevention**: Use .env file for consistent configuration
+  </AccordionItem>
+</Accordion>
 
-**Invalid YAML syntax:**
-```yaml
-# Correct format
-target: https://example.com
-vus: 25
-duration: 2m
-description: "My website"
-tags:
-  - "react"
-  - "nodejs"
-```
+## 🔧 Performance Issues
 
-**Missing required fields:**
-- **`target`** - URL to test (required)
-- **`vus`** - Number of virtual users (required)
-- **`duration`** - Test duration (required)
+### High-Load Testing Problems
 
-### Environment Variables
+<Accordion>
+  <AccordionItem title="System Resource Exhaustion">
+    **Symptoms**: System becomes unresponsive, high CPU/memory usage
+    
+    **Solutions**:
+    ```bash
+    # Monitor system resources
+    htop
+    free -h
+    df -h
+    
+    # Reduce test load
+    vus: 50  # Instead of 200
+    duration: 5m  # Instead of 30m
+    
+    # Increase Docker resource limits
+    --memory=8g  # More memory
+    --cpus=4     # More CPU cores
+    
+    # Use ramp-up strategy
+    # System automatically implements gradual load increase
+    ```
+    
+    **Prevention**: Monitor system resources, use appropriate VU counts
+  </AccordionItem>
+  
+  <AccordionItem title="Network Bottlenecks">
+    **Symptoms**: High latency, connection timeouts, packet loss
+    
+    **Solutions**:
+    ```bash
+    # Check network performance
+    ping your-target-site.com
+    traceroute your-target-site.com
+    
+    # Reduce concurrent connections
+    vus: 25  # Lower VU count
+    
+    # Use local testing
+    # Test against local development server
+    
+    # Check bandwidth usage
+    iftop
+    nethogs
+    ```
+    
+    **Prevention**: Test network capacity, use appropriate load levels
+  </AccordionItem>
+  
+  <AccordionItem title="Target Site Overload">
+    **Symptoms**: Target site becomes slow or unresponsive
+    
+    **Solutions**:
+    ```bash
+    # Reduce test load immediately
+    vus: 10  # Much lower VU count
+    
+    # Use shorter duration
+    duration: 1m  # Quick test
+    
+    # Test during off-peak hours
+    # Schedule tests for low-traffic periods
+    
+    # Monitor target site
+    curl -I https://your-target-site.com
+    ```
+    
+    **Prevention**: Coordinate with target site owners, use appropriate load
+  </AccordionItem>
+</Accordion>
 
-**Missing .env file:**
-```bash
-# Copy template
-cp env.example .env
+### Browser Testing Issues
 
-# Add your OpenAI API key
-echo "OPENAI_API_KEY=your-key-here" >> .env
-```
+<Accordion>
+  <AccordionItem title="Browser Container Failures">
+    **Symptoms**: `Browser test failed` or `Chromium not available`
+    
+    **Solutions**:
+    ```bash
+    # Increase browser container resources
+    --memory=8g  # More memory for browser
+    --shm-size=4g  # More shared memory
+    
+    # Reduce browser VUs
+    browser_settings:
+      vus: 3  # Lower VU count
+    
+    # Check browser image
+    docker images | grep xk6-browser
+    
+    # Rebuild browser image
+    docker build -f docker/Dockerfile.browser -t xk6-browser-test .
+    ```
+    
+    **Prevention**: Adequate system resources, proper Docker setup
+  </AccordionItem>
+  
+  <AccordionItem title="Core Web Vitals Not Captured">
+    **Symptoms**: Missing FCP, LCP, FID metrics
+    
+    **Solutions**:
+    ```bash
+    # Check browser test script
+    cat tests/browser_load_test.js
+    
+    # Increase page load timeout
+    browser_settings:
+      timeout: "60s"  # Longer timeout
+    
+    # Check target site JavaScript
+    # Ensure site loads properly in browser
+    
+    # Use headless mode
+    browser_settings:
+      headless: true
+    ```
+    
+    **Prevention**: Verify target site loads properly, adequate timeouts
+  </AccordionItem>
+  
+  <AccordionItem title="Resource Loading Issues">
+    **Symptoms**: Incomplete resource analysis or missing data
+    
+    **Solutions**:
+    ```bash
+    # Increase browser timeout
+    browser_settings:
+      timeout: "90s"  # Longer timeout for complex pages
+    
+    # Check target site resources
+    # Ensure all resources are accessible
+    
+    # Use simpler test configuration
+    browser_settings:
+      vus: 1  # Single browser instance
+      duration: 2m  # Longer duration
+    ```
+    
+    **Prevention**: Verify target site accessibility, adequate timeouts
+  </AccordionItem>
+</Accordion>
 
-## 📊 Results Issues
+## 🔍 Debugging Techniques
 
-### Missing Result Files
+### Log Analysis
 
-**No output directory:**
-```bash
-# Check if output directory exists
-ls -la output/
+<Accordion>
+  <AccordionItem title="Docker Logs">
+    ```bash
+    # Get container logs
+    docker logs <container-id>
+    
+    # Follow logs in real-time
+    docker logs -f <container-id>
+    
+    # Get logs from specific time
+    docker logs --since="2025-08-12T05:37:27Z" <container-id>
+    
+    # Get last N lines
+    docker logs --tail=100 <container-id>
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="System Logs">
+    ```bash
+    # Check system logs
+    journalctl -f
+    
+    # Check Docker logs
+    journalctl -u docker.service -f
+    
+    # Check disk space
+    df -h
+    
+    # Check memory usage
+    free -h
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Application Logs">
+    ```bash
+    # Check Python script output
+    python run_test.py configs/your-config.yaml 2>&1 | tee test.log
+    
+    # Check specific script logs
+    python scripts/enhanced_performance_analyzer.py input.json 2>&1 | tee analysis.log
+    
+    # Enable debug mode
+    # Add debug=True to script calls
+    ```
+  </AccordionItem>
+</Accordion>
 
-# Create if missing
-mkdir -p output/
-```
+### Data Validation
 
-**Empty result files:**
-- Check if test completed successfully
-- Verify Docker container ran properly
-- Check `load_test.log` for errors
+<Accordion>
+  <AccordionItem title="File Integrity Checks">
+    ```bash
+    # Check file sizes
+    ls -lh output/site_name/latest/
+    
+    # Validate JSON files
+    python -c "import json; json.load(open('file.json'))"
+    
+    # Check JSONL format
+    head -5 output/site_name/latest/protocol_summary.json
+    
+    # Count data points
+    wc -l output/site_name/latest/protocol_summary.json
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Data Quality Checks">
+    ```bash
+    # Check for empty files
+    find output/ -name "*.json" -size 0
+    
+    # Check for corrupted files
+    find output/ -name "*.json" -exec python -c "import json; json.load(open('{}'))" \;
+    
+    # Validate data structure
+    python -c "
+    import json
+    data = json.load(open('output/site_name/latest/enhanced_analysis_report.json'))
+    print('Keys:', list(data.keys()))
+    print('Summary:', data.get('summary', {}))
+    "
+    ```
+  </AccordionItem>
+</Accordion>
 
-### Result Navigation Issues
+## 🛠️ Recovery Procedures
 
-**list_test_results.py errors:**
-```bash
-# Check script permissions
-chmod +x scripts/list_test_results.py
+### Test Failure Recovery
 
-# Run with Python explicitly
-python scripts/list_test_results.py list
-```
+<Accordion>
+  <AccordionItem title="Partial Test Failures">
+    ```bash
+    # Check what completed successfully
+    ls -la output/site_name/latest/
+    
+    # If protocol test failed but browser test succeeded
+    # Regenerate protocol analysis only
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    
+    # If browser test failed but protocol test succeeded
+    # Regenerate browser analysis only
+    python scripts/browser_metrics_analyzer.py output/site_name/latest/browser_summary.json
+    
+    # Generate manual report with available data
+    python scripts/generate_manual_report.py output/site_name/latest/
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Complete Test Failures">
+    ```bash
+    # Clean up failed test data
+    rm -rf output/site_name/latest/
+    
+    # Check system resources
+    free -h
+    df -h
+    
+    # Restart Docker
+    sudo systemctl restart docker
+    
+    # Try with reduced load
+    vus: 10
+    duration: 1m
+    
+    # Re-run test
+    python run_test.py configs/your-config.yaml
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Data Corruption Recovery">
+    ```bash
+    # Backup corrupted data
+    cp -r output/site_name/latest/ output/site_name/latest_backup/
+    
+    # Remove corrupted files
+    rm output/site_name/latest/corrupted_file.json
+    
+    # Regenerate missing analysis
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    
+    # Generate manual report
+    python scripts/generate_manual_report.py output/site_name/latest/
+    ```
+  </AccordionItem>
+</Accordion>
 
-## 🤖 AI Analysis Issues
+### System Recovery
 
-### OpenAI Integration Problems
-
-**API rate limits:**
-- Check OpenAI usage dashboard
-- Implement rate limiting in scripts
-- Use different API keys for heavy usage
-
-**Model access issues:**
-```python
-# Check model availability
-# Current model: gpt-4o-mini
-# Alternative: gpt-3.5-turbo
-```
-
-### Analysis Pipeline Errors
-
-**Page resource analysis failures:**
-- Check target URL accessibility
-- Verify network connectivity
-- Review analysis script logs
-
-**Enhanced analysis errors:**
-- Check k6 metrics file format
-- Verify JSON parsing
-- Review analysis script output
-
-## 🔍 Debugging Steps
-
-### 1. Check Logs
-```bash
-# View detailed logs
-tail -f load_test.log
-
-# Check Docker logs
-docker logs <container-id>
-```
-
-### 2. Verify Configuration
-```bash
-# Test configuration parsing
-python -c "import yaml; print(yaml.safe_load(open('configs/test_config.yaml')))"
-```
-
-### 3. Test Components Individually
-```bash
-# Test page resource analysis
-python scripts/page_resource_analyzer.py https://example.com
-
-# Test enhanced analysis
-python scripts/enhanced_performance_analyzer.py
-
-# Test AI analysis
-python scripts/test_openai_integration.py
-```
-
-### 4. Check System Resources
-```bash
-# Monitor Docker resources
-docker stats
-
-# Check disk space
-df -h
-
-# Monitor memory usage
-free -h
-```
-
-## 🚀 Performance Issues
-
-### Slow Test Execution
-
-**Docker performance:**
-- Increase Docker memory allocation
-- Use SSD storage for Docker
-- Optimize Docker settings
-
-**Network performance:**
-- Check internet connection speed
-- Use local Docker registry
-- Optimize target server location
-
-### High Resource Usage
-
-**Memory issues:**
-- Reduce virtual users (VUs)
-- Shorter test duration
-- Monitor system resources
-
-**CPU issues:**
-- Limit concurrent tests
-- Use resource limits in Docker
-- Monitor system load
+<Accordion>
+  <AccordionItem title="Docker Recovery">
+    ```bash
+    # Clean up Docker resources
+    docker system prune -f
+    docker volume prune -f
+    docker network prune -f
+    
+    # Restart Docker service
+    sudo systemctl restart docker
+    
+    # Rebuild images
+    docker build -f docker/Dockerfile -t k6-load-test .
+    docker build -f docker/Dockerfile.browser -t xk6-browser-test .
+    
+    # Verify images
+    docker images | grep -E "(k6-load-test|xk6-browser-test)"
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="System Resource Recovery">
+    ```bash
+    # Clear system caches
+    sudo sync && sudo sysctl -w vm.drop_caches=3
+    
+    # Restart services
+    sudo systemctl restart docker
+    sudo systemctl restart network-manager
+    
+    # Check system health
+    htop
+    free -h
+    df -h
+    
+    # Monitor for resource leaks
+    watch -n 5 "free -h && df -h"
+    ```
+  </AccordionItem>
+</Accordion>
 
 ## 📞 Getting Help
 
-### Before Asking for Help
+### Self-Service Resources
 
-1. **Check this troubleshooting guide**
-2. **Review the logs** (`load_test.log`)
-3. **Test with minimal configuration**
-4. **Verify system requirements**
+<Accordion>
+  <AccordionItem title="Documentation">
+    - **[Quick Start Guide](/quick-start)** - Basic setup and usage
+    - **[Configuration Reference](/configuration)** - All configuration options
+    - **[API Reference](/reference/api-reference)** - Script documentation
+    - **[Examples](/reference/examples)** - Usage examples
+  </AccordionItem>
+  
+  <AccordionItem title="Built-in Help">
+    ```bash
+    # Script help
+    python run_test.py --help
+    
+    # List available configurations
+    ls configs/
+    
+    # Check script documentation
+    python scripts/enhanced_performance_analyzer.py --help
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Debugging Tools">
+    ```bash
+    # Validate configuration
+    python -c "import yaml; yaml.safe_load(open('configs/your-config.yaml'))"
+    
+    # Check system requirements
+    python -c "import docker; print('Docker available')"
+    python -c "import requests; print('Requests available')"
+    
+    # Test basic functionality
+    python scripts/test_system.py
+    ```
+  </AccordionItem>
+</Accordion>
 
-### Useful Information to Include
+### Community Support
 
-- **Error messages** (exact text)
-- **Configuration files** (sanitized)
-- **System information** (OS, Python version, Docker version)
-- **Steps to reproduce** the issue
+<Accordion>
+  <AccordionItem title="GitHub Issues">
+    - **[Report Bugs](https://github.com/colespicer/load-opt-agent/issues)** - Create detailed bug reports
+    - **[Feature Requests](https://github.com/colespicer/load-opt-agent/issues)** - Suggest improvements
+    - **[Search Issues](https://github.com/colespicer/load-opt-agent/issues)** - Find existing solutions
+  </AccordionItem>
+  
+  <AccordionItem title="Best Practices">
+    - Include configuration files in bug reports
+    - Provide system information (OS, Docker version, etc.)
+    - Include relevant log files
+    - Describe steps to reproduce the issue
+    - Mention what you've already tried
+  </AccordionItem>
+</Accordion>
 
-### Community Resources
+---
 
-- **GitHub Issues**: Report bugs and request features
-- **Documentation**: Check guides and reference
-- **Examples**: Review working configurations
-
-## 🔗 Related Resources
-
-- **[Running Tests](/guides/running-tests)** - Test execution guide
-- **[Interpreting Results](/guides/interpreting-results)** - Results analysis
-- **[Configuration Reference](/configuration)** - Configuration options 
+<div className="cta">
+  <h3>Still having issues?</h3>
+  <p>Check our documentation or create a GitHub issue with detailed information.</p>
+  <a href="https://github.com/colespicer/load-opt-agent/issues" className="btn btn-primary">Get Help</a>
+</div> 

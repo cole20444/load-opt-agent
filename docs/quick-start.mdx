@@ -5,7 +5,7 @@ description: Get up and running with the Load Testing & Optimization Agent in mi
 
 # Quick Start Guide
 
-Get your first load test running with AI-powered analysis in under 5 minutes.
+Get your first comprehensive load test running with browser testing and AI-powered analysis in under 5 minutes.
 
 ## Prerequisites
 
@@ -40,26 +40,28 @@ pip install -r requirements.txt
 # Copy environment template
 cp env.example .env
 
-# Edit .env file and add your OpenAI API key
+# Edit .env file and add your OpenAI API key (optional)
 # OPENAI_API_KEY=your-api-key-here
 ```
 
 <Callout type="info">
-  **OpenAI API Key**: Required for AI-powered analysis. Get one from [OpenAI Platform](https://platform.openai.com/api-keys).
+  **OpenAI API Key**: Optional for AI-powered analysis. Get one from [OpenAI Platform](https://platform.openai.com/api-keys).
 </Callout>
 
 ## 🎯 Step 3: Run Your First Test
 
 ```bash
-# Test a sample API endpoint
-python run_test.py configs/api_test.yaml
+# Run a comprehensive test (protocol + browser)
+python run_test.py configs/pop_website_test.yaml
 ```
 
 This will:
-- ✅ Build the Docker image (first time only)
-- ✅ Run a 1-minute load test with 100 virtual users
+- ✅ Build Docker images (first time only)
+- ✅ Run protocol-level load test with k6
+- ✅ Run browser-level test with xk6-browser
 - ✅ Generate comprehensive performance metrics
-- ✅ Create organized results in `output/`
+- ✅ Create interactive HTML reports
+- ✅ Organize results in `output/`
 
 ## 📊 Step 4: View Results
 
@@ -69,30 +71,38 @@ python scripts/list_test_results.py list
 
 # View latest results
 python scripts/list_test_results.py latest
+
+# Open the HTML report
+open output/pop-website-2024-dev_azurewebsites_net/latest/load_test_report.html
 ```
 
 Your results are organized by site and timestamp:
 ```
 output/
-└── jsonplaceholder_typicode_com_posts/
-    ├── 20250807_111130/          # Latest test run
-    │   ├── summary.json          # Raw k6 metrics
-    │   ├── test_report.json      # Formatted summary
-    │   └── ai_analysis_report.json # AI recommendations
-    └── latest -> 20250807_111130/ # Symlink to latest
+└── pop-website-2024-dev_azurewebsites_net/
+    ├── 20250811_223723/                    # Latest test run
+    │   ├── protocol_summary.json          # Raw k6 metrics
+    │   ├── browser_summary.json           # Raw browser metrics
+    │   ├── enhanced_analysis_report.json  # Protocol analysis
+    │   ├── browser_summary_analysis.json  # Browser analysis
+    │   ├── load_test_report.html          # Interactive HTML report
+    │   └── manual_load_test_report.html   # Fallback report
+    └── latest -> 20250811_223723/         # Symlink to latest
 ```
 
-## 🤖 Step 5: AI Analysis (Optional)
+## 🌐 Step 5: Explore the HTML Report
 
-If you have an OpenAI API key configured, the system automatically:
+The HTML report provides:
 
-1. **Analyzes page resources** for performance issues
-2. **Processes detailed metrics** for insights
-3. **Generates AI recommendations** for optimization
-4. **Provides implementation guidance** for improvements
+1. **Executive Summary** with performance grades
+2. **Navigation** with jump links to sections
+3. **Protocol Test Results** with detailed metrics
+4. **Browser Test Results** with Core Web Vitals
+5. **Enhanced Analysis** with issues and recommendations
+6. **Interactive Charts** with Plotly visualizations
 
 <Callout type="success">
-  **Success!** You've completed your first load test with AI-powered analysis. 
+  **Success!** You've completed your first comprehensive load test with browser analysis and interactive HTML reports. 
   Check the `output/` directory for detailed results and recommendations.
 </Callout>
 
@@ -108,6 +118,7 @@ cp configs/test_config.yaml configs/my-app.yaml
 target: https://your-website.com
 vus: 25
 duration: 2m
+test_type: both  # Run both protocol and browser tests
 description: "My web application for load testing"
 tags: ["react", "nodejs", "aws"]
 ```
@@ -115,10 +126,13 @@ tags: ["react", "nodejs", "aws"]
 ### Run Different Test Scenarios
 
 ```bash
-# Test WordPress site
-python run_test.py configs/wordpress_test.yaml
+# Quick protocol-only test
+python run_test.py configs/quick_test.yaml
 
-# Test POP website (Svelte + Strapi)
+# Browser-only test
+python run_test.py configs/browser_test.yaml
+
+# High-load test (200 VUs, 30 minutes)
 python run_test.py configs/pop_website_test.yaml
 
 # Test your custom configuration
@@ -128,26 +142,41 @@ python run_test.py configs/my-app.yaml
 ### Explore Advanced Features
 
 - **[Configuration Reference](/configuration)** - Learn all YAML options
-- **[Scripts Documentation](/scripts)** - Use individual analysis tools
-- **[Examples](/examples)** - See real-world use cases
-- **[Troubleshooting](/troubleshooting)** - Common issues and solutions
+- **[Features Overview](/features)** - Explore all system capabilities
+- **[API Reference](/reference/api-reference)** - Use individual analysis tools
+- **[Troubleshooting](/guides/troubleshooting)** - Common issues and solutions
 
 ## 🔍 What You Get
 
 After running a test, you'll have:
 
-### 📊 Performance Metrics
-- **21 k6 metrics** with 38K+ data points
-- **Response times** (average, median, P95, P99)
-- **Error rates** and failure analysis
-- **Throughput** and request rates
-- **Resource usage** and timing breakdown
+### 🔌 Protocol Test Results
+- **Raw k6 metrics** (JSONL format, 21+ metrics)
+- **Enhanced performance analysis** with detailed breakdowns
+- **HTTP timing analysis** (DNS, TLS, server processing)
+- **Data transfer analysis** and load distribution
+- **High-load optimizations** (ramp-up, resource limits)
 
-### 🤖 AI Analysis (with OpenAI)
+### 🌐 Browser Test Results
+- **Core Web Vitals** (FCP, LCP, FID, CLS, TTI, TBT)
+- **Resource loading analysis** and page weight
+- **Performance issues detection** and scoring
+- **Real browser testing** with Chromium
+- **Front-end optimization insights**
+
+### 📊 HTML Reports
+- **Interactive HTML reports** with Plotly visualizations
+- **Navigation system** with jump links
+- **Responsive design** for all devices
+- **Manual report generation** fallback
+- **Executive summary** with performance grades
+
+### 🤖 AI Analysis (Optional)
 - **Technology-specific recommendations**
 - **Prioritized optimization actions**
 - **Implementation guidance**
 - **Expected performance improvements**
+- **Cross-perspective analysis** (protocol + browser)
 
 ### 📁 Organized Results
 - **Site-based organization** for multiple applications
@@ -177,6 +206,24 @@ After running a test, you'll have:
     ```
   </AccordionItem>
   
+  <AccordionItem title="Memory issues with high-load tests">
+    ```bash
+    # Check available memory
+    free -h
+    # Reduce VUs or duration in config
+    vus: 50  # Instead of 200
+    duration: 5m  # Instead of 30m
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Browser test timeouts">
+    ```bash
+    # Increase browser test timeouts
+    browser_settings:
+      timeout: "60s"  # Instead of 30s
+    ```
+  </AccordionItem>
+  
   <AccordionItem title="OpenAI API errors">
     ```bash
     # Check your API key
@@ -188,7 +235,7 @@ After running a test, you'll have:
 
 ### Need Help?
 
-- **[Troubleshooting Guide](/troubleshooting)** - Common issues and solutions
+- **[Troubleshooting Guide](/guides/troubleshooting)** - Common issues and solutions
 - **[GitHub Issues](https://github.com/colespicer/load-opt-agent/issues)** - Report bugs or request features
 - **[Configuration Reference](/configuration)** - Detailed configuration options
 

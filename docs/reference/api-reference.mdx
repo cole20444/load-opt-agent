@@ -1,224 +1,823 @@
 ---
 title: API Reference
-description: Reference documentation for all scripts and components
+description: Complete reference for all scripts, functions, and configuration options
 ---
 
 # API Reference
 
-Complete reference for all scripts, components, and utilities in the Load Testing & Optimization Agent.
+Complete reference documentation for all scripts, functions, and configuration options in the Load Testing & Optimization Agent.
 
 ## 🚀 Main Scripts
 
-### `run_test.py`
+### run_test.py
 
-The main entry point for running load tests.
+**Purpose**: Main test orchestration script
 
-**Usage:**
+**Usage**:
 ```bash
-python run_test.py [config_file]
+python run_test.py <config_file>
 ```
 
-**Arguments:**
-- `config_file` (optional): Path to YAML configuration file
+**Arguments**:
+- `config_file` (str): Path to YAML configuration file
 
-**Functions:**
-- `load_config(config_path)` - Load and validate YAML configuration
-- `create_output_directory(config)` - Create organized output structure
-- `run_k6_test(config, output_dir)` - Execute k6 load test
-- `generate_test_report(config, output_dir)` - Create formatted test report
-- `run_ai_analysis(config, output_dir)` - Execute AI analysis pipeline
+**Key Functions**:
 
-### `scripts/list_test_results.py`
+<Accordion>
+  <AccordionItem title="load_config(config_file)">
+    **Purpose**: Load and validate YAML configuration
+    
+    **Parameters**:
+    - `config_file` (str): Path to configuration file
+    
+    **Returns**:
+    - `dict`: Validated configuration dictionary
+    
+    **Example**:
+    ```python
+    config = load_config('configs/pop_website_test.yaml')
+    print(config['target'])  # https://example.com
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="build_docker_images()">
+    **Purpose**: Build Docker images for testing
+    
+    **Returns**:
+    - `bool`: True if successful, False otherwise
+    
+    **Example**:
+    ```python
+    success = build_docker_images()
+    if not success:
+        print("Docker build failed")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="run_protocol_test(config, output_dir)">
+    **Purpose**: Execute k6 protocol test
+    
+    **Parameters**:
+    - `config` (dict): Test configuration
+    - `output_dir` (str): Output directory path
+    
+    **Returns**:
+    - `bool`: True if successful, False otherwise
+    
+    **Example**:
+    ```python
+    success = run_protocol_test(config, 'output/site_name/timestamp/')
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="run_browser_test(config, output_dir)">
+    **Purpose**: Execute xk6-browser test
+    
+    **Parameters**:
+    - `config` (dict): Test configuration
+    - `output_dir` (str): Output directory path
+    
+    **Returns**:
+    - `bool`: True if successful, False otherwise
+    
+    **Example**:
+    ```python
+    success = run_browser_test(config, 'output/site_name/timestamp/')
+    ```
+  </AccordionItem>
+</Accordion>
 
-Navigate and view test results.
+## 🔍 Analysis Scripts
 
-**Usage:**
+### enhanced_performance_analyzer.py
+
+**Purpose**: Comprehensive protocol metrics analysis
+
+**Usage**:
 ```bash
-python scripts/list_test_results.py [command] [site_name]
+python scripts/enhanced_performance_analyzer.py <protocol_summary.json>
 ```
 
-**Commands:**
-- `list` - List all test results by site and timestamp
-- `latest` - Show latest results for all sites
-- `latest <site>` - Show latest results for specific site
+**Key Functions**:
 
-**Functions:**
-- `list_test_results()` - List all test results
-- `show_latest_results(site_name)` - Show latest results
-- `show_test_run_details(test_run_path)` - Show detailed test run info
+<Accordion>
+  <AccordionItem title="load_data(file_path)">
+    **Purpose**: Load k6 JSONL data
+    
+    **Parameters**:
+    - `file_path` (str): Path to protocol_summary.json
+    
+    **Returns**:
+    - `list`: List of data points
+    
+    **Example**:
+    ```python
+    data = load_data('output/site_name/latest/protocol_summary.json')
+    print(f"Loaded {len(data)} data points")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="analyze_http_timing(data)">
+    **Purpose**: Analyze HTTP timing breakdown
+    
+    **Parameters**:
+    - `data` (list): k6 data points
+    
+    **Returns**:
+    - `dict`: HTTP timing analysis
+    
+    **Example**:
+    ```python
+    timing = analyze_http_timing(data)
+    print(f"Average server processing: {timing['server_avg']}ms")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="analyze_data_transfer(data)">
+    **Purpose**: Analyze data transfer metrics
+    
+    **Parameters**:
+    - `data` (list): k6 data points
+    
+    **Returns**:
+    - `dict`: Data transfer analysis
+    
+    **Example**:
+    ```python
+    transfer = analyze_data_transfer(data)
+    print(f"Average data received: {transfer['received_avg']} bytes")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_page_analysis_report(data, output_dir)">
+    **Purpose**: Generate comprehensive analysis report
+    
+    **Parameters**:
+    - `data` (list): k6 data points
+    - `output_dir` (str): Output directory
+    
+    **Returns**:
+    - `str`: Path to generated report
+    
+    **Example**:
+    ```python
+    report_path = generate_page_analysis_report(data, 'output/site_name/latest/')
+    print(f"Report generated: {report_path}")
+    ```
+  </AccordionItem>
+</Accordion>
 
-## 🔧 Analysis Scripts
+### browser_metrics_analyzer.py
 
-### `scripts/page_resource_analyzer.py`
+**Purpose**: Browser performance and Core Web Vitals analysis
 
-Analyze page resources for performance issues.
-
-**Usage:**
+**Usage**:
 ```bash
-python scripts/page_resource_analyzer.py <url>
+python scripts/browser_metrics_analyzer.py <browser_summary.json>
 ```
 
-**Arguments:**
-- `url` - Target URL to analyze
+**Key Functions**:
 
-**Features:**
-- Resource discovery (images, CSS, JS, fonts, APIs)
-- Performance analysis (size, load time, compression)
-- Technology-specific recommendations
-- Detailed reporting
+<Accordion>
+  <AccordionItem title="load_data(file_path)">
+    **Purpose**: Load browser metrics data
+    
+    **Parameters**:
+    - `file_path` (str): Path to browser_summary.json
+    
+    **Returns**:
+    - `list`: List of browser data points
+    
+    **Example**:
+    ```python
+    data = load_data('output/site_name/latest/browser_summary.json')
+    print(f"Loaded {len(data)} browser data points")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="analyze_core_web_vitals(data)">
+    **Purpose**: Analyze Core Web Vitals metrics
+    
+    **Parameters**:
+    - `data` (list): Browser data points
+    
+    **Returns**:
+    - `dict`: Core Web Vitals analysis
+    
+    **Example**:
+    ```python
+    cwv = analyze_core_web_vitals(data)
+    print(f"FCP average: {cwv['fcp']['avg']}ms")
+    print(f"LCP grade: {cwv['lcp']['grade']}")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="analyze_resource_loading(data)">
+    **Purpose**: Analyze resource loading metrics
+    
+    **Parameters**:
+    - `data` (list): Browser data points
+    
+    **Returns**:
+    - `dict`: Resource loading analysis
+    
+    **Example**:
+    ```python
+    resources = analyze_resource_loading(data)
+    print(f"Total page weight: {resources['total_page_weight_mb']}MB")
+    print(f"Resource count: {resources['total_requests']}")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_browser_report(data, output_dir)">
+    **Purpose**: Generate browser performance report
+    
+    **Parameters**:
+    - `data` (list): Browser data points
+    - `output_dir` (str): Output directory
+    
+    **Returns**:
+    - `str`: Path to generated report
+    
+    **Example**:
+    ```python
+    report_path = generate_browser_report(data, 'output/site_name/latest/')
+    print(f"Browser report generated: {report_path}")
+    ```
+  </AccordionItem>
+</Accordion>
 
-### `scripts/enhanced_performance_analyzer.py`
+## 📄 Report Generation Scripts
 
-Enhanced k6 metrics analysis.
+### generate_k6_html_report.py
 
-**Usage:**
+**Purpose**: Generate comprehensive interactive HTML reports
+
+**Usage**:
 ```bash
-python scripts/enhanced_performance_analyzer.py
+python scripts/generate_k6_html_report.py <output_directory>
 ```
 
-**Features:**
-- HTTP timing breakdown analysis
-- Data transfer analysis
-- Load distribution patterns
-- Error pattern analysis
+**Key Functions**:
 
-### `scripts/analyze_k6_metrics.py`
+<Accordion>
+  <AccordionItem title="load_k6_summary(file_path)">
+    **Purpose**: Load k6 summary data
+    
+    **Parameters**:
+    - `file_path` (str): Path to protocol_summary.json
+    
+    **Returns**:
+    - `list`: k6 data points
+    
+    **Example**:
+    ```python
+    data = load_k6_summary('output/site_name/latest/protocol_summary.json')
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="extract_metrics(summary_data)">
+    **Purpose**: Extract comprehensive metrics from k6 data
+    
+    **Parameters**:
+    - `summary_data` (list): k6 data points
+    
+    **Returns**:
+    - `dict`: Extracted metrics
+    
+    **Example**:
+    ```python
+    metrics = extract_metrics(data)
+    print(f"Total requests: {metrics['total_requests']}")
+    print(f"Success rate: {metrics['success_rate']}%")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_html_report(output_dir)">
+    **Purpose**: Generate complete HTML report
+    
+    **Parameters**:
+    - `output_dir` (str): Output directory
+    
+    **Returns**:
+    - `str`: Path to generated HTML file
+    
+    **Example**:
+    ```python
+    html_path = generate_html_report('output/site_name/latest/')
+    print(f"HTML report: {html_path}")
+    ```
+  </AccordionItem>
+</Accordion>
 
-Analyze raw k6 metrics data.
+### generate_manual_report.py
 
-**Usage:**
+**Purpose**: Generate fallback HTML report from analysis files
+
+**Usage**:
 ```bash
-python scripts/analyze_k6_metrics.py
+python scripts/generate_manual_report.py <output_directory>
 ```
 
-**Features:**
-- 21 k6 metrics analysis
-- 38K+ data points processing
-- Performance threshold checking
-- Statistical analysis
+**Key Functions**:
 
-## 🤖 AI Analysis Components
+<Accordion>
+  <AccordionItem title="load_analysis_file(file_path)">
+    **Purpose**: Load analysis JSON file
+    
+    **Parameters**:
+    - `file_path` (str): Path to analysis file
+    
+    **Returns**:
+    - `dict`: Analysis data
+    
+    **Example**:
+    ```python
+    analysis = load_analysis_file('output/site_name/latest/enhanced_analysis_report.json')
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_html_report(output_dir)">
+    **Purpose**: Generate manual HTML report
+    
+    **Parameters**:
+    - `output_dir` (str): Output directory
+    
+    **Returns**:
+    - `str`: Path to generated HTML file
+    
+    **Example**:
+    ```python
+    html_path = generate_html_report('output/site_name/latest/')
+    print(f"Manual report: {html_path}")
+    ```
+  </AccordionItem>
+</Accordion>
 
-### `ai_analysis/openai_enhanced_agent.py`
+## 🧪 Test Scripts
 
-AI-powered analysis and recommendations.
+### tests/load_test.js
 
-**Classes:**
-- `EnhancedAIAnalysisAgent` - Main AI analysis agent
+**Purpose**: k6 protocol load test script
 
-**Methods:**
-- `analyze_performance(test_data, site_info)` - Analyze performance data
-- `generate_recommendations(analysis_results)` - Generate optimization recommendations
-- `_combine_recommendations(ai_recommendations)` - Combine AI insights
+**Key Functions**:
 
-### `ai_analysis/technology_templates.yaml`
+<Accordion>
+  <AccordionItem title="default function()">
+    **Purpose**: Main test function
+    
+    **Example**:
+    ```javascript
+    export default function() {
+      const targetUrl = __ENV.TARGET_URL;
+      
+      // Main page request
+      const mainResponse = http.get(targetUrl, {
+        headers: {
+          'User-Agent': 'k6-load-test-agent/1.0',
+          'Accept-Encoding': 'gzip, deflate, br',
+        },
+        timeout: '30s',
+      });
+      
+      // Resource analysis
+      analyzePageResources(mainResponse.body, targetUrl);
+      
+      // Think time
+      sleep(1);
+    }
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="options">
+    **Purpose**: k6 test configuration
+    
+    **Example**:
+    ```javascript
+    export const options = {
+      stages: [
+        { duration: '2m', target: 50 },
+        { duration: '5m', target: 200 },
+        { duration: '2m', target: 0 }
+      ],
+      thresholds: {
+        http_req_duration: ['p(95)<10000'],
+        http_req_failed: ['rate<0.3']
+      },
+      discardResponseBodies: true,
+      http_debug: false,
+      no_usage_report: true
+    };
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="analyzePageResources(htmlContent, baseUrl)">
+    **Purpose**: Analyze page resources
+    
+    **Parameters**:
+    - `htmlContent` (string): HTML content
+    - `baseUrl` (string): Base URL for resources
+    
+    **Example**:
+    ```javascript
+    function analyzePageResources(htmlContent, baseUrl) {
+      // Extract resource URLs
+      const resourcePatterns = [
+        { type: 'image', pattern: /<img[^>]+src=["']([^"']+)["']/gi },
+        { type: 'script', pattern: /<script[^>]+src=["']([^"']+)["']/gi }
+      ];
+      
+      // Analyze resources
+      // Implementation details...
+    }
+    ```
+  </AccordionItem>
+</Accordion>
 
-Technology-specific optimization patterns.
+### tests/browser_load_test.js
 
-**Templates:**
-- `svelte_strapi_azure` - Svelte + Strapi + Azure patterns
-- `wordpress` - WordPress optimization patterns
-- `api` - API endpoint patterns
+**Purpose**: xk6-browser front-end test script
+
+**Key Functions**:
+
+<Accordion>
+  <AccordionItem title="default function()">
+    **Purpose**: Main browser test function
+    
+    **Example**:
+    ```javascript
+    export default function() {
+      const page = browser.newPage();
+      
+      // Navigate to page
+      page.goto(__ENV.TARGET_URL);
+      
+      // Measure Core Web Vitals
+      const metrics = page.evaluate(() => {
+        return {
+          fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime,
+          lcp: performance.getEntriesByName('largest-contentful-paint')[0]?.startTime,
+          fid: performance.getEntriesByName('first-input-delay')[0]?.processingStart,
+          cls: performance.getEntriesByName('layout-shift')[0]?.value
+        };
+      });
+      
+      // Record metrics
+      check(metrics, {
+        'FCP is measured': (m) => m.fcp !== undefined,
+        'LCP is measured': (m) => m.lcp !== undefined
+      });
+    }
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="options">
+    **Purpose**: Browser test configuration
+    
+    **Example**:
+    ```javascript
+    export const options = {
+      scenarios: {
+        browser: {
+          executor: 'shared-iterations',
+          options: {
+            browser: {
+              type: 'chromium',
+              headless: true
+            }
+          }
+        }
+      }
+    };
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🔧 Utility Scripts
+
+### list_test_results.py
+
+**Purpose**: List and manage test results
+
+**Usage**:
+```bash
+python scripts/list_test_results.py <command> [options]
+```
+
+**Commands**:
+
+<Accordion>
+  <AccordionItem title="list">
+    **Purpose**: List all test results
+    
+    **Usage**:
+    ```bash
+    python scripts/list_test_results.py list
+    ```
+    
+    **Output**:
+    ```
+    Available test results:
+    - pop-website-2024-dev_azurewebsites_net/
+      ├── 20250811_223723/ (latest)
+      ├── 20250811_215741/
+      └── 20250811_191533/
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="latest">
+    **Purpose**: Show latest test results
+    
+    **Usage**:
+    ```bash
+    python scripts/list_test_results.py latest
+    ```
+    
+    **Output**:
+    ```
+    Latest test results:
+    Site: pop-website-2024-dev_azurewebsites_net
+    Timestamp: 20250811_223723
+    Files:
+    - protocol_summary.json (179MB)
+    - browser_summary.json (1.0GB)
+    - enhanced_analysis_report.json (2.8KB)
+    - load_test_report.html (500KB)
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="clean">
+    **Purpose**: Clean old test results
+    
+    **Usage**:
+    ```bash
+    python scripts/list_test_results.py clean --older-than 7d
+    ```
+    
+    **Options**:
+    - `--older-than`: Remove results older than specified time
+    - `--dry-run`: Show what would be removed without deleting
+  </AccordionItem>
+</Accordion>
+
+### parse_results.py
+
+**Purpose**: Parse and analyze test results
+
+**Usage**:
+```bash
+python scripts/parse_results.py <input_file> [options]
+```
+
+**Key Functions**:
+
+<Accordion>
+  <AccordionItem title="parse_k6_summary(file_path)">
+    **Purpose**: Parse k6 summary data
+    
+    **Parameters**:
+    - `file_path` (str): Path to protocol_summary.json
+    
+    **Returns**:
+    - `dict`: Parsed metrics
+    
+    **Example**:
+    ```python
+    metrics = parse_k6_summary('output/site_name/latest/protocol_summary.json')
+    print(f"Total requests: {metrics['total_requests']}")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="parse_browser_summary(file_path)">
+    **Purpose**: Parse browser summary data
+    
+    **Parameters**:
+    - `file_path` (str): Path to browser_summary.json
+    
+    **Returns**:
+    - `dict`: Parsed browser metrics
+    
+    **Example**:
+    ```python
+    browser_metrics = parse_browser_summary('output/site_name/latest/browser_summary.json')
+    print(f"FCP average: {browser_metrics['fcp_avg']}ms")
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🤖 AI Analysis Scripts
+
+### ai_analysis/analysis_agent.py
+
+**Purpose**: Main AI analysis orchestration
+
+**Key Functions**:
+
+<Accordion>
+  <AccordionItem title="collect_all_data(output_dir)">
+    **Purpose**: Collect all available test data
+    
+    **Parameters**:
+    - `output_dir` (str): Output directory
+    
+    **Returns**:
+    - `dict`: Collected data from all sources
+    
+    **Example**:
+    ```python
+    data = collect_all_data('output/site_name/latest/')
+    print(f"Collected data from {len(data)} sources")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_ai_analysis(data, config)">
+    **Purpose**: Generate AI-powered analysis
+    
+    **Parameters**:
+    - `data` (dict): Collected test data
+    - `config` (dict): Test configuration
+    
+    **Returns**:
+    - `dict`: AI analysis results
+    
+    **Example**:
+    ```python
+    analysis = generate_ai_analysis(data, config)
+    print(f"Generated {len(analysis['recommendations'])} recommendations")
+    ```
+  </AccordionItem>
+</Accordion>
+
+### ai_analysis/openai_enhanced_agent.py
+
+**Purpose**: OpenAI API integration
+
+**Key Functions**:
+
+<Accordion>
+  <AccordionItem title="analyze_with_openai(data, config)">
+    **Purpose**: Analyze data using OpenAI API
+    
+    **Parameters**:
+    - `data` (dict): Test data
+    - `config` (dict): Test configuration
+    
+    **Returns**:
+    - `dict`: OpenAI analysis results
+    
+    **Example**:
+    ```python
+    results = analyze_with_openai(data, config)
+    print(f"Analysis score: {results['score']}/100")
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="generate_recommendations(analysis)">
+    **Purpose**: Generate optimization recommendations
+    
+    **Parameters**:
+    - `analysis` (dict): Analysis results
+    
+    **Returns**:
+    - `list`: List of recommendations
+    
+    **Example**:
+    ```python
+    recommendations = generate_recommendations(analysis)
+    for rec in recommendations:
+        print(f"- {rec['title']}: {rec['description']}")
+    ```
+  </AccordionItem>
+</Accordion>
 
 ## 📊 Configuration Reference
 
-### YAML Configuration Schema
+### YAML Configuration Structure
 
 ```yaml
 # Required fields
-target: string          # Target URL to test
-vus: integer           # Number of virtual users
-duration: string       # Test duration (e.g., "2m", "15m")
+target: https://example.com          # Target URL
+test_type: both                      # Test type: protocol, browser, or both
+vus: 50                              # Virtual users
+duration: 5m                         # Test duration
+
+# Protocol testing configuration
+protocol_settings:
+  vus: 50                            # Protocol virtual users
+  duration: 5m                       # Protocol test duration
+  thresholds:
+    http_req_duration: ["p(95)<5000"]  # Response time threshold
+    http_req_failed: ["rate<0.1"]      # Error rate threshold
+  timeout: "30s"                     # Request timeout
+
+# Browser testing configuration
+browser_settings:
+  vus: 5                             # Browser virtual users
+  duration: 1m                       # Browser test duration
+  timeout: "30s"                     # Page load timeout
+  headless: true                     # Run in headless mode
+  viewport:
+    width: 1920
+    height: 1080
 
 # Optional fields
-description: string    # Site description for AI analysis
-tags: array           # Technology tags for AI analysis
+description: "Test description"      # Site description
+tags: ["react", "nodejs", "aws"]     # Technology tags
 ```
 
 ### Environment Variables
 
-```bash
-# Required for AI analysis
-OPENAI_API_KEY=your-api-key-here
+<Accordion>
+  <AccordionItem title="Test Configuration">
+    ```bash
+    TARGET_URL=https://example.com    # Target URL
+    K6_VUS=50                         # Virtual users
+    K6_DURATION=5m                    # Test duration
+    TEST_TYPE=both                    # Test type
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="AI Configuration">
+    ```bash
+    OPENAI_API_KEY=your-api-key       # OpenAI API key
+    OPENAI_MODEL=gpt-4o-mini          # OpenAI model
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Docker Configuration">
+    ```bash
+    DOCKER_MEMORY_LIMIT=4g            # Docker memory limit
+    DOCKER_CPU_LIMIT=2                # Docker CPU limit
+    DOCKER_TIMEOUT=2400               # Docker timeout (seconds)
+    ```
+  </AccordionItem>
+</Accordion>
 
-# Optional overrides
-TARGET_URL=https://example.com
-VUS=25
-DURATION=2m
-```
+## 🔧 Error Handling
 
-## 📁 Output Structure
+### Common Error Codes
 
-### Result Files
+<Accordion>
+  <AccordionItem title="Docker Errors">
+    - `DockerNotRunning`: Docker daemon not running
+    - `DockerBuildFailed`: Docker image build failed
+    - `DockerPermissionDenied`: Docker permission issues
+    - `DockerTimeout`: Docker operation timed out
+  </AccordionItem>
+  
+  <AccordionItem title="Test Errors">
+    - `ProtocolTestFailed`: k6 protocol test failed
+    - `BrowserTestFailed`: xk6-browser test failed
+    - `TestTimeout`: Test execution timed out
+    - `InvalidConfiguration`: Configuration validation failed
+  </AccordionItem>
+  
+  <AccordionItem title="Analysis Errors">
+    - `DataLoadFailed`: Failed to load test data
+    - `AnalysisFailed`: Analysis script failed
+    - `ReportGenerationFailed`: HTML report generation failed
+    - `DataCorruption`: Test data is corrupted
+  </AccordionItem>
+</Accordion>
 
-Each test run generates:
+### Error Recovery
 
-- **`summary.json`** - Raw k6 metrics (streaming JSON)
-- **`test_report.json`** - Formatted test summary
-- **`page_resource_analysis.json`** - Page resource analysis
-- **`enhanced_analysis_report.json`** - Enhanced performance analysis
-- **`ai_analysis_report.json`** - AI recommendations
+<Accordion>
+  <AccordionItem title="Partial Failures">
+    ```python
+    # Check what completed successfully
+    if os.path.exists('protocol_summary.json'):
+        # Protocol test succeeded, analyze protocol data
+        analyze_protocol_data()
+    
+    if os.path.exists('browser_summary.json'):
+        # Browser test succeeded, analyze browser data
+        analyze_browser_data()
+    
+    # Generate report with available data
+    generate_report()
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Data Corruption">
+    ```python
+    # Validate data integrity
+    try:
+        data = load_data('protocol_summary.json')
+    except json.JSONDecodeError:
+        # Data is corrupted, try to recover
+        data = recover_data('protocol_summary.json')
+    
+    # Generate fallback report
+    generate_manual_report()
+    ```
+  </AccordionItem>
+</Accordion>
 
-### Directory Structure
+---
 
-```
-output/
-└── site_name/
-    ├── timestamp/
-    │   ├── summary.json
-    │   ├── test_report.json
-    │   ├── page_resource_analysis.json
-    │   ├── enhanced_analysis_report.json
-    │   └── ai_analysis_report.json
-    └── latest -> timestamp/
-```
-
-## 🔍 k6 Metrics Reference
-
-### Core Metrics
-
-- **`http_req_duration`** - Response time metrics
-- **`http_req_failed`** - Error rate metrics
-- **`http_reqs`** - Request count metrics
-
-### HTTP Timing Metrics
-
-- **`http_req_dns`** - DNS resolution time
-- **`http_req_connecting`** - TCP connection time
-- **`http_req_tls_handshaking`** - TLS handshake time
-- **`http_req_sending`** - Request sending time
-- **`http_req_waiting`** - Server processing time
-- **`http_req_receiving`** - Response receiving time
-
-### Data Transfer Metrics
-
-- **`data_sent`** - Bytes sent
-- **`data_received`** - Bytes received
-- **`http_req_size`** - Request size
-- **`http_resp_size`** - Response size
-
-## 🎯 Performance Thresholds
-
-### Default Thresholds
-
-```javascript
-// Built into k6 test script
-http_req_duration: ['p(95)<2000'],  // 95% under 2 seconds
-http_req_failed: ['rate<0.1'],      // Error rate under 10%
-```
-
-### Custom Thresholds
-
-```yaml
-# Future configuration option
-thresholds:
-  http_req_duration: ["p(95)<1000"]
-  http_req_failed: ["rate<0.05"]
-```
-
-## 🔗 Related Documentation
-
-- **[Running Tests](/guides/running-tests)** - How to use these scripts
-- **[Interpreting Results](/guides/interpreting-results)** - Understanding output
-- **[Configuration Reference](/configuration)** - Configuration options
-- **[Troubleshooting](/guides/troubleshooting)** - Common issues 
+<div className="cta">
+  <h3>Need more details?</h3>
+  <p>Check our examples and metrics reference for more information.</p>
+  <a href="/reference/examples" className="btn btn-primary">View Examples</a>
+</div> 

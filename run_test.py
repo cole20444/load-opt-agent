@@ -125,9 +125,12 @@ def run_protocol_test(config, output_dir):
             logger.error(f"Failed to build protocol Docker image: {build_result.stderr}")
             return False
         
-        # Run the protocol test
+        # Run the protocol test with resource limits for high-load testing
         run_result = subprocess.run([
             'docker', 'run', '--rm',
+            '--memory=4g',  # 4GB memory limit
+            '--cpus=2',     # 2 CPU cores
+            '--ulimit', 'nofile=65536:65536',  # Increase file descriptor limit
             '-e', f'TARGET_URL={config["target"]}',
             '-e', f'K6_VUS={config["vus"]}',
             '-e', f'K6_DURATION={config["duration"]}',
@@ -136,7 +139,7 @@ def run_protocol_test(config, output_dir):
             'k6-load-test',
             '--out', 'json=/app/output/protocol_summary.json',
             '/app/load_test.js'
-        ], capture_output=True, text=True, timeout=900)
+        ], capture_output=True, text=True, timeout=2400)  # 40 minutes timeout for 30m test
         
         if run_result.returncode == 0:
             logger.info("✅ Protocol-level test completed successfully")
@@ -174,9 +177,13 @@ def run_browser_test(config, output_dir):
             create_failed_browser_summary(output_dir)
             return False
         
-        # Run the browser test
+        # Run the browser test with resource limits
         run_result = subprocess.run([
             'docker', 'run', '--rm',
+            '--memory=6g',  # 6GB memory limit for browser tests
+            '--cpus=2',     # 2 CPU cores
+            '--ulimit', 'nofile=65536:65536',  # Increase file descriptor limit
+            '--shm-size=2g',  # Shared memory for browser
             '-e', f'TARGET_URL={config["target"]}',
             '-e', f'K6_VUS={config["vus"]}',
             '-e', f'K6_DURATION={config["duration"]}',
@@ -185,7 +192,7 @@ def run_browser_test(config, output_dir):
             'xk6-browser-test',
             '--out', 'json=/app/output/browser_summary.json',
             '/app/browser_load_test.js'
-        ], capture_output=True, text=True, timeout=900)  # Longer timeout for browser tests
+        ], capture_output=True, text=True, timeout=1800)  # 30 minutes timeout for browser tests
         
         if run_result.returncode == 0:
             logger.info("✅ Browser-level test completed successfully")

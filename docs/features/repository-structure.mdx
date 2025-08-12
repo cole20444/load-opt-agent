@@ -1,161 +1,564 @@
 ---
-title: Repository Organization
-description: Clean repository structure and organization for the Load Testing & Optimization Agent
+title: Repository Structure
+description: Complete overview of the Load Testing & Optimization Agent codebase structure
 ---
 
-# 🗂️ Repository Organization
+# Repository Structure
 
-## 📁 **Clean Directory Structure**
+The Load Testing & Optimization Agent is organized into logical directories for easy navigation and maintenance.
 
-The repository is now organized with a clean, logical structure where only essential files are in the root directory.
+## 📁 Root Directory
 
-### **Root Directory (Essential Files Only)**
 ```
 load-opt-agent/
-├── run_test.py              # 🚀 Main test runner
-├── requirements.txt         # 📦 Python dependencies
-├── env.example             # 🔧 Environment variables template
-├── .gitignore             # 🚫 Git ignore rules
-├── README.md              # 📖 Main documentation
-├── AI_ANALYSIS_DATA_SUMMARY.md    # 📊 AI analysis documentation
-├── PERFORMANCE_ANALYSIS_SUMMARY.md # 📈 Performance analysis docs
-└── load_test.log          # 📝 Latest test logs
+├── 📋 Configuration Files
+│   ├── requirements.txt          # Python dependencies
+│   ├── env.example               # Environment variables template
+│   └── README.md                 # Project documentation
+│
+├── 🚀 Main Scripts
+│   ├── run_test.py               # Main test execution script
+│   └── FLOW_INTEGRATION.md       # Complete system flow documentation
+│
+├── 📁 Configuration
+│   └── configs/                  # YAML test configurations
+│
+├── 🐳 Docker
+│   └── docker/                   # Docker images and configurations
+│
+├── 🔍 Analysis Scripts
+│   └── scripts/                  # Performance analysis tools
+│
+├── 🧪 Test Scripts
+│   └── tests/                    # k6 and xk6-browser test files
+│
+├── 🤖 AI Analysis
+│   └── ai_analysis/              # AI-powered analysis components
+│
+├── 📊 Output
+│   └── output/                   # Test results and reports
+│
+└── 📚 Documentation
+    └── docs/                     # Mintlify documentation
 ```
 
-### **Core Directories**
+## 📋 Configuration Files
+
+### Core Configuration
+
+<Accordion>
+  <AccordionItem title="requirements.txt">
+    **Purpose**: Python package dependencies
+    
+    ```txt
+    requests>=2.25.1
+    pyyaml>=5.4.1
+    openai>=0.27.0
+    plotly>=5.0.0
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="env.example">
+    **Purpose**: Environment variables template
+    
+    ```bash
+    # OpenAI API configuration (optional)
+    OPENAI_API_KEY=your-api-key-here
+    
+    # Test configuration
+    TARGET_URL=https://example.com
+    K6_VUS=50
+    K6_DURATION=5m
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="README.md">
+    **Purpose**: Project overview and quick start guide
+    
+    - Installation instructions
+    - Basic usage examples
+    - Feature overview
+    - Troubleshooting tips
+  </AccordionItem>
+</Accordion>
+
+## 🚀 Main Scripts
+
+### Core Execution
+
+<Accordion>
+  <AccordionItem title="run_test.py">
+    **Purpose**: Main test orchestration script
+    
+    **Key Functions**:
+    - Load YAML configuration
+    - Build Docker images
+    - Execute protocol tests (k6)
+    - Execute browser tests (xk6-browser)
+    - Generate analysis reports
+    - Create HTML reports
+    
+    **Usage**:
+    ```bash
+    python run_test.py configs/pop_website_test.yaml
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="FLOW_INTEGRATION.md">
+    **Purpose**: Complete system flow documentation
+    
+    **Contents**:
+    - Test execution flow
+    - Data collection & analysis flow
+    - Component integration matrix
+    - High-load testing optimizations
+    - HTML report generation
+    - Error handling & recovery
+  </AccordionItem>
+</Accordion>
+
+## 📁 Configuration Directory
+
+### Test Configurations
+
 ```
-load-opt-agent/
-├── docker/                 # 🐳 Docker configuration
-│   └── Dockerfile         # k6 container definition
-├── tests/                  # 🧪 Test scripts
-│   └── load_test.js       # k6 load test script
-├── ai_analysis/           # 🤖 AI analysis components
-│   ├── analysis_agent.py  # Rule-based analysis
-│   ├── openai_enhanced_agent.py # AI-enhanced analysis
-│   └── technology_templates.yaml # Technology patterns
-├── scripts/               # 🔧 Utility and test scripts
-│   ├── README.md          # Scripts documentation
-│   ├── page_resource_analyzer.py      # Page resource analysis
-│   ├── enhanced_performance_analyzer.py # Enhanced k6 analysis
-│   ├── analyze_k6_metrics.py          # k6 metrics analysis
-│   ├── test_system.py                 # System testing
-│   ├── test_ai_analysis.py            # AI analysis testing
-│   ├── test_openai_integration.py     # OpenAI integration testing
-│   ├── parse_results.py               # Results parsing
-│   ├── show_ai_prompts.py             # AI prompt display
-│   └── show_template_usage.py         # Template usage demo
-├── configs/               # 📋 Load test configurations
-│   ├── test_config.yaml   # Basic example
-│   ├── pop_website_test.yaml # POP website (Svelte + Strapi)
-│   ├── wordpress_test.yaml # WordPress example
-│   └── api_test.yaml      # API example
-├── output/                # 📊 Test results and reports
-│   ├── summary.json       # Raw k6 metrics
-│   ├── test_report.json   # Formatted test results
-│   ├── page_resource_analysis.json # Page resource analysis
-│   ├── enhanced_analysis_report.json # Enhanced analysis
-│   └── ai_analysis_report.json # AI recommendations
-└── .venv/                 # 🐍 Python virtual environment
-```
-
-## 🎯 **Organization Benefits**
-
-### **1. Clean Root Directory**
-- **Only essential files** in root
-- **Easy to find** main entry points
-- **Professional appearance**
-- **Clear separation** of concerns
-
-### **2. Logical Grouping**
-- **`docker/`** - Container configuration
-- **`tests/`** - Core test scripts
-- **`ai_analysis/`** - AI analysis components
-- **`scripts/`** - Utility and testing scripts
-- **`configs/`** - Load test configurations
-- **`output/`** - Generated results
-
-### **3. Easy Navigation**
-- **Main runner**: `run_test.py` (root)
-- **Documentation**: `README.md` (root)
-- **Scripts**: `scripts/` directory
-- **Configurations**: `configs/` directory
-- **Results**: `output/` directory
-
-## 🔧 **Scripts Organization**
-
-### **Core Analysis Scripts**
-- `page_resource_analyzer.py` - Page resource analysis
-- `enhanced_performance_analyzer.py` - Enhanced k6 analysis
-- `analyze_k6_metrics.py` - k6 metrics analysis
-
-### **Testing Scripts**
-- `test_system.py` - System verification
-- `test_ai_analysis.py` - AI analysis testing
-- `test_openai_integration.py` - OpenAI integration testing
-
-### **Utility Scripts**
-- `parse_results.py` - Results parsing
-- `show_ai_prompts.py` - AI prompt display
-- `show_template_usage.py` - Template usage demo
-
-## 📋 **Usage Examples**
-
-### **Main Operations**
-```bash
-# Run complete test with analysis
-python run_test.py configs/pop_website_test.yaml
-
-# Run individual analysis
-python scripts/page_resource_analyzer.py https://example.com
-python scripts/enhanced_performance_analyzer.py
-python scripts/analyze_k6_metrics.py
-
-# Test system components
-python scripts/test_system.py
-python scripts/test_ai_analysis.py
-```
-
-### **Development Workflow**
-```bash
-# 1. Test system components
-python scripts/test_system.py
-
-# 2. Run load test
-python run_test.py configs/pop_website_test.yaml
-
-# 3. Analyze results
-python scripts/analyze_k6_metrics.py
-python scripts/enhanced_performance_analyzer.py
-
-# 4. Check AI analysis
-python scripts/show_ai_prompts.py
+configs/
+├── 📄 Pre-configured Templates
+│   ├── quick_test.yaml           # Fast protocol-only test
+│   ├── browser_test.yaml         # Browser-only test
+│   ├── comprehensive_test.yaml   # Both protocol and browser
+│   └── pop_website_test.yaml     # High-load test (200 VUs)
+│
+├── 📄 Example Configurations
+│   ├── api_test.yaml             # API endpoint testing
+│   ├── wordpress_test.yaml       # WordPress site testing
+│   └── test_config.yaml          # Template for custom configs
+│
+└── 📄 Specialized Configurations
+    ├── 5min_comprehensive_test.yaml  # 5-minute comprehensive test
+    └── technical_analysis.yaml       # Technical analysis focus
 ```
 
-## 🚀 **Benefits for Development**
+### Configuration Examples
 
-### **1. Clear Separation**
-- **Core functionality** in root
-- **Utilities** in `scripts/`
-- **Configurations** in `configs/`
-- **Results** in `output/`
+<Accordion>
+  <AccordionItem title="Quick Test (quick_test.yaml)">
+    ```yaml
+    test_type: protocol
+    vus: 20
+    duration: 2m
+    target: https://example.com
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="High-Load Test (pop_website_test.yaml)">
+    ```yaml
+    test_type: both
+    vus: 200
+    duration: 30m
+    protocol_settings:
+      vus: 200
+      duration: 30m
+      thresholds:
+        http_req_duration: ["p(95)<10000"]
+        http_req_failed: ["rate<0.3"]
+    browser_settings:
+      vus: 50
+      duration: 10m
+    ```
+  </AccordionItem>
+</Accordion>
 
-### **2. Easy Maintenance**
-- **Organized by purpose**
-- **Clear file locations**
-- **Documented structure**
-- **Consistent naming**
+## 🐳 Docker Directory
 
-### **3. Scalable Structure**
-- **Easy to add new scripts**
-- **Clear organization patterns**
-- **Documented conventions**
-- **Professional appearance**
+### Container Configurations
 
-## ✅ **Verification**
+```
+docker/
+├── 📄 Protocol Testing
+│   └── Dockerfile                # k6 protocol test container
+│
+└── 📄 Browser Testing
+    └── Dockerfile.browser        # xk6-browser test container
+```
 
-All scripts work correctly from their new locations:
-- ✅ `python scripts/test_system.py` - System verification
-- ✅ `python scripts/analyze_k6_metrics.py` - Metrics analysis
-- ✅ `python run_test.py` - Main runner (updated paths)
+### Docker Configurations
 
-The repository is now **clean, organized, and professional** with a logical structure that makes it easy to find and use all components. 
+<Accordion>
+  <AccordionItem title="Dockerfile (Protocol)">
+    ```dockerfile
+    FROM grafana/k6:latest
+    
+    # Environment optimizations
+    ENV K6_DISABLE_COMPRESSION=true
+    ENV K6_DISABLE_HTTP2=true
+    ENV K6_NO_USAGE_REPORT=true
+    
+    WORKDIR /app
+    ENTRYPOINT ["k6", "run"]
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Dockerfile.browser (Browser)">
+    ```dockerfile
+    FROM grafana/xk6-browser:latest
+    
+    # Browser optimizations
+    ENV K6_BROWSER_ENABLED=true
+    ENV K6_BROWSER_HEADLESS=true
+    
+    WORKDIR /app
+    ENTRYPOINT ["k6", "run"]
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🔍 Analysis Scripts Directory
+
+### Performance Analysis Tools
+
+```
+scripts/
+├── 📊 Core Analysis
+│   ├── enhanced_performance_analyzer.py    # Protocol metrics analysis
+│   ├── browser_metrics_analyzer.py         # Browser metrics analysis
+│   └── generate_k6_html_report.py          # Primary HTML report generator
+│
+├── 📄 Report Generation
+│   ├── generate_manual_report.py           # Fallback HTML report
+│   ├── generate_readable_report.py         # Alternative report generator
+│   └── list_test_results.py                # Test results listing
+│
+├── 🔧 Utility Scripts
+│   ├── parse_results.py                    # Results parsing utilities
+│   ├── analyze_k6_metrics.py               # k6 metrics analysis
+│   └── page_resource_analyzer.py           # Page resource analysis
+│
+├── 🧪 Testing Scripts
+│   ├── test_ai_analysis.py                 # AI analysis testing
+│   ├── test_openai_integration.py          # OpenAI integration testing
+│   ├── test_system.py                      # System testing
+│   └── test_fallback_system.py             # Fallback system testing
+│
+└── 📋 Documentation
+    └── README.md                           # Scripts documentation
+```
+
+### Key Analysis Scripts
+
+<Accordion>
+  <AccordionItem title="enhanced_performance_analyzer.py">
+    **Purpose**: Comprehensive protocol metrics analysis
+    
+    **Features**:
+    - HTTP timing breakdown analysis
+    - Data transfer analysis
+    - Load distribution analysis
+    - Performance scoring
+    - Issue detection and recommendations
+    
+    **Output**: `enhanced_analysis_report.json`
+  </AccordionItem>
+  
+  <AccordionItem title="browser_metrics_analyzer.py">
+    **Purpose**: Browser performance analysis
+    
+    **Features**:
+    - Core Web Vitals analysis
+    - Resource loading analysis
+    - Performance issues detection
+    - Browser-specific scoring
+    - Front-end optimization insights
+    
+    **Output**: `browser_summary_analysis.json`
+  </AccordionItem>
+  
+  <AccordionItem title="generate_k6_html_report.py">
+    **Purpose**: Primary HTML report generation
+    
+    **Features**:
+    - Interactive Plotly visualizations
+    - Navigation system with jump links
+    - Responsive design
+    - Comprehensive data display
+    - Error handling
+    
+    **Output**: `load_test_report.html`
+  </AccordionItem>
+  
+  <AccordionItem title="generate_manual_report.py">
+    **Purpose**: Fallback HTML report generation
+    
+    **Features**:
+    - Simple, clean design
+    - Analysis file integration
+    - Error recovery
+    - Self-contained HTML
+    
+    **Output**: `manual_load_test_report.html`
+  </AccordionItem>
+</Accordion>
+
+## 🧪 Test Scripts Directory
+
+### Load Test Definitions
+
+```
+tests/
+├── 📄 Protocol Tests
+│   └── load_test.js              # k6 protocol test script
+│
+└── 📄 Browser Tests
+    └── browser_load_test.js      # xk6-browser test script
+```
+
+### Test Scripts
+
+<Accordion>
+  <AccordionItem title="load_test.js (Protocol)">
+    **Purpose**: k6 protocol-level load testing
+    
+    **Features**:
+    - HTTP request testing
+    - Ramp-up strategy implementation
+    - Memory optimizations
+    - Custom metrics collection
+    - Error handling
+    
+    ```javascript
+    export const options = {
+      stages: [
+        { duration: '2m', target: 50 },
+        { duration: '5m', target: 200 },
+        { duration: '2m', target: 0 }
+      ],
+      discardResponseBodies: true,
+      thresholds: {
+        http_req_duration: ['p(95)<10000'],
+        http_req_failed: ['rate<0.3']
+      }
+    };
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="browser_load_test.js (Browser)">
+    **Purpose**: xk6-browser front-end testing
+    
+    **Features**:
+    - Real browser testing with Chromium
+    - Core Web Vitals measurement
+    - Resource loading analysis
+    - User interaction simulation
+    - Performance metrics collection
+    
+    ```javascript
+    export default function() {
+      const page = browser.newPage();
+      page.goto('https://example.com');
+      
+      // Measure Core Web Vitals
+      const metrics = page.evaluate(() => {
+        return {
+          fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime,
+          lcp: performance.getEntriesByName('largest-contentful-paint')[0]?.startTime
+        };
+      });
+    }
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🤖 AI Analysis Directory
+
+### AI-Powered Analysis
+
+```
+ai_analysis/
+├── 📄 Core AI Components
+│   ├── analysis_agent.py         # Main AI analysis agent
+│   ├── openai_enhanced_agent.py  # OpenAI integration
+│   └── technology_templates.yaml # Technology-specific patterns
+│
+└── 📄 AI Configuration
+    └── templates/                 # AI analysis templates
+```
+
+### AI Components
+
+<Accordion>
+  <AccordionItem title="analysis_agent.py">
+    **Purpose**: Main AI analysis orchestration
+    
+    **Features**:
+    - Data collection from all sources
+    - Technology-specific analysis
+    - Recommendation generation
+    - Report creation
+  </AccordionItem>
+  
+  <AccordionItem title="openai_enhanced_agent.py">
+    **Purpose**: OpenAI API integration
+    
+    **Features**:
+    - GPT model integration
+    - Context-aware analysis
+    - Technology-specific insights
+    - Implementation guidance
+  </AccordionItem>
+  
+  <AccordionItem title="technology_templates.yaml">
+    **Purpose**: Technology-specific analysis patterns
+    
+    **Contents**:
+    - Framework-specific optimizations
+    - Technology best practices
+    - Common performance issues
+    - Optimization strategies
+  </AccordionItem>
+</Accordion>
+
+## 📊 Output Directory
+
+### Test Results Organization
+
+```
+output/
+└── 📁 Site-based Organization
+    └── site_name/
+        ├── 📁 Timestamped Runs
+        │   ├── 20250811_223723/           # Latest test run
+        │   │   ├── protocol_summary.json  # Raw k6 data (JSONL)
+        │   │   ├── browser_summary.json   # Raw browser data
+        │   │   ├── enhanced_analysis_report.json
+        │   │   ├── browser_summary_analysis.json
+        │   │   ├── load_test_report.html  # Interactive report
+        │   │   └── manual_load_test_report.html
+        │   │
+        │   ├── 20250811_215741/           # Previous test run
+        │   └── 20250811_191533/           # Earlier test run
+        │
+        └── 🔗 Latest Symlink
+            └── latest -> 20250811_223723/  # Points to most recent
+```
+
+### Output File Types
+
+<Accordion>
+  <AccordionItem title="Raw Data Files">
+    - **`protocol_summary.json`**: k6 metrics in JSONL format (50MB-1GB)
+    - **`browser_summary.json`**: xk6-browser metrics (100MB-1GB)
+  </AccordionItem>
+  
+  <AccordionItem title="Analysis Files">
+    - **`enhanced_analysis_report.json`**: Processed protocol analysis (1-10MB)
+    - **`browser_summary_analysis.json`**: Processed browser analysis (1-10MB)
+  </AccordionItem>
+  
+  <AccordionItem title="HTML Reports">
+    - **`load_test_report.html`**: Interactive comprehensive report (100-500KB)
+    - **`manual_load_test_report.html`**: Fallback report (100-500KB)
+  </AccordionItem>
+  
+  <AccordionItem title="AI Reports (Optional)">
+    - **`ai_analysis_report.json`**: AI recommendations (1-5MB)
+    - **`ai_analysis_report.html`**: AI HTML report (100-500KB)
+    - **`ai_analysis_report.md`**: AI markdown report (10-50KB)
+  </AccordionItem>
+</Accordion>
+
+## 📚 Documentation Directory
+
+### Mintlify Documentation
+
+```
+docs/
+├── 📄 Main Pages
+│   ├── index.mdx                 # Landing page
+│   ├── quick-start.mdx           # Quick start guide
+│   └── configuration.mdx         # Configuration reference
+│
+├── 📁 Features
+│   ├── performance-analysis.mdx  # Performance analysis features
+│   ├── test-results.mdx          # Test results documentation
+│   ├── ai-analysis.mdx           # AI analysis features
+│   └── repository-structure.mdx  # This file
+│
+├── 📁 Guides
+│   ├── running-tests.mdx         # Test execution guide
+│   ├── interpreting-results.mdx  # Results interpretation
+│   └── troubleshooting.mdx       # Troubleshooting guide
+│
+├── 📁 Reference
+│   ├── api-reference.mdx         # Script API documentation
+│   ├── examples.mdx              # Usage examples
+│   └── metrics-reference.mdx     # Metrics documentation
+│
+└── 📄 Configuration
+    ├── _config.yml               # Mintlify configuration
+    └── mint.json                 # Mintlify metadata
+```
+
+### Documentation Structure
+
+<Accordion>
+  <AccordionItem title="Main Documentation">
+    - **index.mdx**: Project overview and key features
+    - **quick-start.mdx**: Getting started guide
+    - **configuration.mdx**: YAML configuration reference
+  </AccordionItem>
+  
+  <AccordionItem title="Feature Documentation">
+    - **performance-analysis.mdx**: Protocol and browser testing
+    - **test-results.mdx**: HTML reports and analysis
+    - **ai-analysis.mdx**: AI-powered recommendations
+    - **repository-structure.mdx**: Codebase organization
+  </AccordionItem>
+  
+  <AccordionItem title="Guides">
+    - **running-tests.mdx**: Test execution instructions
+    - **interpreting-results.mdx**: Results analysis guide
+    - **troubleshooting.mdx**: Common issues and solutions
+  </AccordionItem>
+  
+  <AccordionItem title="Reference">
+    - **api-reference.mdx**: Script documentation
+    - **examples.mdx**: Usage examples
+    - **metrics-reference.mdx**: Metrics definitions
+  </AccordionItem>
+</Accordion>
+
+## 🔧 Development Workflow
+
+### File Organization Principles
+
+<Accordion>
+  <AccordionItem title="Separation of Concerns">
+    - **Configuration**: YAML files for test settings
+    - **Execution**: Python scripts for orchestration
+    - **Testing**: JavaScript files for load tests
+    - **Analysis**: Python scripts for data processing
+    - **Documentation**: Markdown files for guides
+  </AccordionItem>
+  
+  <AccordionItem title="Modularity">
+    - **Independent Components**: Each script has a single responsibility
+    - **Configurable**: Settings externalized to YAML files
+    - **Extensible**: Easy to add new analysis components
+    - **Maintainable**: Clear separation of concerns
+  </AccordionItem>
+  
+  <AccordionItem title="Scalability">
+    - **Docker-based**: Containerized for consistency
+    - **Resource-aware**: Optimized for high-load testing
+    - **Error-handling**: Robust error recovery
+    - **Fallback Systems**: Multiple report generation options
+  </AccordionItem>
+</Accordion>
+
+---
+
+<div className="cta">
+  <h3>Ready to explore the codebase?</h3>
+  <p>Now that you understand the structure, dive into the specific components and start customizing.</p>
+  <a href="/quick-start" className="btn btn-primary">Get Started</a>
+</div> 

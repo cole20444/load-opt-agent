@@ -1,20 +1,20 @@
 ---
 title: Load Testing & Optimization Agent
-description: Automated load testing with AI-powered performance optimization recommendations
+description: Professional-grade load testing with browser testing, AI analysis, and comprehensive HTML reports
 ---
 
 # Load Testing & Optimization Agent
 
 <div className="hero">
   <div className="hero-content">
-    <h1>Automated Load Testing with AI Optimization</h1>
+    <h1>Professional Load Testing with Browser & AI Analysis</h1>
     <p className="hero-description">
-      Professional-grade load testing system that combines k6 performance testing with AI-powered optimization recommendations. 
-      Test any web application and get intelligent insights for performance improvements.
+      Advanced load testing system combining k6 protocol testing, xk6-browser front-end analysis, 
+      and AI-powered optimization recommendations. Get comprehensive insights from both server and client perspectives.
     </p>
     <div className="hero-buttons">
       <a href="/quick-start" className="btn btn-primary">Get Started</a>
-      <a href="/examples" className="btn btn-secondary">View Examples</a>
+      <a href="/configuration" className="btn btn-secondary">Configuration</a>
     </div>
   </div>
 </div>
@@ -24,22 +24,32 @@ description: Automated load testing with AI-powered performance optimization rec
 <div className="features-grid">
   <div className="feature-card">
     <h3>🔧 Dockerized Load Testing</h3>
-    <p>Containerized k6 tests with YAML configuration for repeatable, scalable performance testing.</p>
+    <p>Containerized k6 and xk6-browser tests with YAML configuration for repeatable, scalable performance testing.</p>
+  </div>
+  
+  <div className="feature-card">
+    <h3>🌐 Browser Performance Testing</h3>
+    <p>Real browser testing with Core Web Vitals, resource analysis, and front-end performance insights.</p>
+  </div>
+  
+  <div className="feature-card">
+    <h3>📊 Comprehensive HTML Reports</h3>
+    <p>Interactive HTML reports with Plotly visualizations, navigation, and detailed performance analysis.</p>
+  </div>
+  
+  <div className="feature-card">
+    <h3>⚡ High-Load Optimizations</h3>
+    <p>Ramp-up strategies, resource limits, and memory optimizations for testing up to 200+ virtual users.</p>
   </div>
   
   <div className="feature-card">
     <h3>🤖 AI-Powered Analysis</h3>
-    <p>OpenAI integration provides intelligent optimization recommendations based on test results.</p>
-  </div>
-  
-  <div className="feature-card">
-    <h3>📊 Comprehensive Metrics</h3>
-    <p>21 k6 metrics with 38K+ data points, page resource analysis, and detailed performance insights.</p>
+    <p>OpenAI integration provides intelligent optimization recommendations based on comprehensive test results.</p>
   </div>
   
   <div className="feature-card">
     <h3>📁 Organized Results</h3>
-    <p>Site-based organization with timestamped test runs and easy navigation through results.</p>
+    <p>Site-based organization with timestamped test runs, latest symlinks, and easy navigation through results.</p>
   </div>
 </div>
 
@@ -50,17 +60,41 @@ description: Automated load testing with AI-powered performance optimization rec
 - **APIs**: REST and GraphQL endpoint load testing
 - **E-commerce**: Shopify, WooCommerce, and custom solutions
 - **Performance Optimization**: Get AI recommendations for improvements
+- **Front-end Performance**: Core Web Vitals and browser-level analysis
 
 ## 📈 What You Get
 
 <div className="benefits">
   <div className="benefit">
-    <h4>📋 Test Reports</h4>
+    <h4>🔌 Protocol Test Results</h4>
     <ul>
-      <li>Raw k6 metrics (21 metrics, 38K+ data points)</li>
-      <li>Formatted test summaries with metadata</li>
-      <li>Page resource analysis results</li>
-      <li>Enhanced performance analysis</li>
+      <li>Raw k6 metrics (JSONL format, 21+ metrics)</li>
+      <li>Enhanced performance analysis with detailed breakdowns</li>
+      <li>HTTP timing analysis (DNS, TLS, server processing)</li>
+      <li>Data transfer analysis and load distribution</li>
+      <li>High-load optimizations (ramp-up, resource limits)</li>
+    </ul>
+  </div>
+  
+  <div className="benefit">
+    <h4>🌐 Browser Test Results</h4>
+    <ul>
+      <li>Core Web Vitals (FCP, LCP, FID, CLS, TTI, TBT)</li>
+      <li>Resource loading analysis and page weight</li>
+      <li>Performance issues detection and scoring</li>
+      <li>Real browser testing with Chromium</li>
+      <li>Front-end optimization insights</li>
+    </ul>
+  </div>
+  
+  <div className="benefit">
+    <h4>📊 HTML Reports</h4>
+    <ul>
+      <li>Interactive HTML reports with Plotly visualizations</li>
+      <li>Navigation system with jump links</li>
+      <li>Responsive design for all devices</li>
+      <li>Manual report generation fallback</li>
+      <li>Executive summary with performance grades</li>
     </ul>
   </div>
   
@@ -71,16 +105,7 @@ description: Automated load testing with AI-powered performance optimization rec
       <li>Prioritized action items</li>
       <li>Implementation guidance</li>
       <li>Expected performance improvements</li>
-    </ul>
-  </div>
-  
-  <div className="benefit">
-    <h4>🔧 Easy Management</h4>
-    <ul>
-      <li>Organized results by site and timestamp</li>
-      <li>Latest results always accessible</li>
-      <li>Historical performance tracking</li>
-      <li>Multiple site support</li>
+      <li>Cross-perspective analysis (protocol + browser)</li>
     </ul>
   </div>
 </div>
@@ -97,34 +122,50 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 3. Configure environment
+# 3. Configure environment (optional, for AI analysis)
 cp env.example .env
 # Add your OpenAI API key to .env
 
-# 4. Run your first test
+# 4. Run your first comprehensive test
 python run_test.py configs/pop_website_test.yaml
+
+# 5. View results
+open output/pop-website-2024-dev_azurewebsites_net/latest/load_test_report.html
 ```
 
 ## 📊 Example Results
 
 <div className="example-results">
   <div className="result-card">
-    <h4>Performance Metrics</h4>
+    <h4>Protocol Performance</h4>
     <ul>
-      <li>📈 Total Requests: 1,963</li>
-      <li>⏱️ Avg Response Time: 529ms</li>
-      <li>❌ Error Rate: 0.30%</li>
-      <li>👥 Virtual Users: 25</li>
+      <li>📈 Total Requests: 7,116</li>
+      <li>⏱️ Avg Response Time: 166ms</li>
+      <li>❌ Error Rate: 2.50%</li>
+      <li>👥 Virtual Users: 200</li>
+      <li>🎯 Performance Score: 80/100</li>
+    </ul>
+  </div>
+  
+  <div className="result-card">
+    <h4>Browser Performance</h4>
+    <ul>
+      <li>🎨 FCP: 471ms (Grade: A)</li>
+      <li>📏 LCP: 706ms (Grade: A)</li>
+      <li>⚡ FID: 588ms (Grade: C)</li>
+      <li>📦 Page Weight: 86.42MB</li>
+      <li>🎯 Performance Score: 30/100</li>
     </ul>
   </div>
   
   <div className="result-card">
     <h4>AI Analysis</h4>
     <ul>
-      <li>🎯 Performance Grade: B+</li>
-      <li>📊 Overall Score: 78/100</li>
+      <li>🎯 Overall Grade: B+</li>
+      <li>📊 Combined Score: 78/100</li>
       <li>💡 Recommendations: 7 generated</li>
       <li>🚀 Expected Improvement: 25-40%</li>
+      <li>⚠️ Issues Found: 5 (2 high priority)</li>
     </ul>
   </div>
 </div>
@@ -133,13 +174,13 @@ python run_test.py configs/pop_website_test.yaml
 
 - **[Quick Start Guide](/quick-start)** - Get up and running in minutes
 - **[Configuration Reference](/configuration)** - Learn about YAML configuration options
-- **[Examples](/examples)** - See real-world usage examples
-- **[API Reference](/api-reference)** - Detailed script documentation
+- **[Features Overview](/features)** - Explore all system capabilities
+- **[API Reference](/reference/api-reference)** - Detailed script documentation
 
 ---
 
 <div className="cta">
   <h3>Ready to optimize your web application performance?</h3>
-  <p>Start with our quick start guide and see the difference AI-powered analysis can make.</p>
+  <p>Start with our quick start guide and see the difference comprehensive testing can make.</p>
   <a href="/quick-start" className="btn btn-primary">Get Started Now</a>
 </div> 

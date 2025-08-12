@@ -21,15 +21,32 @@ export const thresholds = {
 };
 
 export const options = {
+  // Dynamic stages based on environment variables
   stages: [
-    { duration: '10s', target: 5 }, // Ramp up
-    { duration: '30s', target: 25 }, // Stay at 25 VUs
-    { duration: '10s', target: 0 }, // Ramp down
+    // Ramp up to 50 VUs over 2 minutes
+    { duration: '2m', target: 50 },
+    // Ramp up to 100 VUs over 3 minutes
+    { duration: '3m', target: 100 },
+    // Ramp up to 200 VUs over 5 minutes
+    { duration: '5m', target: 200 },
+    // Stay at 200 VUs for 15 minutes
+    { duration: '15m', target: 200 },
+    // Ramp down to 100 VUs over 2 minutes
+    { duration: '2m', target: 100 },
+    // Ramp down to 50 VUs over 2 minutes
+    { duration: '2m', target: 50 },
+    // Ramp down to 0 VUs over 1 minute
+    { duration: '1m', target: 0 },
   ],
   thresholds,
   // Global timeout settings
   http_debug: false, // Disable debug to reduce noise
   no_usage_report: true, // Disable usage reporting
+  // Memory and resource optimizations
+  discardResponseBodies: true, // Reduce memory usage
+  // Connection pooling
+  http_req_duration: ['p(95)<10000'], // 10s timeout for high load
+  http_req_failed: ['rate<0.3'], // Allow 30% error rate during ramp-up
 };
 
 // Setup function - runs once before the test
@@ -108,9 +125,9 @@ export default function(data) {
     // Compression analysis
     const contentLength = mainResponse.headers['Content-Length'];
     const transferEncoding = mainResponse.headers['Content-Encoding'];
-    const responseSize = mainResponse.body.length;
+    const responseSize = mainResponse.body ? mainResponse.body.length : 0;
     
-    if (contentLength && transferEncoding) {
+    if (contentLength && transferEncoding && responseSize > 0) {
       const originalSize = parseInt(contentLength);
       const compressedSize = responseSize;
       const ratio = originalSize > 0 ? (originalSize - compressedSize) / originalSize : 0;
@@ -118,7 +135,9 @@ export default function(data) {
     }
     
     // Resource analysis - extract and analyze page resources
-    analyzePageResources(mainResponse.body, targetUrl);
+    if (mainResponse.body) {
+      analyzePageResources(mainResponse.body, targetUrl);
+    }
   }
 
   // Simulate user behavior with think time
@@ -172,7 +191,7 @@ function analyzePageResources(htmlContent, baseUrl) {
         if (resourceResponse.status === 200) {
           // Record resource metrics
           resourceLoadTime.add(resourceResponse.timings.duration);
-          resourceSize.add(resourceResponse.body.length);
+          resourceSize.add(resourceResponse.body ? resourceResponse.body.length : 0);
           resourceType.add(1, { type });
           
           // Analyze resource-specific issues
@@ -190,7 +209,7 @@ function analyzePageResources(htmlContent, baseUrl) {
 
 // Function to analyze specific resource issues
 function analyzeResourceIssues(type, url, response) {
-  const size = response.body.length;
+  const size = response.body ? response.body.length : 0;
   const loadTime = response.timings.duration;
   
   // Define thresholds for different resource types

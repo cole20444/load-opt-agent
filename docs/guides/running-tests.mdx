@@ -1,179 +1,549 @@
 ---
 title: Running Tests
-description: Complete guide to running load tests with the Load Testing & Optimization Agent
+description: Complete guide to running load tests with protocol testing, browser testing, and comprehensive analysis
 ---
 
 # Running Tests
 
-Learn how to run load tests and get comprehensive performance analysis.
+Learn how to execute load tests with the Load Testing & Optimization Agent, including protocol testing, browser testing, and comprehensive analysis.
 
 ## 🚀 Basic Test Execution
 
-### Quick Test
-```bash
-# Run with default configuration
-python run_test.py
+### Quick Start
 
-# Run with specific configuration
+```bash
+# Run a comprehensive test (protocol + browser)
 python run_test.py configs/pop_website_test.yaml
+
+# Run a quick protocol-only test
+python run_test.py configs/quick_test.yaml
+
+# Run a browser-only test
+python run_test.py configs/browser_test.yaml
 ```
 
-### Extended Test
+### Test Execution Flow
+
+The system follows this execution sequence:
+
+```
+1. 📋 Load Configuration
+   ├── Parse YAML config file
+   ├── Validate required fields
+   └── Set defaults and overrides
+
+2. 🐳 Build Docker Images
+   ├── Build k6 protocol test image
+   └── Build xk6-browser test image
+
+3. 🔌 Protocol Testing (if enabled)
+   ├── Run k6 container with resource limits
+   ├── Execute load_test.js with ramp-up strategy
+   └── Generate protocol_summary.json
+
+4. 🌐 Browser Testing (if enabled)
+   ├── Run xk6-browser container with browser optimizations
+   ├── Execute browser_load_test.js
+   └── Generate browser_summary.json
+
+5. 📊 Analysis & Reporting
+   ├── Run enhanced_performance_analyzer.py
+   ├── Run browser_metrics_analyzer.py
+   ├── Generate HTML reports
+   └── Create latest symlink
+```
+
+## 📋 Configuration Options
+
+### Test Types
+
+<Accordion>
+  <AccordionItem title="Protocol Testing (k6)">
+    **Purpose**: Server-side performance testing
+    
+    ```yaml
+    test_type: protocol
+    vus: 50
+    duration: 5m
+    ```
+    
+    **Best For**:
+    - API endpoint testing
+    - Server performance validation
+    - High-load stress testing
+    - Backend optimization
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Testing (xk6-browser)">
+    **Purpose**: Front-end performance testing
+    
+    ```yaml
+    test_type: browser
+    browser_settings:
+      vus: 5
+      duration: 1m
+      timeout: "30s"
+    ```
+    
+    **Best For**:
+    - Core Web Vitals measurement
+    - Front-end performance analysis
+    - User experience testing
+    - Resource loading optimization
+  </AccordionItem>
+  
+  <AccordionItem title="Comprehensive Testing (both)">
+    **Purpose**: Full-stack performance testing
+    
+    ```yaml
+    test_type: both
+    vus: 100
+    duration: 5m
+    protocol_settings:
+      vus: 100
+      duration: 5m
+    browser_settings:
+      vus: 10
+      duration: 2m
+    ```
+    
+    **Best For**:
+    - Complete application testing
+    - End-to-end performance validation
+    - Production readiness testing
+    - Comprehensive optimization
+  </AccordionItem>
+</Accordion>
+
+### Load Testing Scenarios
+
+<Accordion>
+  <AccordionItem title="Quick Development Test">
+    ```yaml
+    target: https://your-app.com
+    test_type: protocol
+    vus: 20
+    duration: 2m
+    description: "Quick development test"
+    ```
+    
+    **Use Case**: Fast feedback during development
+    **Duration**: 2-3 minutes total
+    **Resource Usage**: Low
+  </AccordionItem>
+  
+  <AccordionItem title="Production Validation Test">
+    ```yaml
+    target: https://your-app.com
+    test_type: both
+    vus: 100
+    duration: 10m
+    protocol_settings:
+      vus: 100
+      duration: 10m
+      thresholds:
+        http_req_duration: ["p(95)<3000"]
+        http_req_failed: ["rate<0.05"]
+    browser_settings:
+      vus: 20
+      duration: 5m
+    ```
+    
+    **Use Case**: Production deployment validation
+    **Duration**: 10-15 minutes total
+    **Resource Usage**: Medium
+  </AccordionItem>
+  
+  <AccordionItem title="High-Load Stress Test">
+    ```yaml
+    target: https://your-app.com
+    test_type: both
+    vus: 200
+    duration: 30m
+    protocol_settings:
+      vus: 200
+      duration: 30m
+      thresholds:
+        http_req_duration: ["p(95)<10000"]
+        http_req_failed: ["rate<0.3"]
+    browser_settings:
+      vus: 50
+      duration: 10m
+    ```
+    
+    **Use Case**: Capacity planning and stress testing
+    **Duration**: 30-40 minutes total
+    **Resource Usage**: High
+  </AccordionItem>
+</Accordion>
+
+## ⚡ High-Load Testing
+
+### Ramp-up Strategy
+
+For high-load tests (200+ VUs), the system automatically implements intelligent ramp-up:
+
+```javascript
+// Automatic ramp-up for 200 VUs over 30 minutes
+export const options = {
+  stages: [
+    { duration: '2m', target: 50 },   // Gentle start
+    { duration: '3m', target: 100 },  // Gradual increase
+    { duration: '5m', target: 200 },  // Peak load
+    { duration: '15m', target: 200 }, // Sustained load
+    { duration: '2m', target: 100 },  // Gradual decrease
+    { duration: '2m', target: 50 },   // Gentle ramp-down
+    { duration: '1m', target: 0 },    // Complete shutdown
+  ],
+};
+```
+
+### Resource Management
+
+<Accordion>
+  <AccordionItem title="Docker Resource Limits">
+    ```bash
+    # Protocol test container
+    --memory=4g          # 4GB memory limit
+    --cpus=2             # 2 CPU cores
+    --ulimit nofile=65536:65536  # File descriptor limit
+    
+    # Browser test container
+    --memory=6g          # 6GB memory limit
+    --cpus=2             # 2 CPU cores
+    --shm-size=2g        # Shared memory for browser
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="k6 Optimizations">
+    ```javascript
+    // Memory optimizations
+    discardResponseBodies: true,  // Reduce memory usage
+    http_debug: false,            // Disable debug output
+    no_usage_report: true,        // Disable usage reporting
+    
+    // Performance optimizations
+    K6_DISABLE_COMPRESSION: true, // Disable compression
+    K6_DISABLE_HTTP2: true,       // Disable HTTP/2
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Timeout Handling">
+    ```javascript
+    // Increased timeouts for high load
+    http_req_duration: ['p(95)<10000'],  // 10s timeout
+    http_req_failed: ['rate<0.3'],       // 30% error tolerance
+    
+    // Request-level timeouts
+    timeout: '30s',  // Main page timeout
+    timeout: '20s',  // Resource timeout
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🔧 Advanced Configuration
+
+### Environment Variables
+
+You can override configuration with environment variables:
+
 ```bash
-# Run a 15-minute test with 50 virtual users
-python run_test.py configs/pop_website_15min_test.yaml
+# Set target URL
+export TARGET_URL=https://your-app.com
+
+# Set virtual users
+export K6_VUS=100
+
+# Set test duration
+export K6_DURATION=10m
+
+# Set OpenAI API key (optional)
+export OPENAI_API_KEY=your-api-key-here
+
+# Run test
+python run_test.py configs/your-config.yaml
 ```
 
-## 📊 What Happens During a Test
+### Custom Test Scripts
 
-1. **Configuration Loading** - YAML config is parsed and validated
-2. **Docker Build** - k6 container is built (first time only)
-3. **Load Test Execution** - k6 runs the performance test
-4. **Results Collection** - Metrics are collected and organized
-5. **Analysis Pipeline** - Page resources and performance are analyzed
-6. **AI Analysis** - OpenAI generates optimization recommendations
+You can use custom test scripts by modifying the configuration:
 
-## 🎯 Test Configurations
-
-### Available Configurations
-- **`configs/api_test.yaml`** - API endpoint testing
-- **`configs/pop_website_test.yaml`** - POP website (2 minutes)
-- **`configs/pop_website_15min_test.yaml`** - Extended POP test (15 minutes)
-- **`configs/wordpress_test.yaml`** - WordPress site testing
-
-### Custom Configuration
 ```yaml
-# configs/my-app.yaml
-target: https://your-website.com
-vus: 25
-duration: 5m
-description: "My web application"
-tags: ["react", "nodejs", "aws"]
-```
-
-## 📈 Test Scenarios
-
-### Light Load Testing
-```yaml
-vus: 10
-duration: 1m
-```
-**Use Case**: Basic functionality testing
-
-### Medium Load Testing
-```yaml
-vus: 25
-duration: 2m
-```
-**Use Case**: Production validation
-
-### Heavy Load Testing
-```yaml
+# Custom protocol test
+target: https://your-app.com
+test_type: protocol
 vus: 50
 duration: 5m
+custom_script: tests/my-custom-test.js
+
+# Custom browser test
+target: https://your-app.com
+test_type: browser
+browser_settings:
+  vus: 5
+  duration: 2m
+  custom_script: tests/my-custom-browser-test.js
 ```
-**Use Case**: Stress testing
 
-### Extended Testing
-```yaml
-vus: 50
-duration: 15m
-```
-**Use Case**: Comprehensive analysis
+## 📊 Monitoring Test Execution
 
-## 🔍 Monitoring Test Progress
+### Real-time Monitoring
 
-### Real-time Output
+During test execution, you can monitor progress:
+
 ```bash
-# Watch test progress in real-time
-python run_test.py configs/pop_website_test.yaml
+# Check Docker containers
+docker ps
+
+# Monitor resource usage
+docker stats
+
+# Check test logs
+docker logs <container-id>
+
+# Monitor output directory
+watch -n 5 "ls -la output/site_name/latest/"
 ```
 
-**Output includes:**
-- Test initialization
-- k6 progress updates
-- Analysis pipeline status
-- Final results summary
+### Progress Indicators
 
-### Log Files
-- **`load_test.log`** - Detailed execution logs
-- **Console output** - Real-time progress
+The system provides progress feedback:
 
-## 📁 Results Organization
+```
+🔧 Building Docker images...
+✅ Protocol test image built
+✅ Browser test image built
 
-### Automatic Organization
-Results are automatically organized by:
-- **Site name** (extracted from URL)
-- **Timestamp** (YYYYMMDD_HHMMSS format)
-- **Latest symlink** (always points to most recent)
+🔌 Running protocol test...
+📊 Protocol test completed (7,116 requests, 2.50% error rate)
 
-### Result Files
-Each test run creates:
-- `summary.json` - Raw k6 metrics
-- `test_report.json` - Formatted summary
-- `page_resource_analysis.json` - Page analysis
-- `enhanced_analysis_report.json` - Performance analysis
-- `ai_analysis_report.json` - AI recommendations
+🌐 Running browser test...
+📊 Browser test completed (1,298 resources, 86.42MB page weight)
+
+📊 Generating analysis...
+✅ Enhanced performance analysis completed
+✅ Browser metrics analysis completed
+
+📄 Generating HTML reports...
+✅ Interactive HTML report generated
+✅ Manual fallback report generated
+
+🎉 Test completed successfully!
+📁 Results saved to: output/site_name/20250811_223723/
+🔗 Latest symlink updated
+```
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
 
-**Docker not running:**
-```bash
-# Start Docker Desktop
-open -a Docker  # macOS
+<Accordion>
+  <AccordionItem title="Docker Not Running">
+    ```bash
+    # Start Docker Desktop
+    open -a Docker  # macOS
+    # Or start Docker service on Linux
+    sudo systemctl start docker
+    
+    # Verify Docker is running
+    docker ps
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Permission Errors">
+    ```bash
+    # Ensure Docker permissions
+    sudo usermod -aG docker $USER
+    # Log out and back in
+    
+    # Check file permissions
+    chmod +x run_test.py
+    chmod +x scripts/*.py
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Memory Issues">
+    ```bash
+    # Check available memory
+    free -h
+    
+    # Reduce VUs or duration
+    vus: 50  # Instead of 200
+    duration: 5m  # Instead of 30m
+    
+    # Increase Docker memory limits
+    --memory=8g  # Instead of 4g
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Browser Test Timeouts">
+    ```bash
+    # Increase browser timeouts
+    browser_settings:
+      timeout: "60s"  # Instead of 30s
+      vus: 3          # Reduce VUs for browser tests
+    
+    # Check network connectivity
+    curl -I https://your-target-site.com
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Test Failures">
+    ```bash
+    # Check test logs
+    docker logs <container-id>
+    
+    # Verify target site is accessible
+    curl -I https://your-target-site.com
+    
+    # Check configuration syntax
+    python -c "import yaml; yaml.safe_load(open('configs/your-config.yaml'))"
+    ```
+  </AccordionItem>
+</Accordion>
+
+### Error Recovery
+
+<Accordion>
+  <AccordionItem title="Partial Test Failures">
+    ```bash
+    # If protocol test fails, browser test continues
+    # If browser test fails, protocol results are still available
+    
+    # Check what completed successfully
+    ls -la output/site_name/latest/
+    
+    # Regenerate analysis for available data
+    python scripts/enhanced_performance_analyzer.py output/site_name/latest/protocol_summary.json
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="HTML Report Failures">
+    ```bash
+    # Try manual report generation
+    python scripts/generate_manual_report.py output/site_name/latest/
+    
+    # Check for corrupted data
+    head -10 output/site_name/latest/protocol_summary.json
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Resource Exhaustion">
+    ```bash
+    # Clean up Docker resources
+    docker system prune -f
+    
+    # Restart Docker
+    sudo systemctl restart docker
+    
+    # Reduce test load
+    vus: 25  # Instead of 200
+    duration: 2m  # Instead of 30m
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 📈 Performance Optimization
+
+### Test Execution Tips
+
+<Accordion>
+  <AccordionItem title="For Development">
+    ```yaml
+    # Quick feedback loop
+    test_type: protocol
+    vus: 10
+    duration: 30s
+    
+    # Focus on specific endpoints
+    target: https://your-api.com/specific-endpoint
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="For Production">
+    ```yaml
+    # Comprehensive testing
+    test_type: both
+    vus: 100
+    duration: 10m
+    
+    # Realistic thresholds
+    protocol_settings:
+      thresholds:
+        http_req_duration: ["p(95)<3000"]
+        http_req_failed: ["rate<0.05"]
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="For Stress Testing">
+    ```yaml
+    # High-load testing
+    test_type: both
+    vus: 200
+    duration: 30m
+    
+    # Relaxed thresholds for stress testing
+    protocol_settings:
+      thresholds:
+        http_req_duration: ["p(95)<10000"]
+        http_req_failed: ["rate<0.3"]
+    ```
+  </AccordionItem>
+</Accordion>
+
+## 🔄 Continuous Integration
+
+### CI/CD Integration
+
+You can integrate load testing into your CI/CD pipeline:
+
+```yaml
+# GitHub Actions example
+name: Load Testing
+on: [push, pull_request]
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run load test
+        run: |
+          python run_test.py configs/ci-test.yaml
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: load-test-results
+          path: output/
 ```
 
-**Permission errors:**
-```bash
-# Ensure Docker permissions
-sudo usermod -aG docker $USER
+### Automated Testing
+
+```yaml
+# CI test configuration (configs/ci-test.yaml)
+target: https://your-app.com
+test_type: protocol
+vus: 25
+duration: 2m
+description: "CI/CD load test"
+tags: ["ci", "automated", "regression"]
 ```
 
-**OpenAI API errors:**
-```bash
-# Check API key
-cat .env | grep OPENAI_API_KEY
-```
+---
 
-### Test Timeouts
-- **Default timeout**: 5 minutes
-- **Extended tests**: May need longer timeouts
-- **Monitor progress**: Watch console output
-
-## 🎯 Best Practices
-
-### 1. Start Small
-```bash
-# Begin with light load
-python run_test.py configs/api_test.yaml
-```
-
-### 2. Gradual Increase
-```bash
-# Test different load levels
-python run_test.py configs/pop_website_test.yaml      # 2 minutes
-python run_test.py configs/pop_website_15min_test.yaml # 15 minutes
-```
-
-### 3. Monitor Resources
-- **Docker memory usage**
-- **Network bandwidth**
-- **Target server capacity**
-
-### 4. Document Results
-```bash
-# List all test results
-python scripts/list_test_results.py list
-
-# View latest results
-python scripts/list_test_results.py latest
-```
-
-## 🔗 Next Steps
-
-After running tests:
-- **[Interpreting Results](/guides/interpreting-results)** - Understand your test data
-- **[Configuration Reference](/configuration)** - Learn all configuration options
-- **[Troubleshooting](/guides/troubleshooting)** - Solve common issues 
+<div className="cta">
+  <h3>Ready to run your first test?</h3>
+  <p>Start with our quick start guide and explore the comprehensive testing capabilities.</p>
+  <a href="/quick-start" className="btn btn-primary">Get Started</a>
+</div> 
