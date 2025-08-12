@@ -205,42 +205,42 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 563.5,
       "p95": 967.0,
       "grade": "A",
-      "target": "< 1800ms"
+      "target": "&lt; 1800ms"
     },
     "lcp": {
       "avg": 705.9,
       "p75": 845.3,
       "p95": 1450.4,
       "grade": "A",
-      "target": "< 2500ms"
+      "target": "&lt; 2500ms"
     },
     "fid": {
       "avg": 588.3,
       "p75": 704.4,
       "p95": 1208.7,
       "grade": "C",
-      "target": "< 100ms"
+      "target": "&lt; 100ms"
     },
     "cls": {
       "avg": 0.1,
       "p75": 0.1,
       "p95": 0.2,
       "grade": "B",
-      "target": "< 0.1"
+      "target": "&lt; 0.1"
     },
     "tti": {
       "avg": 882.5,
       "p75": 1056.6,
       "p95": 1813.0,
       "grade": "A",
-      "target": "< 3800ms"
+      "target": "&lt; 3800ms"
     },
     "tbt": {
       "avg": 65.8,
       "p75": 70.4,
       "p95": 120.9,
       "grade": "A",
-      "target": "< 200ms"
+      "target": "&lt; 200ms"
     }
   }
 }
@@ -252,7 +252,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="First Contentful Paint (FCP)">
     **Definition**: Time until first content appears on screen
     
-    **Target**: < 1.8 seconds
+    **Target**: "&lt; 1.8 seconds"
     **Grades**: A (0-1.8s), B (1.8-3s), C (3-4s), D (>4s)
     
     **What it means**:
@@ -265,7 +265,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Largest Contentful Paint (LCP)">
     **Definition**: Time until largest content element loads
     
-    **Target**: < 2.5 seconds
+    **Target**: "&lt; 2.5 seconds"
     **Grades**: A (0-2.5s), B (2.5-4s), C (4-6s), D (>6s)
     
     **What it means**:
@@ -278,7 +278,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="First Input Delay (FID)">
     **Definition**: Time from first interaction to response
     
-    **Target**: < 100 milliseconds
+    **Target**: "&lt; 100 milliseconds"
     **Grades**: A (0-100ms), B (100-300ms), C (300-500ms), D (>500ms)
     
     **What it means**:
@@ -291,7 +291,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Cumulative Layout Shift (CLS)">
     **Definition**: Visual stability measurement
     
-    **Target**: < 0.1
+    **Target**: "&lt; 0.1"
     **Grades**: A (0-0.1), B (0.1-0.25), C (0.25-0.35), D (>0.35)
     
     **What it means**:
@@ -304,7 +304,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Time to Interactive (TTI)">
     **Definition**: Time until page is fully interactive
     
-    **Target**: < 3.8 seconds
+    **Target**: "&lt; 3.8 seconds"
     **Grades**: A (0-3.8s), B (3.8-7.3s), C (7.3-11.2s), D (>11.2s)
     
     **What it means**:
@@ -317,7 +317,7 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Total Blocking Time (TBT)">
     **Definition**: Total time main thread is blocked
     
-    **Target**: < 200 milliseconds
+    **Target**: "&lt; 200 milliseconds"
     **Grades**: A (0-200ms), B (200-600ms), C (600-1000ms), D (>1000ms)
     
     **What it means**:
@@ -334,10 +334,10 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Page Weight">
     **Definition**: Total size of all resources loaded
     
-    **Target**: < 2MB for optimal performance
+    **Target**: "&lt; 2MB" for optimal performance
     
     **Interpretation**:
-    - **< 1MB**: Excellent
+    - **"&lt; 1MB"**: Excellent
     - **1-2MB**: Good
     - **2-5MB**: Fair
     - **> 5MB**: Poor
@@ -348,10 +348,10 @@ The browser section displays detailed Core Web Vitals metrics:
   <AccordionItem title="Resource Count">
     **Definition**: Number of resources loaded
     
-    **Target**: < 50 resources for optimal performance
+    **Target**: "&lt; 50" resources for optimal performance
     
     **Interpretation**:
-    - **< 25**: Excellent
+    - **"&lt; 25"**: Excellent
     - **25-50**: Good
     - **50-100**: Fair
     - **> 100**: Poor
@@ -425,7 +425,7 @@ The enhanced analysis identifies and categorizes performance problems:
     - Suboptimal response times (P95 >3s)
     - Poor Core Web Vitals (TTI >7s, TBT >600ms)
     - Slow resources (>500ms load time)
-    - Inefficient compression (<50% ratio)
+    - Inefficient compression ("&lt;50%" ratio)
     - High resource count (>100 resources)
     
     **Action**: Plan optimization for next sprint
@@ -682,23 +682,23 @@ The manual report (`manual_load_test_report.html`) is generated when:
 
 <Accordion>
   <AccordionItem title="Protocol Metrics">
-    - **Response Time**: P95 < 2s (good), < 1s (excellent)
-    - **Error Rate**: < 1% (good), < 0.1% (excellent)
+    - **Response Time**: P95 "&lt; 2s" (good), "&lt; 1s" (excellent)
+    - **Error Rate**: "&lt; 1%" (good), "&lt; 0.1%" (excellent)
     - **Throughput**: > 100 req/s (good), > 500 req/s (excellent)
     - **Performance Score**: > 80 (good), > 90 (excellent)
   </AccordionItem>
   
   <AccordionItem title="Browser Metrics">
-    - **FCP**: < 1.8s (good), < 1s (excellent)
-    - **LCP**: < 2.5s (good), < 1.5s (excellent)
-    - **FID**: < 100ms (good), < 50ms (excellent)
-    - **CLS**: < 0.1 (good), < 0.05 (excellent)
-    - **Page Weight**: < 2MB (good), < 1MB (excellent)
+    - **FCP**: "&lt; 1.8s" (good), "&lt; 1s" (excellent)
+    - **LCP**: "&lt; 2.5s" (good), "&lt; 1.5s" (excellent)
+    - **FID**: "&lt; 100ms" (good), "&lt; 50ms" (excellent)
+    - **CLS**: "&lt; 0.1" (good), "&lt; 0.05" (excellent)
+    - **Page Weight**: "&lt; 2MB" (good), "&lt; 1MB" (excellent)
   </AccordionItem>
   
   <AccordionItem title="Overall Metrics">
     - **Performance Grade**: A or B (good), A+ (excellent)
-    - **Issue Count**: < 5 total (good), < 2 total (excellent)
+    - **Issue Count**: "&lt; 5" total (good), "&lt; 2" total (excellent)
     - **High Priority Issues**: 0 (good), 0 (excellent)
     - **User Experience**: Fast, responsive, stable
   </AccordionItem>

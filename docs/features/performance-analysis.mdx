@@ -95,42 +95,42 @@ export default function() {
 <Accordion>
   <AccordionItem title="First Contentful Paint (FCP)">
     - **Definition**: Time until first content appears
-    - **Target**: < 1.8 seconds
+    - **Target**: "&lt; 1.8 seconds"
     - **Grade**: A (0-1.8s), B (1.8-3s), C (3-4s), D (>4s)
     - **Impact**: User perception of page load speed
   </AccordionItem>
   
   <AccordionItem title="Largest Contentful Paint (LCP)">
     - **Definition**: Time until largest content element loads
-    - **Target**: < 2.5 seconds
+    - **Target**: "&lt; 2.5 seconds"
     - **Grade**: A (0-2.5s), B (2.5-4s), C (4-6s), D (>6s)
     - **Impact**: Perceived loading performance
   </AccordionItem>
   
   <AccordionItem title="First Input Delay (FID)">
     - **Definition**: Time from first interaction to response
-    - **Target**: < 100 milliseconds
+    - **Target**: "&lt; 100 milliseconds"
     - **Grade**: A (0-100ms), B (100-300ms), C (300-500ms), D (>500ms)
     - **Impact**: Interactivity and responsiveness
   </AccordionItem>
   
   <AccordionItem title="Cumulative Layout Shift (CLS)">
     - **Definition**: Visual stability measurement
-    - **Target**: < 0.1
+    - **Target**: "&lt; 0.1"
     - **Grade**: A (0-0.1), B (0.1-0.25), C (0.25-0.35), D (>0.35)
     - **Impact**: Visual stability and user experience
   </AccordionItem>
   
   <AccordionItem title="Time to Interactive (TTI)">
     - **Definition**: Time until page is fully interactive
-    - **Target**: < 3.8 seconds
+    - **Target**: "&lt; 3.8 seconds"
     - **Grade**: A (0-3.8s), B (3.8-7.3s), C (7.3-11.2s), D (>11.2s)
     - **Impact**: User ability to interact with page
   </AccordionItem>
   
   <AccordionItem title="Total Blocking Time (TBT)">
     - **Definition**: Total time main thread is blocked
-    - **Target**: < 200 milliseconds
+    - **Target**: "&lt; 200 milliseconds"
     - **Grade**: A (0-200ms), B (200-600ms), C (600-1000ms), D (>1000ms)
     - **Impact**: Main thread responsiveness
   </AccordionItem>
@@ -357,7 +357,7 @@ Our system automatically detects and categorizes performance issues:
     - **Suboptimal Response Times**: 95th percentile >3s
     - **Poor Core Web Vitals**: CLS >0.1, TTI >3.8s
     - **Slow Resources**: Resources >500ms load time
-    - **Inefficient Compression**: <50% compression ratio
+    - **Inefficient Compression**: "&lt;50%" compression ratio
     - **High Resource Count**: >100 resources per page
   </AccordionItem>
   
@@ -377,12 +377,12 @@ Our system automatically detects and categorizes performance issues:
 | Metric | Description | Unit | Target |
 |--------|-------------|------|--------|
 | `http_reqs` | Total HTTP requests | count | - |
-| `http_req_duration` | Response time | ms | <2000ms |
-| `http_req_failed` | Failed requests | rate | <0.1 |
-| `http_req_connecting` | Connection time | ms | <100ms |
-| `http_req_tls_handshaking` | TLS handshake time | ms | <200ms |
-| `http_req_waiting` | Server processing time | ms | <1000ms |
-| `http_req_receiving` | Response receiving time | ms | <500ms |
+| `http_req_duration` | Response time | ms | "&lt;2000ms" |
+| `http_req_failed` | Failed requests | rate | "&lt;0.1" |
+| `http_req_connecting` | Connection time | ms | "&lt;100ms" |
+| `http_req_tls_handshaking` | TLS handshake time | ms | "&lt;200ms" |
+| `http_req_waiting` | Server processing time | ms | "&lt;1000ms" |
+| `http_req_receiving` | Response receiving time | ms | "&lt;500ms" |
 | `data_sent` | Bytes sent | bytes | - |
 | `data_received` | Bytes received | bytes | - |
 | `vus` | Virtual users | count | - |
@@ -392,14 +392,14 @@ Our system automatically detects and categorizes performance issues:
 
 | Metric | Description | Unit | Target |
 |--------|-------------|------|--------|
-| `FCP` | First Contentful Paint | ms | <1800ms |
-| `LCP` | Largest Contentful Paint | ms | <2500ms |
-| `FID` | First Input Delay | ms | <100ms |
-| `CLS` | Cumulative Layout Shift | score | <0.1 |
-| `TTI` | Time to Interactive | ms | <3800ms |
-| `TBT` | Total Blocking Time | ms | <200ms |
-| `Page Weight` | Total resource size | MB | <2MB |
-| `Resource Count` | Number of resources | count | <50 |
+| `FCP` | First Contentful Paint | ms | "&lt;1800ms" |
+| `LCP` | Largest Contentful Paint | ms | "&lt;2500ms" |
+| `FID` | First Input Delay | ms | "&lt;100ms" |
+| `CLS` | Cumulative Layout Shift | score | "&lt;0.1" |
+| `TTI` | Time to Interactive | ms | "&lt;3800ms" |
+| `TBT` | Total Blocking Time | ms | "&lt;200ms" |
+| `Page Weight` | Total resource size | MB | "&lt;2MB" |
+| `Resource Count` | Number of resources | count | "&lt;50" |
 
 ---
 
