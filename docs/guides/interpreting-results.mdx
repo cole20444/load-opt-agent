@@ -60,7 +60,7 @@ The report includes a navigation system for easy exploration:
 
 The overall performance grade combines protocol and browser scores:
 
-```json
+```javascript
 {
   "overall_grade": "B+",
   "protocol_score": 80,
@@ -109,7 +109,7 @@ The overall performance grade combines protocol and browser scores:
 
 The protocol section shows comprehensive HTTP performance metrics:
 
-```json
+```javascript
 {
   "total_requests": 7116,
   "requests_per_second": 3.95,
@@ -197,7 +197,7 @@ The protocol section shows comprehensive HTTP performance metrics:
 
 The browser section displays detailed Core Web Vitals metrics:
 
-```json
+```javascript
 {
   "core_web_vitals": {
     "fcp": {
@@ -377,7 +377,7 @@ The browser section displays detailed Core Web Vitals metrics:
 
 The enhanced analysis identifies and categorizes performance problems:
 
-```json
+```javascript
 {
   "issues": {
     "high": [
@@ -528,7 +528,7 @@ The manual report (`manual_load_test_report.html`) is generated when:
     **Size**: 50MB-1GB
     **Content**: Raw k6 metrics
     
-    ```json
+    ```javascript
     {"type":"Metric","data":{"name":"vus","type":"gauge"},"metric":"vus"}
     {"metric":"vus","type":"Point","data":{"time":"2025-08-12T05:37:27Z","value":0}}
     {"metric":"http_reqs","type":"Point","data":{"time":"2025-08-12T05:37:27Z","value":1}}
@@ -542,7 +542,7 @@ The manual report (`manual_load_test_report.html`) is generated when:
     **Size**: 100MB-1GB
     **Content**: Raw browser metrics
     
-    ```json
+    ```javascript
     {
       "metrics": {
         "browser_fcp": [{"time": "2025-08-12T05:37:27Z", "value": 470.6}],
@@ -563,7 +563,7 @@ The manual report (`manual_load_test_report.html`) is generated when:
     **Size**: 1-10MB
     **Content**: Processed protocol analysis
     
-    ```json
+    ```javascript
     {
       "summary": {
         "performance_score": 80,
@@ -586,7 +586,7 @@ The manual report (`manual_load_test_report.html`) is generated when:
     **Size**: 1-10MB
     **Content**: Processed browser analysis
     
-    ```json
+    ```javascript
     {
       "core_web_vitals": {
         "fcp": {"avg": 470.6, "grade": "A"},

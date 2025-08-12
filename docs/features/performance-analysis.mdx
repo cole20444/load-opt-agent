@@ -22,7 +22,7 @@ export const options = {
     { duration: '2m', target: 0 },    // Ramp down
   ],
   thresholds: {
-    http_req_duration: ['p(95)<5000'],
+    http_req_duration: ['p95<5000'],
     http_req_failed: ['rate<0.1'],
   },
   discardResponseBodies: true,  // Memory optimization
@@ -196,7 +196,7 @@ def analyze_performance(metrics):
 <Accordion>
   <AccordionItem title="Protocol Performance Score">
     **Scoring Algorithm**:
-    - **Response Time**: 40% weight (P95 response time)
+    - **Response Time**: 40% weight (95th percentile response time)
     - **Error Rate**: 30% weight (HTTP error percentage)
     - **Throughput**: 20% weight (requests per second)
     - **Data Efficiency**: 10% weight (compression ratio)
@@ -254,7 +254,7 @@ Our HTML reports include interactive charts and visualizations:
   
   <AccordionItem title="Protocol Test Results">
     - **Key Metrics**: Requests, success rate, response times
-    - **Detailed Metrics**: P50, P75, P90, P95, P99 percentiles
+    - **Detailed Metrics**: 50th, 75th, 90th, 95th, 99th percentiles
     - **Data Transfer**: Bytes sent/received, compression
     - **Interactive Charts**: Response time distribution, connection breakdown
   </AccordionItem>
@@ -328,7 +328,7 @@ export const options = {
   <AccordionItem title="Timeout Handling">
     ```javascript
     // Increased timeouts for high load
-    http_req_duration: ['p(95)<10000'],  // 10s timeout
+    http_req_duration: ['p95<10000'],  // 10s timeout
     http_req_failed: ['rate<0.3'],       // 30% error tolerance
     
     // Request-level timeouts
@@ -354,7 +354,7 @@ Our system automatically detects and categorizes performance issues:
   </AccordionItem>
   
   <AccordionItem title="Medium Priority Issues">
-    - **Suboptimal Response Times**: P95 >3s
+    - **Suboptimal Response Times**: 95th percentile >3s
     - **Poor Core Web Vitals**: CLS >0.1, TTI >3.8s
     - **Slow Resources**: Resources >500ms load time
     - **Inefficient Compression**: <50% compression ratio
