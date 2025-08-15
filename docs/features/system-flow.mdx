@@ -1,0 +1,210 @@
+---
+title: System Flow
+description: Complete system flow integration for load testing with protocol and browser testing
+---
+
+## Complete System Flow
+
+### Test Execution Flow
+
+```
+User runs: python run_test.py configs/pop_website_test.yaml
+│
+├── Load Configuration
+│   ├── Parse YAML config
+│   ├── Validate required fields
+│   └── Set defaults (test_type: 'both')
+│
+├── Protocol Testing (k6)
+│   ├── Build Docker image (k6-load-test) with resource limits
+│   ├── Run k6 container with tests/load_test.js (ramp-up strategy)
+│   ├── Generate protocol_summary.json
+│   └── Handle high-load optimizations (memory, timeouts)
+│
+├── Browser Testing (xk6-browser)
+│   ├── Build Docker image (xk6-browser-test) with browser optimizations
+│   ├── Run xk6-browser container with tests/browser_load_test.js
+│   ├── Generate browser_summary.json
+│   └── Run browser_metrics_analyzer.py → browser_summary_analysis.json
+│
+└── Analysis & Reporting
+    ├── Enhanced Performance Analysis (enhanced_performance_analyzer.py)
+    ├── Browser Metrics Analysis (browser_metrics_analyzer.py)
+    ├── AI Analysis (optional, with ALL data)
+    ├── HTML Report Generation (generate_k6_html_report.py)
+    └── Manual Report Generation (generate_manual_report.py)
+```
+
+### Data Collection & Analysis Flow
+
+```
+Output Directory Structure:
+output/site_name/timestamp/
+│
+├── Protocol Data
+│   ├── protocol_summary.json          # Raw k6 metrics (JSONL format)
+│   └── enhanced_analysis_report.json  # Detailed protocol analysis
+│
+├── Browser Data
+│   ├── browser_summary.json           # Raw xk6-browser metrics
+│   └── browser_summary_analysis.json  # Core Web Vitals analysis
+│
+├── HTML Reports
+│   ├── load_test_report.html          # Comprehensive HTML report (Plotly)
+│   └── manual_load_test_report.html   # Manual generation fallback
+│
+└── AI Analysis (Optional)
+    ├── ai_analysis_report.json        # AI recommendations
+    ├── ai_analysis_report.html        # Interactive HTML report
+    └── ai_analysis_report.md          # Markdown report
+```
+
+### Component Integration Matrix
+
+| Component | Protocol Test | Browser Test | HTML Report | Manual Report |
+|-----------|---------------|--------------|-------------|---------------|
+| **k6 (Protocol)** | Primary | | Enhanced metrics | Protocol data |
+| **xk6-browser** | | Primary | Core Web Vitals | Browser data |
+| **Enhanced Performance Analyzer** | k6 metrics | Browser metrics | Detailed analysis | Analysis data |
+| **Browser Metrics Analyzer** | | Core Web Vitals | Browser insights | Browser analysis |
+| **HTML Report Generator** | All data | All data | Primary | |
+| **Manual Report Generator** | Analysis files | Analysis files | | Primary |
+
+### High-Load Testing Optimizations
+
+#### Ramp-up Strategy (200 VUs, 30 minutes)
+```
+Stages Configuration:
+├── 0-2m:   Ramp up to 50 VUs
+├── 2-5m:   Ramp up to 100 VUs  
+├── 5-10m:  Ramp up to 200 VUs
+├── 10-25m: Stay at 200 VUs
+├── 25-27m: Ramp down to 100 VUs
+├── 27-29m: Ramp down to 50 VUs
+└── 29-30m: Ramp down to 0 VUs
+```
+
+#### Docker Resource Limits
+```
+Protocol Test Container:
+├── Memory: 4GB
+├── CPUs: 2 cores
+├── File descriptors: 65536
+└── Timeout: 40 minutes
+
+Browser Test Container:
+├── Memory: 6GB
+├── CPUs: 2 cores
+├── File descriptors: 65536
+├── Shared memory: 2GB
+└── Timeout: 30 minutes
+```
+
+#### k6 Optimizations
+```
+Memory Optimizations:
+├── discardResponseBodies: true
+├── K6_DISABLE_COMPRESSION=true
+├── K6_DISABLE_HTTP2=true
+└── Retry logic for transient failures
+
+Timeout Settings:
+├── Main page requests: 30s
+├── Resource requests: 20s
+├── Global timeout: 10s
+└── Connection timeout: 5s
+```
+
+### Analysis Pipeline
+
+#### Enhanced Performance Analysis
+```
+Input: protocol_summary.json (JSONL format)
+Process:
+├── Parse JSONL data line by line
+├── Calculate comprehensive metrics:
+│   ├── HTTP duration percentiles (P50, P75, P90, P95, P99)
+│   ├── Connection breakdown (DNS, TCP, TLS, waiting, receiving)
+│   ├── Data transfer analysis (bytes sent/received)
+│   ├── Status code distribution
+│   ├── Virtual user analysis
+│   └── Iteration timing
+└── Output: enhanced_analysis_report.json
+```
+
+#### Browser Metrics Analysis
+```
+Input: browser_summary.json
+Process:
+├── Parse browser performance data
+├── Calculate Core Web Vitals:
+│   ├── First Contentful Paint (FCP)
+│   ├── Largest Contentful Paint (LCP)
+│   ├── First Input Delay (FID)
+│   ├── Cumulative Layout Shift (CLS)
+│   ├── Time to Interactive (TTI)
+│   └── Total Blocking Time (TBT)
+├── Resource loading analysis
+├── Performance issue detection
+└── Output: browser_summary_analysis.json
+```
+
+#### HTML Report Generation
+```
+Input: All analysis files
+Process:
+├── Load enhanced_analysis_report.json
+├── Load browser_summary_analysis.json
+├── Generate Plotly visualizations:
+│   ├── Response time distribution charts
+│   ├── Connection breakdown charts
+│   ├── Status code distribution
+│   └── Performance metrics tables
+├── Create interactive HTML with navigation
+└── Output: load_test_report.html
+```
+
+### Error Handling & Fallbacks
+
+#### Primary Flow
+1. **Protocol Test** → Enhanced Performance Analysis → HTML Report
+2. **Browser Test** → Browser Metrics Analysis → HTML Report
+3. **Combined Analysis** → Comprehensive HTML Report
+
+#### Fallback Flow
+1. **Primary HTML Report Fails** → Manual Report Generation
+2. **Analysis Scripts Fail** → Basic Test Report Generation
+3. **Docker Build Fails** → Error with helpful troubleshooting
+
+#### Success Criteria
+- **Protocol Test**: File generation (protocol_summary.json) rather than return code
+- **Browser Test**: File generation (browser_summary.json) rather than return code
+- **Analysis**: Output file generation rather than return code
+- **Reports**: HTML file generation with proper content
+
+### Configuration Integration
+
+#### YAML Configuration Flow
+```
+configs/pop_website_test.yaml
+├── Basic Settings (target, vus, duration)
+├── Protocol Settings (thresholds, optimizations)
+├── Browser Settings (viewport, timeouts)
+├── Analysis Settings (enabled/disabled features)
+└── AI Settings (optional OpenAI integration)
+```
+
+#### Environment Variables
+```
+Docker Environment:
+├── TARGET_URL: Test target URL
+├── K6_VUS: Virtual users count
+├── K6_DURATION: Test duration
+└── K6_OUT: Output format specification
+
+Python Environment:
+├── OPENAI_API_KEY: AI analysis (optional)
+└── Analysis settings from YAML config
+```
+
+This system flow ensures comprehensive load testing with both protocol and browser-level analysis, providing detailed insights into application performance from multiple perspectives.

@@ -3,10 +3,6 @@ title: Quick Start Guide
 description: Get up and running with the Load Testing & Optimization Agent in minutes
 ---
 
-# Quick Start Guide
-
-Get your first comprehensive load test running with browser testing and AI-powered analysis in under 5 minutes.
-
 ## Prerequisites
 
 - **Python 3.7+** installed on your system
@@ -14,7 +10,7 @@ Get your first comprehensive load test running with browser testing and AI-power
 - **Git** for cloning the repository
 - **OpenAI API key** (optional, for AI analysis)
 
-## 🚀 Step 1: Clone and Setup
+## Step 1: Clone and Setup
 
 ```bash
 # Clone the repository
@@ -34,7 +30,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 🔧 Step 2: Configure Environment
+## Step 2: Configure Environment
 
 ```bash
 # Copy environment template
@@ -48,7 +44,7 @@ cp env.example .env
   **OpenAI API Key**: Optional for AI-powered analysis. Get one from [OpenAI Platform](https://platform.openai.com/api-keys).
 </Callout>
 
-## 🎯 Step 3: Run Your First Test
+## Step 3: Run Your First Test
 
 ```bash
 # Run a comprehensive test (protocol + browser)
@@ -56,14 +52,14 @@ python run_test.py configs/pop_website_test.yaml
 ```
 
 This will:
-- ✅ Build Docker images (first time only)
-- ✅ Run protocol-level load test with k6
-- ✅ Run browser-level test with xk6-browser
-- ✅ Generate comprehensive performance metrics
-- ✅ Create interactive HTML reports
-- ✅ Organize results in `output/`
+- Build Docker images (first time only)
+- Run protocol-level load test with k6
+- Run browser-level test with xk6-browser
+- Generate comprehensive performance metrics
+- Create interactive HTML reports
+- Organize results in `output/`
 
-## 📊 Step 4: View Results
+## Step 4: View Results
 
 ```bash
 # List all test results
@@ -90,7 +86,7 @@ output/
     └── latest -> 20250811_223723/         # Symlink to latest
 ```
 
-## 🌐 Step 5: Explore the HTML Report
+## Step 5: Explore the HTML Report
 
 The HTML report provides:
 
