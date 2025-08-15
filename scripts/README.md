@@ -1,17 +1,58 @@
 # Scripts Directory
 
-This directory contains utility scripts for the Load Testing & Optimization Agent.
+This directory contains the core analysis and report generation scripts for the Load Testing & Optimization Agent.
 
-## Available Scripts
+## Core Analysis Scripts
 
-### `list_test_results.py`
-Lists and navigates test results in the organized output structure.
+### `enhanced_performance_analyzer.py`
+Performs comprehensive protocol-level performance analysis with detailed metrics including:
+- HTTP request duration percentiles (P50, P75, P90, P95, P99)
+- Connection breakdown analysis (DNS, TCP, TLS, waiting, receiving)
+- Data transfer metrics (bytes sent/received)
+- Status code distribution
+- Virtual user and iteration analysis
 
 **Usage:**
 ```bash
-python scripts/list_test_results.py
-python scripts/list_test_results.py --latest
-python scripts/list_test_results.py --site <site_name>
+python scripts/enhanced_performance_analyzer.py <protocol_summary.json>
+```
+
+### `browser_metrics_analyzer.py`
+Analyzes browser-level performance metrics including:
+- Core Web Vitals (FCP, LCP, FID, CLS, TTI, TBT)
+- Page load performance analysis
+- Resource loading optimization
+- Performance issue detection and scoring
+
+**Usage:**
+```bash
+python scripts/browser_metrics_analyzer.py <browser_summary.json>
+```
+
+### `page_resource_analyzer.py`
+Analyzes page resources and identifies optimization opportunities:
+- Resource type analysis (CSS, JS, images, fonts)
+- Compression and caching analysis
+- Performance bottleneck identification
+- Optimization recommendations
+
+**Usage:**
+```bash
+python scripts/page_resource_analyzer.py <target_url>
+```
+
+## Report Generation Scripts
+
+### `generate_k6_html_report.py`
+Generates comprehensive HTML reports with interactive Plotly visualizations:
+- Protocol and browser test results
+- Interactive charts and graphs
+- Performance metrics and insights
+- Modern, responsive UI design
+
+**Usage:**
+```bash
+python scripts/generate_k6_html_report.py <output_directory>
 ```
 
 ### `generate_readable_report.py`
@@ -27,42 +68,21 @@ python scripts/generate_readable_report.py <ai_analysis_report.json>
 - `{filename}_report.md` - Markdown report for easy reading
 - Console summary with key metrics and top recommendations
 
-**Features:**
-- Responsive HTML design with modern styling
-- Color-coded priority badges and performance grades
-- Interactive elements and clean typography
-- Comprehensive data visualization
-- Technology-specific insights section
+### `generate_manual_report.py`
+Fallback HTML report generator that works directly from analysis JSON files:
+- Loads enhanced_analysis_report.json and browser_summary_analysis.json
+- Generates comprehensive HTML report with all metrics
+- Useful if primary HTML report generation fails
 
-### Analysis Scripts
+**Usage:**
+```bash
+python scripts/generate_manual_report.py <output_directory>
+```
 
-#### `analyze_k6_metrics.py`
-Analyzes k6 metrics and generates performance insights.
+## Integration
 
-#### `enhanced_performance_analyzer.py`
-Performs enhanced performance analysis with detailed metrics.
-
-#### `page_resource_analyzer.py`
-Analyzes page resources and identifies optimization opportunities.
-
-### Testing Scripts
-
-#### `test_system.py`
-Tests the entire system end-to-end.
-
-#### `test_ai_analysis.py`
-Tests the AI analysis functionality.
-
-#### `test_openai_integration.py`
-Tests OpenAI API integration.
-
-### Utility Scripts
-
-#### `parse_results.py`
-Parses and formats test results.
-
-#### `show_ai_prompts.py`
-Shows the actual prompts sent to OpenAI for review.
-
-#### `show_template_usage.py`
-Shows how technology templates are used in analysis. 
+All these scripts are automatically called by the main `run_test.py` application in the correct sequence:
+1. Enhanced performance analysis runs after protocol tests
+2. Browser metrics analysis runs after browser tests
+3. HTML report generation runs after all analysis is complete
+4. Fallback reports are generated if primary reports fail 

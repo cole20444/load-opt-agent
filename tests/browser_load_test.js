@@ -28,9 +28,8 @@ export const thresholds = {
 
 export const options = {
   stages: [
-    { duration: '10s', target: 2 }, // Ramp up (lower VUs for browser tests)
-    { duration: '30s', target: 5 }, // Stay at 5 VUs (browser tests are resource-intensive)
-    { duration: '10s', target: 0 }, // Ramp down
+    { duration: '15s', target: 5 }, // Ramp up to 5 VUs
+    { duration: '15s', target: 5 }, // Stay at 5 VUs
   ],
   thresholds,
 };

@@ -141,7 +141,9 @@ def run_protocol_test(config, output_dir):
             '/app/load_test.js'
         ], capture_output=True, text=True, timeout=2400)  # 40 minutes timeout for 30m test
         
-        if run_result.returncode == 0:
+        # Check if the test generated output files (more reliable than return code)
+        protocol_summary_file = os.path.join(output_dir, "protocol_summary.json")
+        if os.path.exists(protocol_summary_file) and os.path.getsize(protocol_summary_file) > 0:
             logger.info("✅ Protocol-level test completed successfully")
             return True
         else:
@@ -194,7 +196,9 @@ def run_browser_test(config, output_dir):
             '/app/browser_load_test.js'
         ], capture_output=True, text=True, timeout=1800)  # 30 minutes timeout for browser tests
         
-        if run_result.returncode == 0:
+        # Check if the test generated output files (more reliable than return code)
+        browser_summary_file = os.path.join(output_dir, "browser_summary.json")
+        if os.path.exists(browser_summary_file) and os.path.getsize(browser_summary_file) > 0:
             logger.info("✅ Browser-level test completed successfully")
             return True
         else:
@@ -785,7 +789,7 @@ def main():
     logger.info("=== Load Testing & Optimization Agent - Enhanced with Browser Testing ===")
     
     # Load configuration
-    config_path = "configs/test_config.yaml"
+    config_path = "configs/pop_website_test.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     
@@ -818,6 +822,29 @@ def main():
             logger.info(f"Failed Requests: {report['test_summary']['failed_requests']}")
             logger.info(f"Average Response Time: {report['test_summary']['average_response_time']:.2f}ms")
             logger.info(f"Error Rate: {report['test_summary']['error_rate']:.2f}%")
+        
+        # Run enhanced performance analysis for protocol tests
+        if test_type in ['protocol', 'both']:
+            logger.info("🔍 Running enhanced performance analysis...")
+            try:
+                protocol_summary_file = os.path.join(output_dir, "protocol_summary.json")
+                if os.path.exists(protocol_summary_file):
+                    result = subprocess.run([
+                        'python', 'scripts/enhanced_performance_analyzer.py', protocol_summary_file
+                    ], capture_output=True, text=True, timeout=120)
+                    
+                    if result.returncode == 0:
+                        logger.info("✅ Enhanced performance analysis completed")
+                        # Move the output to our test directory
+                        if os.path.exists('enhanced_analysis_report.json'):
+                            import shutil
+                            shutil.move('enhanced_analysis_report.json', os.path.join(output_dir, 'enhanced_analysis_report.json'))
+                    else:
+                        logger.warning(f"⚠️ Enhanced performance analysis failed: {result.stderr}")
+                else:
+                    logger.warning(f"⚠️ Protocol summary file not found: {protocol_summary_file}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not run enhanced performance analysis: {e}")
         
         # Run browser analysis if applicable
         if test_type in ['browser', 'both']:

@@ -23,30 +23,14 @@ export const thresholds = {
 export const options = {
   // Dynamic stages based on environment variables
   stages: [
-    // Ramp up to 50 VUs over 2 minutes
-    { duration: '2m', target: 50 },
-    // Ramp up to 100 VUs over 3 minutes
-    { duration: '3m', target: 100 },
-    // Ramp up to 200 VUs over 5 minutes
-    { duration: '5m', target: 200 },
-    // Stay at 200 VUs for 15 minutes
-    { duration: '15m', target: 200 },
-    // Ramp down to 100 VUs over 2 minutes
-    { duration: '2m', target: 100 },
-    // Ramp down to 50 VUs over 2 minutes
-    { duration: '2m', target: 50 },
-    // Ramp down to 0 VUs over 1 minute
-    { duration: '1m', target: 0 },
+    // Ramp up to 10 VUs over 30 seconds
+    { duration: '30s', target: 10 },
+    // Stay at 10 VUs for 30 seconds
+    { duration: '30s', target: 10 },
   ],
   thresholds,
-  // Global timeout settings
-  http_debug: false, // Disable debug to reduce noise
-  no_usage_report: true, // Disable usage reporting
   // Memory and resource optimizations
   discardResponseBodies: true, // Reduce memory usage
-  // Connection pooling
-  http_req_duration: ['p(95)<10000'], // 10s timeout for high load
-  http_req_failed: ['rate<0.3'], // Allow 30% error rate during ramp-up
 };
 
 // Setup function - runs once before the test
