@@ -1010,7 +1010,10 @@ def run_azure_distributed_test(config, output_dir):
                 continue
             
             # Aggregate summaries
-            summary_files = [f for f in downloaded_files if 'summary_' in f and f.endswith('.json')]
+            if test_type == 'browser':
+                summary_files = [f for f in downloaded_files if 'playwright_results_' in f and f.endswith('.json')]
+            else:
+                summary_files = [f for f in downloaded_files if 'summary_' in f and f.endswith('.json')]
             if summary_files:
                 aggregated_summary = result_aggregator.aggregate_summaries(summary_files, test_type)
                 if aggregated_summary:

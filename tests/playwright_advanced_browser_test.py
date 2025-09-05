@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced Playwright-based browser test for Azure containers
+Enhanced Playwright-based browser test with advanced performance metrics
 Captures comprehensive Core Web Vitals, memory usage, and rendering performance
 """
 
@@ -11,7 +11,7 @@ from datetime import datetime
 from playwright.async_api import async_playwright
 import os
 
-class PlaywrightBrowserTest:
+class AdvancedPlaywrightBrowserTest:
     def __init__(self, target_url, duration_minutes=2, vus=5):
         self.target_url = target_url
         self.duration_seconds = duration_minutes * 60
@@ -292,21 +292,21 @@ class PlaywrightBrowserTest:
         else: return 50
 
 async def main():
-    """Main function to run the browser test"""
+    """Main function to run the advanced browser test"""
     target_url = os.getenv('TARGET_URL', 'https://wearepop.com')
     duration_minutes = int(os.getenv('DURATION_MINUTES', '2'))
     vus = int(os.getenv('VUS', '5'))
     
-    print(f"🚀 Starting Playwright browser test")
+    print(f"🚀 Starting Advanced Playwright browser test")
     print(f"📊 Target: {target_url}")
     print(f"⏱️  Duration: {duration_minutes} minutes")
     print(f"👥 Virtual Users: {vus}")
     
-    test = PlaywrightBrowserTest(target_url, duration_minutes, vus)
+    test = AdvancedPlaywrightBrowserTest(target_url, duration_minutes, vus)
     summary = await test.run_load_test()
     
     # Save results
-    output_file = os.getenv('OUTPUT_FILE', 'playwright_results.json')
+    output_file = os.getenv('OUTPUT_FILE', 'playwright_advanced_results.json')
     with open(output_file, 'w') as f:
         json.dump({
             'summary': summary,

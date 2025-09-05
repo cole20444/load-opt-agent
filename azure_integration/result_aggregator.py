@@ -42,15 +42,26 @@ class ResultAggregator:
         downloaded_files = []
         
         for worker_index in range(worker_count):
-            # Download summary file
-            blob_name = f"{run_id}/summary_{worker_index}.json"
-            local_file = os.path.join(local_output_dir, f"summary_{worker_index}.json")
-            
-            if self.azure_client.download_file(container_name, blob_name, local_file):
-                downloaded_files.append(local_file)
-                logger.info(f"Downloaded summary from worker {worker_index}")
+            if test_type == 'browser':
+                # For Playwright browser tests, download the Playwright results
+                blob_name = f"{run_id}/playwright_results_{worker_index}.json"
+                local_file = os.path.join(local_output_dir, f"playwright_results_{worker_index}.json")
+                
+                if self.azure_client.download_file(container_name, blob_name, local_file):
+                    downloaded_files.append(local_file)
+                    logger.info(f"Downloaded Playwright results from worker {worker_index}")
+                else:
+                    logger.warning(f"Failed to download Playwright results from worker {worker_index}")
             else:
-                logger.warning(f"Failed to download summary from worker {worker_index}")
+                # For protocol tests, download k6 summary file
+                blob_name = f"{run_id}/summary_{worker_index}.json"
+                local_file = os.path.join(local_output_dir, f"summary_{worker_index}.json")
+                
+                if self.azure_client.download_file(container_name, blob_name, local_file):
+                    downloaded_files.append(local_file)
+                    logger.info(f"Downloaded summary from worker {worker_index}")
+                else:
+                    logger.warning(f"Failed to download summary from worker {worker_index}")
             
             # Note: We only generate summary files, not trace/metrics/logs files
             # Additional files like trace_*.har, metrics_*.json, logs_*.txt are not created
@@ -75,6 +86,10 @@ class ResultAggregator:
             return None
         
         logger.info(f"Aggregating {len(summary_files)} summary files for {test_type} test")
+        
+        # Handle Playwright results differently
+        if test_type == 'browser' and any('playwright_results' in f for f in summary_files):
+            return self._aggregate_playwright_results(summary_files)
         
         try:
             # Load all summaries (handle both JSON and JSONL formats)
@@ -596,3 +611,153 @@ class ResultAggregator:
                 'metrics': {},
                 'root_group': {'name': '', 'groups': {}, 'checks': {}}
             }
+    
+    def _aggregate_playwright_results(self, result_files: List[str]) -> Optional[Dict]:
+        """
+        Aggregate Playwright browser test results
+        
+        Args:
+            result_files: List of Playwright result file paths
+            
+        Returns:
+            Dict: Aggregated Playwright results
+        """
+        logger.info(f"Aggregating {len(result_files)} Playwright result files")
+        
+        try:
+            all_results = []
+            all_summaries = []
+            
+            for file_path in result_files:
+                if os.path.exists(file_path):
+                    try:
+                        with open(file_path, 'r') as f:
+                            data = json.load(f)
+                            
+                            # Extract summary and detailed results
+                            if 'summary' in data:
+                                all_summaries.append(data['summary'])
+                            if 'detailed_results' in data:
+                                all_results.extend(data['detailed_results'])
+                                
+                            logger.debug(f"Loaded Playwright results from {file_path}")
+                    except Exception as e:
+                        logger.error(f"Failed to load Playwright results from {file_path}: {e}")
+            
+            if not all_summaries:
+                logger.error("No valid Playwright summaries found")
+                return None
+            
+            # Aggregate summaries
+            aggregated_summary = {
+                'total_iterations': sum(s.get('total_iterations', 0) for s in all_summaries),
+                'successful_iterations': sum(s.get('successful_iterations', 0) for s in all_summaries),
+                'error_rate': sum(s.get('error_rate', 0) for s in all_summaries) / len(all_summaries) if all_summaries else 0,
+                'total_vus': sum(s.get('total_vus', 0) for s in all_summaries),
+                'test_duration': max(s.get('test_duration', 0) for s in all_summaries),
+                'target_url': all_summaries[0].get('target_url', '') if all_summaries else ''
+            }
+            
+            # Calculate average metrics from successful results
+            successful_results = [r for r in all_results if 'error' not in r]
+            if successful_results:
+                # Define all metrics to aggregate (including new advanced metrics)
+                metrics_to_aggregate = [
+                    'total_time', 'dom_content_loaded', 'load_complete', 
+                    'first_contentful_paint', 'first_paint', 'largest_contentful_paint',
+                    'cumulative_layout_shift', 'first_input_delay', 'time_to_first_byte',
+                    'resource_count', 'total_resource_size', 'avg_resource_load_time',
+                    'js_heap_used', 'js_heap_total', 'js_heap_limit', 'long_tasks_count', 'total_blocking_time',
+                    'layout_duration', 'recalc_style_duration', 'script_duration', 'paint_duration',
+                    'dns_lookup', 'tcp_connection', 'ssl_handshake'
+                ]
+                
+                for metric in metrics_to_aggregate:
+                    values = [r.get(metric, 0) for r in successful_results if metric in r and r[metric] is not None]
+                    if values:
+                        aggregated_summary[f'avg_{metric}'] = sum(values) / len(values)
+                        aggregated_summary[f'min_{metric}'] = min(values)
+                        aggregated_summary[f'max_{metric}'] = max(values)
+                        aggregated_summary[f'p50_{metric}'] = sorted(values)[len(values)//2] if values else 0
+                        aggregated_summary[f'p95_{metric}'] = sorted(values)[int(len(values)*0.95)] if values else 0
+                        aggregated_summary[f'p99_{metric}'] = sorted(values)[int(len(values)*0.99)] if values else 0
+                
+                # Calculate Core Web Vitals scores
+                lcp_score = self._calculate_lcp_score(aggregated_summary.get('avg_largest_contentful_paint', 0))
+                fid_score = self._calculate_fid_score(aggregated_summary.get('avg_first_input_delay', 0))
+                cls_score = self._calculate_cls_score(aggregated_summary.get('avg_cumulative_layout_shift', 0))
+                
+                aggregated_summary['lcp_score'] = lcp_score
+                aggregated_summary['fid_score'] = fid_score
+                aggregated_summary['cls_score'] = cls_score
+                aggregated_summary['performance_score'] = (lcp_score + fid_score + cls_score) / 3
+            
+            logger.info(f"Successfully aggregated {len(all_summaries)} Playwright summaries")
+            return {
+                'state': {
+                    'testRunDuration': f"{aggregated_summary['test_duration']}s",
+                    'vus': aggregated_summary['total_vus'],
+                    'vusMax': aggregated_summary['total_vus'],
+                    'iterationCount': aggregated_summary['total_iterations'],
+                    'dataReceived': 0,
+                    'dataSent': 0,
+                    'checks': {},
+                    'thresholds': {},
+                    'groups': {},
+                    'rootGroup': {'name': '', 'groups': {}, 'checks': {}, 'scenarios': {}}
+                },
+                'metrics': {
+                    'playwright_iterations': {
+                        'type': 'counter',
+                        'contains': 'default',
+                        'values': {},
+                        'thresholds': [],
+                        'count': aggregated_summary['total_iterations'],
+                        'sum': aggregated_summary['total_iterations'],
+                        'min': aggregated_summary['total_iterations'],
+                        'max': aggregated_summary['total_iterations'],
+                        'avg': aggregated_summary['total_iterations'],
+                        'rate': aggregated_summary['total_iterations'] / aggregated_summary['test_duration'] if aggregated_summary['test_duration'] > 0 else 0
+                    },
+                    'playwright_page_load_time': {
+                        'type': 'trend',
+                        'contains': 'time',
+                        'values': {},
+                        'thresholds': [],
+                        'count': aggregated_summary.get('successful_iterations', 0),
+                        'sum': aggregated_summary.get('avg_total_time', 0) * aggregated_summary.get('successful_iterations', 0),
+                        'min': aggregated_summary.get('min_total_time', 0),
+                        'max': aggregated_summary.get('max_total_time', 0),
+                        'avg': aggregated_summary.get('avg_total_time', 0),
+                        'p(50)': aggregated_summary.get('avg_total_time', 0),
+                        'p(75)': aggregated_summary.get('avg_total_time', 0),
+                        'p(90)': aggregated_summary.get('avg_total_time', 0),
+                        'p(95)': aggregated_summary.get('avg_total_time', 0),
+                        'p(99)': aggregated_summary.get('avg_total_time', 0)
+                    }
+                },
+                'root_group': {'name': '', 'groups': {}, 'checks': {}, 'scenarios': {}},
+                'playwright_summary': aggregated_summary
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to aggregate Playwright results: {e}")
+            return None
+    
+    def _calculate_lcp_score(self, lcp_ms):
+        """Calculate LCP score (0-100)"""
+        if lcp_ms <= 2500: return 100
+        elif lcp_ms <= 4000: return 75
+        else: return 50
+    
+    def _calculate_fid_score(self, fid_ms):
+        """Calculate FID score (0-100)"""
+        if fid_ms <= 100: return 100
+        elif fid_ms <= 300: return 75
+        else: return 50
+    
+    def _calculate_cls_score(self, cls_value):
+        """Calculate CLS score (0-100)"""
+        if cls_value <= 0.1: return 100
+        elif cls_value <= 0.25: return 75
+        else: return 50

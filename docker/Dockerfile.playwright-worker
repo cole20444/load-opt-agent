@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Azure CLI
-RUN pip3 install azure-cli
+# Install Azure CLI and Playwright
+RUN pip3 install azure-cli playwright==1.40.0
 
 # Install Playwright browsers
 RUN playwright install chromium

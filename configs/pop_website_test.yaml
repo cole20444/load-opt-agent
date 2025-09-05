@@ -4,7 +4,7 @@
 
 target: https://wearepop.com
 vus: 20  # 20 virtual users for Azure test
-duration: 2m  # 2-minute test
+duration: 5m  # 5-minute test
 test_type: both  # Run both protocol and browser tests
 
 # Site description
@@ -33,7 +33,7 @@ analysis_settings:
 # Protocol test settings (k6)
 protocol_settings:
   vus: 20  # 20 virtual users for Azure test
-  duration: 2m
+  duration: 5m
   thresholds:
     http_req_duration: ['p(95)<10000']  # Increased to 10s for high load
     http_req_failed: ['rate<0.3']       # Increased error rate tolerance for ramp-up
@@ -41,7 +41,7 @@ protocol_settings:
 # Browser test settings (xk6-browser) - Enabled for both tests
 browser_settings:
   vus: 10  # 10 virtual users for browser test
-  duration: 2m  # 2-minute browser test
+  duration: 5m  # 2-minute browser test
   viewport:
     width: 1920
     height: 1080
@@ -78,7 +78,7 @@ azure:
 # Distribution settings for Azure distributed testing - Both test types enabled
 distribution:
   total_vus: 20  # Total VUs across all workers
-  duration: "2m"  # Test duration
+  duration: "5m"  # Test duration
   vus_per_container:
     protocol: 10  # VUs per protocol worker container
     browser: 5    # VUs per browser worker container

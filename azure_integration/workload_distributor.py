@@ -172,7 +172,7 @@ class WorkloadDistributor:
         if test_type == 'protocol':
             image = f"{container_registry}/k6-worker:latest"
         elif test_type == 'browser':
-            image = f"{container_registry}/k6-browser-worker:latest"
+            image = f"{container_registry}/k6-playwright-worker:latest"
         else:
             raise ValueError(f"Unknown test type: {test_type}")
         

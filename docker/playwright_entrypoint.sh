@@ -61,8 +61,8 @@ upload_to_blob() {
     if [ -f "$file_path" ]; then
         log "Uploading $file_path to $blob_name"
         az storage blob upload \
-            --account-name "${AZURE_STORAGE_ACCOUNT}" \
-            --container-name "${AZURE_STORAGE_CONTAINER}" \
+            --account-name "${STORAGE_ACCOUNT}" \
+            --container-name "${CONTAINER_NAME}" \
             --file "$file_path" \
             --name "$blob_name" \
             --connection-string "${AZURE_STORAGE_CONNECTION_STRING}" \
