@@ -30,7 +30,7 @@ The system follows this execution sequence:
 
 2. 🐳 Build Docker Images
    ├── Build k6 protocol test image
-   └── Build xk6-browser test image
+   └── Build Playwright test image
 
 3. 🔌 Protocol Testing (if enabled)
    ├── Run k6 container with resource limits
@@ -38,9 +38,9 @@ The system follows this execution sequence:
    └── Generate protocol_summary.json
 
 4. 🌐 Browser Testing (if enabled)
-   ├── Run xk6-browser container with browser optimizations
-   ├── Execute browser_load_test.js
-   └── Generate browser_summary.json
+   ├── Run Playwright container with browser optimizations
+   ├── Execute playwright_browser_test.py
+   └── Generate playwright_results_*.json
 
 5. 📊 Analysis & Reporting
    ├── Run enhanced_performance_analyzer.py
@@ -70,10 +70,10 @@ The system follows this execution sequence:
     - Backend optimization
   </AccordionItem>
   
-  <AccordionItem title="Browser Testing (xk6-browser)">
+  <AccordionItem title="Browser Testing (Playwright)">
     **Purpose**: Front-end performance testing
     
-    ```yaml
+```yaml
     test_type: browser
     browser_settings:
       vus: 5
@@ -91,7 +91,7 @@ The system follows this execution sequence:
   <AccordionItem title="Comprehensive Testing (both)">
     **Purpose**: Full-stack performance testing
     
-    ```yaml
+```yaml
     test_type: both
     vus: 100
     duration: 5m
@@ -99,7 +99,7 @@ The system follows this execution sequence:
       vus: 100
       duration: 5m
     browser_settings:
-      vus: 10
+vus: 10
       duration: 2m
     ```
     
@@ -115,11 +115,11 @@ The system follows this execution sequence:
 
 <Accordion>
   <AccordionItem title="Quick Development Test">
-    ```yaml
+```yaml
     target: https://your-app.com
     test_type: protocol
     vus: 20
-    duration: 2m
+duration: 2m
     description: "Quick development test"
     ```
     
@@ -335,31 +335,31 @@ The system provides progress feedback:
 
 <Accordion>
   <AccordionItem title="Docker Not Running">
-    ```bash
-    # Start Docker Desktop
-    open -a Docker  # macOS
+```bash
+# Start Docker Desktop
+open -a Docker  # macOS
     # Or start Docker service on Linux
     sudo systemctl start docker
     
     # Verify Docker is running
     docker ps
-    ```
+```
   </AccordionItem>
-  
+
   <AccordionItem title="Permission Errors">
-    ```bash
-    # Ensure Docker permissions
-    sudo usermod -aG docker $USER
+```bash
+# Ensure Docker permissions
+sudo usermod -aG docker $USER
     # Log out and back in
     
     # Check file permissions
     chmod +x run_test.py
     chmod +x scripts/*.py
-    ```
+```
   </AccordionItem>
-  
+
   <AccordionItem title="Memory Issues">
-    ```bash
+```bash
     # Check available memory
     free -h
     
@@ -385,7 +385,7 @@ The system provides progress feedback:
   </AccordionItem>
   
   <AccordionItem title="Test Failures">
-    ```bash
+```bash
     # Check test logs
     docker logs <container-id>
     
@@ -402,7 +402,7 @@ The system provides progress feedback:
 
 <Accordion>
   <AccordionItem title="Partial Test Failures">
-    ```bash
+```bash
     # If protocol test fails, browser test continues
     # If browser test fails, protocol results are still available
     
@@ -425,7 +425,7 @@ The system provides progress feedback:
   </AccordionItem>
   
   <AccordionItem title="Resource Exhaustion">
-    ```bash
+```bash
     # Clean up Docker resources
     docker system prune -f
     

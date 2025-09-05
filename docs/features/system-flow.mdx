@@ -21,10 +21,10 @@ User runs: python run_test.py configs/pop_website_test.yaml
 │   ├── Generate protocol_summary.json
 │   └── Handle high-load optimizations (memory, timeouts)
 │
-├── Browser Testing (xk6-browser)
-│   ├── Build Docker image (xk6-browser-test) with browser optimizations
-│   ├── Run xk6-browser container with tests/browser_load_test.js
-│   ├── Generate browser_summary.json
+├── Browser Testing (Playwright)
+│   ├── Build Docker image (playwright-worker) with browser optimizations
+│   ├── Run Playwright container with tests/playwright_browser_test.py
+│   ├── Generate playwright_results_*.json
 │   └── Run browser_metrics_analyzer.py → browser_summary_analysis.json
 │
 └── Analysis & Reporting
@@ -46,7 +46,7 @@ output/site_name/timestamp/
 │   └── enhanced_analysis_report.json  # Detailed protocol analysis
 │
 ├── Browser Data
-│   ├── browser_summary.json           # Raw xk6-browser metrics
+│   ├── playwright_results_*.json      # Raw Playwright browser metrics
 │   └── browser_summary_analysis.json  # Core Web Vitals analysis
 │
 ├── HTML Reports
@@ -64,7 +64,7 @@ output/site_name/timestamp/
 | Component | Protocol Test | Browser Test | HTML Report | Manual Report |
 |-----------|---------------|--------------|-------------|---------------|
 | **k6 (Protocol)** | Primary | | Enhanced metrics | Protocol data |
-| **xk6-browser** | | Primary | Core Web Vitals | Browser data |
+| **Playwright** | | Primary | Core Web Vitals | Browser data |
 | **Enhanced Performance Analyzer** | k6 metrics | Browser metrics | Detailed analysis | Analysis data |
 | **Browser Metrics Analyzer** | | Core Web Vitals | Browser insights | Browser analysis |
 | **HTML Report Generator** | All data | All data | Primary | |

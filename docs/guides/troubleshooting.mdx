@@ -12,12 +12,12 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `docker: command not found` or `Cannot connect to the Docker daemon`
     
     **Solutions**:
-    ```bash
+```bash
     # macOS - Start Docker Desktop
     open -a Docker
     
     # Linux - Start Docker service
-    sudo systemctl start docker
+sudo systemctl start docker
     sudo systemctl enable docker
     
     # Windows - Start Docker Desktop
@@ -34,9 +34,9 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `Got permission denied while trying to connect to the Docker daemon`
     
     **Solutions**:
-    ```bash
+```bash
     # Add user to docker group
-    sudo usermod -aG docker $USER
+sudo usermod -aG docker $USER
     
     # Log out and back in, or restart session
     newgrp docker
@@ -52,8 +52,8 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `failed to build Docker image` or build timeouts
     
     **Solutions**:
-    ```bash
-    # Clean Docker cache
+```bash
+# Clean Docker cache
     docker system prune -f
     docker builder prune -f
     
@@ -98,7 +98,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
   </AccordionItem>
   
   <AccordionItem title="Browser Test Timeouts">
-    **Symptoms**: `Browser test timed out` or `xk6-browser container timeout`
+    **Symptoms**: `Browser test timed out` or `Playwright container timeout`
     
     **Solutions**:
     ```bash
@@ -175,7 +175,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `Error loading browser_summary.json` or missing HTML reports
     
     **Solutions**:
-    ```bash
+```bash
     # Try manual report generation
     python scripts/generate_manual_report.py output/site_name/latest/
     
@@ -194,7 +194,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `enhanced_analysis_report.json not found`
     
     **Solutions**:
-    ```bash
+```bash
     # Check what files exist
     ls -la output/site_name/latest/
     
@@ -213,7 +213,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `JSON decode error` or `Extra data: line 1`
     
     **Solutions**:
-    ```bash
+```bash
     # Check file integrity
     tail -5 output/site_name/latest/protocol_summary.json
     
@@ -249,8 +249,8 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     ```
     
     **Example Valid Configuration**:
-    ```yaml
-    target: https://example.com
+```yaml
+target: https://example.com
     test_type: both
     vus: 50
     duration: 5m
@@ -286,7 +286,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: `Environment variable not found` or incorrect values
     
     **Solutions**:
-    ```bash
+```bash
     # Check environment variables
     echo $TARGET_URL
     echo $K6_VUS
@@ -298,7 +298,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     export K6_DURATION=5m
     
     # Use .env file
-    cp env.example .env
+cp env.example .env
     # Edit .env with your values
     ```
     
@@ -340,7 +340,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: High latency, connection timeouts, packet loss
     
     **Solutions**:
-    ```bash
+```bash
     # Check network performance
     ping your-target-site.com
     traceroute your-target-site.com
@@ -363,7 +363,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: Target site becomes slow or unresponsive
     
     **Solutions**:
-    ```bash
+```bash
     # Reduce test load immediately
     vus: 10  # Much lower VU count
     
@@ -398,10 +398,10 @@ description: Common issues and solutions for the Load Testing & Optimization Age
       vus: 3  # Lower VU count
     
     # Check browser image
-    docker images | grep xk6-browser
+    docker images | grep playwright
     
     # Rebuild browser image
-    docker build -f docker/Dockerfile.browser -t xk6-browser-test .
+    docker build -f docker/Dockerfile.playwright-worker -t playwright-worker .
     ```
     
     **Prevention**: Adequate system resources, proper Docker setup
@@ -413,7 +413,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Solutions**:
     ```bash
     # Check browser test script
-    cat tests/browser_load_test.js
+    cat tests/playwright_browser_test.py
     
     # Increase page load timeout
     browser_settings:
@@ -434,7 +434,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     **Symptoms**: Incomplete resource analysis or missing data
     
     **Solutions**:
-    ```bash
+```bash
     # Increase browser timeout
     browser_settings:
       timeout: "90s"  # Longer timeout for complex pages
@@ -458,7 +458,7 @@ description: Common issues and solutions for the Load Testing & Optimization Age
 
 <Accordion>
   <AccordionItem title="Docker Logs">
-    ```bash
+```bash
     # Get container logs
     docker logs <container-id>
     
@@ -474,19 +474,19 @@ description: Common issues and solutions for the Load Testing & Optimization Age
   </AccordionItem>
   
   <AccordionItem title="System Logs">
-    ```bash
+```bash
     # Check system logs
     journalctl -f
     
     # Check Docker logs
     journalctl -u docker.service -f
-    
-    # Check disk space
-    df -h
-    
+
+# Check disk space
+df -h
+
     # Check memory usage
-    free -h
-    ```
+free -h
+```
   </AccordionItem>
   
   <AccordionItem title="Application Logs">
@@ -617,10 +617,10 @@ description: Common issues and solutions for the Load Testing & Optimization Age
     
     # Rebuild images
     docker build -f docker/Dockerfile -t k6-load-test .
-    docker build -f docker/Dockerfile.browser -t xk6-browser-test .
+    docker build -f docker/Dockerfile.playwright-worker -t playwright-worker .
     
     # Verify images
-    docker images | grep -E "(k6-load-test|xk6-browser-test)"
+    docker images | grep -E "(k6-load-test|playwright-worker)"
     ```
   </AccordionItem>
   

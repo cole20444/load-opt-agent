@@ -26,7 +26,7 @@ load-opt-agent/
 │   └── scripts/                  # Performance analysis tools
 │
 ├── Test Scripts
-│   └── tests/                    # k6 and xk6-browser test files
+│   └── tests/                    # k6 and Playwright test files
 │
 ├── AI Analysis
 │   └── ai_analysis/              # AI-powered analysis components
@@ -90,7 +90,7 @@ load-opt-agent/
     - Load YAML configuration
     - Build Docker images
     - Execute protocol tests (k6)
-    - Execute browser tests (xk6-browser)
+    - Execute browser tests (Playwright)
     - Generate analysis reports
     - Create HTML reports
     
@@ -175,7 +175,7 @@ docker/
 │   └── Dockerfile                # k6 protocol test container
 │
 └── 📄 Browser Testing
-    └── Dockerfile.browser        # xk6-browser test container
+    └── Dockerfile.playwright-worker  # Playwright test container
 ```
 
 ### Docker Configurations
@@ -197,7 +197,7 @@ docker/
   
   <AccordionItem title="Dockerfile.browser (Browser)">
     ```dockerfile
-    FROM grafana/xk6-browser:latest
+    FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
     
     # Browser optimizations
     ENV K6_BROWSER_ENABLED=true
@@ -305,7 +305,7 @@ tests/
 │   └── load_test.js              # k6 protocol test script
 │
 └── 📄 Browser Tests
-    └── browser_load_test.js      # xk6-browser test script
+    └── playwright_browser_test.py  # Playwright test script
 ```
 
 ### Test Scripts
@@ -337,8 +337,8 @@ tests/
     ```
   </AccordionItem>
   
-  <AccordionItem title="browser_load_test.js (Browser)">
-    **Purpose**: xk6-browser front-end testing
+  <AccordionItem title="playwright_browser_test.py (Browser)">
+    **Purpose**: Playwright front-end testing
     
     **Features**:
     - Real browser testing with Chromium
@@ -424,7 +424,7 @@ output/
         ├── 📁 Timestamped Runs
         │   ├── 20250811_223723/           # Latest test run
         │   │   ├── protocol_summary.json  # Raw k6 data (JSONL)
-        │   │   ├── browser_summary.json   # Raw browser data
+        │   │   ├── playwright_results_*.json   # Raw browser data
         │   │   ├── enhanced_analysis_report.json
         │   │   ├── browser_summary_analysis.json
         │   │   ├── load_test_report.html  # Interactive report
@@ -442,7 +442,7 @@ output/
 <Accordion>
   <AccordionItem title="Raw Data Files">
     - **`protocol_summary.json`**: k6 metrics in JSONL format (50MB-1GB)
-    - **`browser_summary.json`**: xk6-browser metrics (100MB-1GB)
+    - **`playwright_results_*.json`**: Playwright browser metrics (100MB-1GB)
   </AccordionItem>
   
   <AccordionItem title="Analysis Files">

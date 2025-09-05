@@ -62,28 +62,57 @@ export const options = {
 
 ## Browser-Level Testing
 
-### xk6-browser Performance Testing
+### Playwright Performance Testing
 
-Real browser testing with Chromium provides front-end performance insights:
+Real browser testing with Playwright provides comprehensive front-end performance insights:
 
-```javascript
-// Browser test with Core Web Vitals
-export default function() {
-  const page = browser.newPage();
-  
-  // Navigate and measure performance
-  page.goto('https://example.com');
-  
-  // Measure Core Web Vitals
-  const metrics = page.evaluate(() => {
-    return {
-      fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime,
-      lcp: performance.getEntriesByName('largest-contentful-paint')[0]?.startTime,
-      fid: performance.getEntriesByName('first-input-delay')[0]?.processingStart,
-      cls: performance.getEntriesByName('layout-shift')[0]?.value,
-    };
-  });
-}
+```python
+# Advanced Playwright test with comprehensive metrics
+from playwright.sync_api import sync_playwright
+import json
+
+def run_browser_test():
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        
+        # Navigate and measure performance
+        page.goto('https://example.com')
+        
+        # Measure Core Web Vitals and advanced metrics
+        metrics = page.evaluate("""
+            () => {
+                const navigation = performance.getEntriesByType('navigation')[0];
+                const paint = performance.getEntriesByType('paint');
+                const lcp = performance.getEntriesByType('largest-contentful-paint');
+                
+                return {
+                    // Core Web Vitals
+                    fcp: paint.find(p => p.name === 'first-contentful-paint')?.startTime,
+                    lcp: lcp[lcp.length - 1]?.startTime,
+                    cls: performance.getEntriesByType('layout-shift')
+                        .reduce((sum, entry) => sum + entry.value, 0),
+                    
+                    // Advanced metrics
+                    ttfb: navigation.responseStart - navigation.requestStart,
+                    dom_loaded: navigation.domContentLoadedEventEnd - navigation.navigationStart,
+                    load_complete: navigation.loadEventEnd - navigation.navigationStart,
+                    
+                    // Memory metrics
+                    js_heap_used: performance.memory?.usedJSHeapSize,
+                    js_heap_total: performance.memory?.totalJSHeapSize,
+                    js_heap_limit: performance.memory?.jsHeapSizeLimit,
+                    
+                    // Resource metrics
+                    resource_count: performance.getEntriesByType('resource').length,
+                    total_resource_size: performance.getEntriesByType('resource')
+                        .reduce((sum, entry) => sum + (entry.transferSize || 0), 0)
+                };
+            }
+        """)
+        
+        browser.close()
+        return metrics
 ```
 
 ### Core Web Vitals
@@ -187,30 +216,49 @@ def analyze_performance(metrics):
     }
 ```
 
-### Performance Scoring
+### Comprehensive Performance Scoring
+
+Our enhanced performance scoring system analyzes 50+ metrics across both protocol and browser tests:
 
 <Accordion>
   <AccordionItem title="Protocol Performance Score">
-    **Scoring Algorithm**:
-    - **Response Time**: 40% weight (95th percentile response time)
-    - **Error Rate**: 30% weight (HTTP error percentage)
-    - **Throughput**: 20% weight (requests per second)
-    - **Data Efficiency**: 10% weight (compression ratio)
+    **Comprehensive Analysis**:
+    - **Error Rate Analysis**: 0-30 points deducted (critical issues)
+    - **Response Time Analysis**: 0-25 points deducted (avg + P95 analysis)
+    - **Throughput Analysis**: 0-15 points deducted (requests per second)
+    - **Connection Performance**: 0-20 points deducted (DNS, TCP, TLS, server processing)
+    - **Data Transfer Efficiency**: 0-10 points deducted (response size analysis)
+    - **Load Distribution**: 0-5 points deducted (VU variation)
+    
+    **Deduction Examples**:
+    - High error rate (>5%): -30 points
+    - Slow response time (>2s avg): -15 points
+    - Low throughput (<50 req/s): -10 points
+    - Slow server processing (>1s): -15 points
     
     **Score Ranges**:
     - **90-100**: Excellent performance
-    - **80-89**: Good performance
+    - **80-89**: Good performance  
     - **70-79**: Fair performance
     - **60-69**: Poor performance
     - **0-59**: Critical issues
   </AccordionItem>
   
   <AccordionItem title="Browser Performance Score">
-    **Scoring Algorithm**:
-    - **Core Web Vitals**: 50% weight (FCP, LCP, FID, CLS)
-    - **Page Weight**: 25% weight (total resource size)
-    - **Resource Efficiency**: 15% weight (optimization opportunities)
-    - **User Experience**: 10% weight (interactivity metrics)
+    **Comprehensive Analysis**:
+    - **Core Web Vitals**: 0-45 points deducted (LCP, FID, CLS scores)
+    - **Page Load Performance**: 0-25 points deducted (response time analysis)
+    - **Network Performance**: 0-20 points deducted (TTFB, DNS, TCP, SSL)
+    - **Memory Usage**: 0-15 points deducted (JS heap analysis)
+    - **Resource Loading**: 0-10 points deducted (count, size, efficiency)
+    - **Rendering Performance**: 0-15 points deducted (blocking time, long tasks)
+    - **Throughput**: 0-10 points deducted (browser requests per second)
+    
+    **Deduction Examples**:
+    - Poor LCP score (<75): -15 points
+    - Slow page load (>3s): -20 points
+    - High JS heap usage (>50MB): -10 points
+    - High blocking time (>300ms): -15 points
     
     **Score Ranges**:
     - **90-100**: Excellent front-end performance
@@ -219,13 +267,51 @@ def analyze_performance(metrics):
     - **60-69**: Poor front-end performance
     - **0-59**: Critical front-end issues
   </AccordionItem>
+  
+  <AccordionItem title="Unified Performance Score">
+    **Combined Analysis**:
+    - **Overall Score**: Average of protocol and browser scores
+    - **Issue Detection**: Comprehensive problem identification
+    - **Priority Categorization**: High, Medium, Low priority issues
+    - **Actionable Recommendations**: Specific optimization steps
+    
+    **Example Scoring**:
+    - Protocol: 95/100 (excellent response times, moderate throughput)
+    - Browser: 85/100 (perfect Core Web Vitals, slow page load)
+    - Overall: 90/100 (balanced performance with optimization opportunities)
+  </AccordionItem>
 </Accordion>
 
-## 📈 HTML Report Generation
+## 📈 Enhanced HTML Report Generation
+
+### Interactive Tooltips System
+
+Our HTML reports feature comprehensive tooltips on every section header:
+
+```html
+<!-- Interactive tooltip example -->
+<div class="tooltip-container">
+  <h2>Core Web Vitals & Performance Scores</h2>
+  <div class="tooltip-icon">ℹ️</div>
+  <div class="tooltip-content">
+    <strong>Core Web Vitals:</strong> Google's key user experience metrics
+    <br><strong>Good ranges:</strong> FCP &lt;1.8s, LCP &lt;2.5s, FID &lt;100ms, CLS &lt;0.1
+    <br><strong>Bad ranges:</strong> FCP &gt;3s, LCP &gt;4s, FID &gt;300ms, CLS &gt;0.25
+    <br><strong>Impact:</strong> Affects SEO rankings and user experience
+  </div>
+</div>
+```
+
+**Tooltip Features**:
+- **Educational Content**: Explains what each metric means
+- **Good/Bad Ranges**: Clear performance benchmarks
+- **Impact Information**: Why the metric matters
+- **Hover Activation**: Professional styling with smooth transitions
+- **Color-Coded Ranges**: Visual indicators for performance levels
 
 ### Interactive Visualizations
 
-Our HTML reports include interactive charts and visualizations:
+Our HTML reports include comprehensive interactive charts and visualizations:
 
 ```html
 <!-- Response Time Distribution Chart -->
@@ -262,11 +348,12 @@ Our HTML reports include interactive charts and visualizations:
     - **Visual Charts**: Core Web Vitals timeline, resource waterfall
   </AccordionItem>
   
-  <AccordionItem title="Enhanced Analysis">
-    - **Performance Issues**: Detailed problem analysis
-    - **Recommendations**: Prioritized optimization actions
-    - **Insights Panel**: Key findings and observations
-    - **Implementation Guidance**: Step-by-step improvement steps
+  <AccordionItem title="Enhanced Performance Analysis">
+    - **Unified Performance Overview**: Combined protocol and browser insights
+    - **Performance Issues & Insights**: Priority-categorized problem detection
+    - **Performance Recommendations**: Actionable optimization steps
+    - **Detailed Performance Metrics**: Comprehensive metric breakdown
+    - **Interactive Tooltips**: Educational content for all metrics
   </AccordionItem>
 </Accordion>
 
@@ -295,7 +382,7 @@ export const options = {
 
 <Accordion>
   <AccordionItem title="Docker Resource Limits">
-    ```bash
+```bash
     # Protocol test container
     --memory=4g          # 4GB memory limit
     --cpus=2             # 2 CPU cores
@@ -334,68 +421,100 @@ export const options = {
   </AccordionItem>
 </Accordion>
 
-## 🔍 Performance Issue Detection
+## 🔍 Comprehensive Performance Issue Detection
 
 ### Automated Problem Identification
 
-Our system automatically detects and categorizes performance issues:
+Our enhanced system analyzes 50+ metrics and automatically detects and categorizes performance issues:
 
 <Accordion>
-  <AccordionItem title="High Priority Issues">
-    - **Slow Server Processing**: >5s average response time
-    - **High Error Rate**: >10% HTTP failures
-    - **Poor First Input Delay**: >300ms FID
-    - **Large Page Weight**: >5MB total size
-    - **Memory Issues**: Container memory limits exceeded
+  <AccordionItem title="High Priority Issues (Critical)">
+    **Protocol Issues**:
+    - **High Error Rate**: >5% HTTP failures (-30 points)
+    - **Slow Server Processing**: >5s average response time (-15 points)
+    - **Critical Response Times**: >10s P95 response time (-20 points)
+    
+    **Browser Issues**:
+    - **Poor Core Web Vitals**: LCP >4s, FID >300ms, CLS >0.25 (-15 points each)
+    - **Memory Issues**: JS heap usage >100MB (-15 points)
+    - **Critical Page Load**: >5s average response time (-25 points)
+    
+    **Action Required**: Immediate attention for production applications
   </AccordionItem>
   
-  <AccordionItem title="Medium Priority Issues">
-    - **Suboptimal Response Times**: 95th percentile >3s
-    - **Poor Core Web Vitals**: CLS >0.1, TTI >3.8s
-    - **Slow Resources**: Resources >500ms load time
-    - **Inefficient Compression**: "&lt;50%" compression ratio
-    - **High Resource Count**: >100 resources per page
+  <AccordionItem title="Medium Priority Issues (Important)">
+    **Protocol Issues**:
+    - **Suboptimal Response Times**: P95 >3s (-10 points)
+    - **Low Throughput**: <50 requests/second (-10 points)
+    - **Connection Issues**: Slow DNS/TCP/TLS times (-5 points each)
+    
+    **Browser Issues**:
+    - **Moderate Core Web Vitals**: TTI >7s, TBT >600ms (-10 points each)
+    - **Resource Issues**: >100 resources, >2MB page weight (-5 points each)
+    - **Network Issues**: TTFB >1s, slow resource loading (-10 points)
+    
+    **Action Required**: Plan optimization for next sprint
   </AccordionItem>
   
-  <AccordionItem title="Low Priority Issues">
-    - **Minor Optimizations**: Image compression, caching
-    - **Code Splitting**: Large JavaScript bundles
-    - **Third-Party Impact**: External script performance
-    - **Caching Headers**: Missing cache-control headers
-    - **Resource Optimization**: Uncompressed assets
+  <AccordionItem title="Low Priority Issues (Optimization)">
+    **Protocol Issues**:
+    - **Minor Response Time**: P95 >2s (-5 points)
+    - **Data Transfer**: Large response sizes (-5 points)
+    - **Load Distribution**: High VU variation (-3 points)
+    
+    **Browser Issues**:
+    - **Minor Optimizations**: Image compression, caching (-3 points)
+    - **Code Splitting**: Large JavaScript bundles (-5 points)
+    - **Third-Party Impact**: External script performance (-3 points)
+    
+    **Action Required**: Address during regular maintenance
   </AccordionItem>
 </Accordion>
 
-## 📊 Metrics Reference
+## 📊 Comprehensive Metrics Reference
 
-### Protocol Metrics
+### Protocol Metrics (k6)
 
-| Metric | Description | Unit | Target |
-|--------|-------------|------|--------|
-| `http_reqs` | Total HTTP requests | count | - |
-| `http_req_duration` | Response time | ms | "&lt;2000ms" |
-| `http_req_failed` | Failed requests | rate | "&lt;0.1" |
-| `http_req_connecting` | Connection time | ms | "&lt;100ms" |
-| `http_req_tls_handshaking` | TLS handshake time | ms | "&lt;200ms" |
-| `http_req_waiting` | Server processing time | ms | "&lt;1000ms" |
-| `http_req_receiving` | Response receiving time | ms | "&lt;500ms" |
-| `data_sent` | Bytes sent | bytes | - |
-| `data_received` | Bytes received | bytes | - |
-| `vus` | Virtual users | count | - |
-| `vus_max` | Max virtual users | count | - |
+| Metric | Description | Unit | Target | Impact |
+|--------|-------------|------|--------|--------|
+| `http_reqs` | Total HTTP requests | count | - | Throughput analysis |
+| `http_req_duration` | Response time | ms | "&lt;2000ms" | User experience |
+| `http_req_failed` | Failed requests | rate | "&lt;0.05" | Reliability |
+| `http_req_connecting` | Connection time | ms | "&lt;100ms" | Network performance |
+| `http_req_tls_handshaking` | TLS handshake time | ms | "&lt;200ms" | Security overhead |
+| `http_req_waiting` | Server processing time | ms | "&lt;1000ms" | Backend performance |
+| `http_req_receiving` | Response receiving time | ms | "&lt;500ms" | Data transfer |
+| `data_sent` | Bytes sent | bytes | - | Request efficiency |
+| `data_received` | Bytes received | bytes | - | Response size |
+| `vus` | Virtual users | count | - | Load simulation |
+| `vus_max` | Max virtual users | count | - | Peak load |
 
-### Browser Metrics
+### Browser Metrics (Playwright)
 
-| Metric | Description | Unit | Target |
-|--------|-------------|------|--------|
-| `FCP` | First Contentful Paint | ms | "&lt;1800ms" |
-| `LCP` | Largest Contentful Paint | ms | "&lt;2500ms" |
-| `FID` | First Input Delay | ms | "&lt;100ms" |
-| `CLS` | Cumulative Layout Shift | score | "&lt;0.1" |
-| `TTI` | Time to Interactive | ms | "&lt;3800ms" |
-| `TBT` | Total Blocking Time | ms | "&lt;200ms" |
-| `Page Weight` | Total resource size | MB | "&lt;2MB" |
-| `Resource Count` | Number of resources | count | "&lt;50" |
+| Metric | Description | Unit | Target | Impact |
+|--------|-------------|------|--------|--------|
+| `FCP` | First Contentful Paint | ms | "&lt;1800ms" | Initial load perception |
+| `LCP` | Largest Contentful Paint | ms | "&lt;2500ms" | Main content load |
+| `FID` | First Input Delay | ms | "&lt;100ms" | Interactivity |
+| `CLS` | Cumulative Layout Shift | score | "&lt;0.1" | Visual stability |
+| `TTI` | Time to Interactive | ms | "&lt;3800ms" | Full interactivity |
+| `TBT` | Total Blocking Time | ms | "&lt;200ms" | Main thread blocking |
+| `TTFB` | Time to First Byte | ms | "&lt;800ms" | Server response |
+| `DOM Loaded` | DOM content loaded | ms | "&lt;2000ms" | Document ready |
+| `Load Complete` | Full page load | ms | "&lt;3000ms" | Complete loading |
+| `JS Heap Used` | JavaScript memory usage | MB | "&lt;50MB" | Memory efficiency |
+| `Resource Count` | Number of resources | count | "&lt;50" | Resource optimization |
+| `Page Weight` | Total resource size | MB | "&lt;2MB" | Download efficiency |
+
+### Advanced Performance Metrics
+
+| Category | Metrics | Description | Impact |
+|----------|---------|-------------|--------|
+| **Network Performance** | DNS, TCP, SSL, TTFB | Connection establishment | User experience |
+| **Memory Performance** | JS Heap, Memory Efficiency | Browser memory usage | Stability |
+| **Rendering Performance** | Layout, Recalc, Script, Paint | Browser rendering | Visual performance |
+| **Resource Performance** | Load times, sizes, compression | Asset optimization | Download speed |
+| **User Experience** | Long tasks, blocking time | Interaction responsiveness | Usability |
 
 ---
 

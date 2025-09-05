@@ -54,7 +54,7 @@ python run_test.py configs/pop_website_test.yaml
 This will:
 - Build Docker images (first time only)
 - Run protocol-level load test with k6
-- Run browser-level test with xk6-browser
+- Run browser-level test with Playwright
 - Generate comprehensive performance metrics
 - Create interactive HTML reports
 - Organize results in `output/`
@@ -78,7 +78,7 @@ output/
 └── pop-website-2024-dev_azurewebsites_net/
     ├── 20250811_223723/                    # Latest test run
     │   ├── protocol_summary.json          # Raw k6 metrics
-    │   ├── browser_summary.json           # Raw browser metrics
+    │   ├── playwright_results_*.json      # Raw browser metrics
     │   ├── enhanced_analysis_report.json  # Protocol analysis
     │   ├── browser_summary_analysis.json  # Browser analysis
     │   ├── load_test_report.html          # Interactive HTML report

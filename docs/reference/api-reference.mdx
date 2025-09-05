@@ -71,7 +71,7 @@ python run_test.py <config_file>
   </AccordionItem>
   
   <AccordionItem title="run_browser_test(config, output_dir)">
-    **Purpose**: Execute xk6-browser test
+    **Purpose**: Execute Playwright browser test
     
     **Parameters**:
     - `config` (dict): Test configuration
@@ -434,9 +434,9 @@ python scripts/generate_manual_report.py <output_directory>
   </AccordionItem>
 </Accordion>
 
-### tests/browser_load_test.js
+### tests/playwright_browser_test.py
 
-**Purpose**: xk6-browser front-end test script
+**Purpose**: Playwright front-end test script
 
 **Key Functions**:
 
@@ -767,7 +767,7 @@ tags: ["react", "nodejs", "aws"]     # Technology tags
   
   <AccordionItem title="Test Errors">
     - `ProtocolTestFailed`: k6 protocol test failed
-    - `BrowserTestFailed`: xk6-browser test failed
+    - `BrowserTestFailed`: Playwright test failed
     - `TestTimeout`: Test execution timed out
     - `InvalidConfiguration`: Configuration validation failed
   </AccordionItem>

@@ -3,39 +3,69 @@ title: Interpreting Results
 description: Complete guide to understanding load test results, HTML reports, and performance analysis
 ---
 
-## HTML Report Overview
+## Enhanced HTML Report Overview
 
 ### Primary Report Structure
 
-The main HTML report (`load_test_report.html`) provides a comprehensive view of your test results:
+The main HTML report (`load_test_report.html`) provides a comprehensive view of your test results with interactive tooltips and enhanced analysis:
 
 ```
-📄 HTML Report Sections:
+📄 Enhanced HTML Report Sections:
 ├── 🎯 Executive Summary
-│   ├── Overall Performance Grade
+│   ├── Overall Performance Grade (A+ to F)
 │   ├── Key Metrics Overview
-│   └── Navigation Links
+│   ├── Navigation Links
+│   └── Interactive Tooltips
 │
 ├── 🔌 Protocol Test Results
 │   ├── Key Metrics (Requests, Success Rate, Response Times)
 │   ├── Detailed Performance Metrics
+│   ├── HTTP Request Breakdown
 │   └── Interactive Charts
 │
-├── 🌐 Browser Test Results
-│   ├── Core Web Vitals
-│   ├── Resource Analysis
-│   └── Performance Issues
+├── 🌐 Browser Test Results (Playwright)
+│   ├── Core Web Vitals & Performance Scores
+│   ├── Advanced Performance Metrics
+│   ├── Memory & Rendering Performance
+│   ├── Network & Resource Performance
+│   ├── Response Time Distribution
+│   ├── HTTP Request Breakdown
+│   ├── Core Web Vitals Performance
+│   ├── Network Performance Breakdown
+│   ├── Memory Usage
+│   ├── Status Code Distribution
+│   └── Interactive Tooltips
 │
-├── 📈 Enhanced Performance Analysis
-│   ├── Performance Issues
-│   ├── Recommendations
-│   └── Insights Panel
-│
-└── 🌐 Enhanced Browser Performance Analysis
-    ├── Core Web Vitals Details
-    ├── Resource Analysis Details
-    └── Browser Performance Issues
+└── 📈 Enhanced Performance Analysis
+    ├── Unified Performance Overview
+    ├── Performance Issues & Insights
+    ├── Performance Recommendations
+    └── Detailed Performance Metrics
 ```
+
+### Interactive Tooltips System
+
+Every section header includes educational tooltips with hover activation:
+
+```html
+<div class="tooltip-container">
+  <h2>Core Web Vitals & Performance Scores</h2>
+  <div class="tooltip-icon">ℹ️</div>
+  <div class="tooltip-content">
+    <strong>Core Web Vitals:</strong> Google's key user experience metrics
+    <br><strong>Good ranges:</strong> FCP &lt;1.8s, LCP &lt;2.5s, FID &lt;100ms, CLS &lt;0.1
+    <br><strong>Bad ranges:</strong> FCP &gt;3s, LCP &gt;4s, FID &gt;300ms, CLS &gt;0.25
+    <br><strong>Impact:</strong> Affects SEO rankings and user experience
+  </div>
+</div>
+```
+
+**Tooltip Features**:
+- **Educational Content**: Explains what each metric means
+- **Good/Bad Ranges**: Clear performance benchmarks with color coding
+- **Impact Information**: Why the metric matters for performance
+- **Hover Activation**: Professional styling with smooth transitions
+- **Comprehensive Coverage**: Tooltips on all 12+ section headers
 
 ### Navigation System
 
@@ -46,7 +76,6 @@ The report includes a navigation system for easy exploration:
   <a href="#protocol-results">Protocol Test Results</a>
   <a href="#browser-results">Browser Test Results</a>
   <a href="#enhanced-analysis">Enhanced Performance Analysis</a>
-  <a href="#enhanced-browser-analysis">Enhanced Browser Performance Analysis</a>
 </div>
 ```
 
@@ -54,24 +83,33 @@ The report includes a navigation system for easy exploration:
 
 ### Performance Grade
 
-The overall performance grade combines protocol and browser scores:
+The overall performance grade combines protocol and browser scores with comprehensive analysis:
 
 ```javascript
 {
   "overall_grade": "B+",
-  "protocol_score": 80,
-  "browser_score": 30,
-  "combined_score": 78
+  "protocol_score": 95,
+  "browser_score": 85,
+  "combined_score": 90,
+  "total_issues": 2,
+  "high_priority": 0,
+  "medium_priority": 1,
+  "low_priority": 1
 }
 ```
 
-**Grade Scale**:
-- **A+ (90-100)**: Excellent performance
-- **A (80-89)**: Good performance
-- **B (70-79)**: Fair performance
-- **C (60-69)**: Poor performance
-- **D (50-59)**: Very poor performance
-- **F (0-49)**: Critical issues
+**Enhanced Grade Scale**:
+- **A+ (90-100)**: Excellent performance - Monitor and maintain
+- **A (80-89)**: Good performance - Minor optimizations
+- **B (70-79)**: Fair performance - Moderate improvements
+- **C (60-69)**: Poor performance - Significant optimization
+- **D (50-59)**: Very poor performance - Major issues
+- **F (0-49)**: Critical issues - Immediate attention
+
+**Scoring Methodology**:
+- **Protocol Score**: Based on error rates, response times, throughput, connection performance, and data transfer efficiency
+- **Browser Score**: Based on Core Web Vitals, page load performance, network performance, memory usage, and resource loading
+- **Issue Detection**: Comprehensive analysis of 50+ metrics with priority categorization
 
 ### Key Metrics Overview
 
@@ -187,11 +225,11 @@ The protocol section shows comprehensive HTTP performance metrics:
   </AccordionItem>
 </Accordion>
 
-## 🌐 Browser Test Results
+## 🌐 Browser Test Results (Playwright)
 
-### Core Web Vitals
+### Core Web Vitals & Performance Scores
 
-The browser section displays detailed Core Web Vitals metrics:
+The browser section displays comprehensive Core Web Vitals and advanced metrics with scoring:
 
 ```javascript
 {
@@ -201,6 +239,7 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 563.5,
       "p95": 967.0,
       "grade": "A",
+      "score": 95,
       "target": "&lt; 1800ms"
     },
     "lcp": {
@@ -208,6 +247,7 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 845.3,
       "p95": 1450.4,
       "grade": "A",
+      "score": 90,
       "target": "&lt; 2500ms"
     },
     "fid": {
@@ -215,6 +255,7 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 704.4,
       "p95": 1208.7,
       "grade": "C",
+      "score": 60,
       "target": "&lt; 100ms"
     },
     "cls": {
@@ -222,6 +263,7 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 0.1,
       "p95": 0.2,
       "grade": "B",
+      "score": 80,
       "target": "&lt; 0.1"
     },
     "tti": {
@@ -229,6 +271,7 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 1056.6,
       "p95": 1813.0,
       "grade": "A",
+      "score": 95,
       "target": "&lt; 3800ms"
     },
     "tbt": {
@@ -236,8 +279,16 @@ The browser section displays detailed Core Web Vitals metrics:
       "p75": 70.4,
       "p95": 120.9,
       "grade": "A",
+      "score": 90,
       "target": "&lt; 200ms"
     }
+  },
+  "advanced_metrics": {
+    "ttfb": { "avg": 245.2, "p75": 312.1, "p95": 456.8 },
+    "dom_loaded": { "avg": 1234.5, "p75": 1456.7, "p95": 1890.2 },
+    "load_complete": { "avg": 2456.8, "p75": 2789.1, "p95": 3456.7 },
+    "js_heap_used": { "avg": 25.4, "p75": 28.7, "p95": 32.1 },
+    "js_heap_total": { "avg": 75.2, "p75": 82.3, "p95": 89.5 }
   }
 }
 ```
@@ -369,73 +420,114 @@ The browser section displays detailed Core Web Vitals metrics:
 
 ## 📈 Enhanced Performance Analysis
 
-### Performance Issues
+### Unified Performance Overview
 
-The enhanced analysis identifies and categorizes performance problems:
+The enhanced analysis provides comprehensive insights across protocol and browser tests:
 
 ```javascript
 {
-  "issues": {
-    "high": [
+  "unified_overview": {
+    "overall_score": 82,
+    "protocol_score": 95,
+    "browser_score": 85,
+    "total_issues": 2,
+    "high_priority": 0,
+    "medium_priority": 1,
+    "low_priority": 1
+  },
+  "performance_issues": {
+    "high": [],
+    "medium": [
       {
-        "type": "timing",
-        "severity": "high",
-        "category": "Server Processing",
-        "issue": "Slow server processing (avg: 8496.3ms)",
-        "recommendation": "Optimize server processing, database queries, or caching"
+        "type": "throughput",
+        "severity": "medium",
+        "category": "Protocol Performance",
+        "issue": "Low throughput (3.95 req/s)",
+        "recommendation": "Optimize Protocol Throughput"
       }
     ],
-    "medium": [],
-    "low": []
+    "low": [
+      {
+        "type": "response_time",
+        "severity": "low",
+        "category": "Browser Performance",
+        "issue": "Slow browser response time (2975ms)",
+        "recommendation": "Optimize Browser Response Times"
+      }
+    ]
   },
-  "summary": {
-    "total_issues": 1,
-    "high_priority": 1,
-    "medium_priority": 0,
-    "low_priority": 0,
-    "performance_score": 80
-  }
+  "recommendations": [
+    {
+      "title": "Optimize Protocol Throughput",
+      "priority": "medium",
+      "actions": [
+        "Implement connection pooling",
+        "Optimize database queries",
+        "Add caching layers",
+        "Scale horizontally"
+      ]
+    },
+    {
+      "title": "Optimize Browser Response Times",
+      "priority": "low",
+      "actions": [
+        "Optimize page load performance",
+        "Implement lazy loading",
+        "Compress images and assets",
+        "Use CDN for static resources"
+      ]
+    }
+  ]
 }
 ```
 
 ### Issue Categories
 
 <Accordion>
-  <AccordionItem title="High Priority Issues">
+  <AccordionItem title="High Priority Issues (Critical)">
     **Severity**: Critical - requires immediate attention
     
-    **Types**:
-    - Slow server processing (>5s average)
-    - High error rates (>10%)
-    - Poor Core Web Vitals (FID >300ms, CLS >0.25)
-    - Large page weight (>5MB)
-    - Memory issues or timeouts
+    **Protocol Issues**:
+    - High error rate (>5%): -30 points
+    - Slow server processing (>5s): -15 points
+    - Critical response times (>10s P95): -20 points
+    
+    **Browser Issues**:
+    - Poor Core Web Vitals (LCP >4s, FID >300ms, CLS >0.25): -15 points each
+    - Memory issues (JS heap >100MB): -15 points
+    - Critical page load (>5s): -25 points
     
     **Action**: Address immediately for production applications
   </AccordionItem>
   
-  <AccordionItem title="Medium Priority Issues">
+  <AccordionItem title="Medium Priority Issues (Important)">
     **Severity**: Important - should be addressed soon
     
-    **Types**:
-    - Suboptimal response times (P95 >3s)
-    - Poor Core Web Vitals (TTI >7s, TBT >600ms)
-    - Slow resources (>500ms load time)
-    - Inefficient compression ("&lt;50%" ratio)
-    - High resource count (>100 resources)
+    **Protocol Issues**:
+    - Suboptimal response times (P95 >3s): -10 points
+    - Low throughput (<50 req/s): -10 points
+    - Connection issues (slow DNS/TCP/TLS): -5 points each
+    
+    **Browser Issues**:
+    - Moderate Core Web Vitals (TTI >7s, TBT >600ms): -10 points each
+    - Resource issues (>100 resources, >2MB page weight): -5 points each
+    - Network issues (TTFB >1s, slow resource loading): -10 points
     
     **Action**: Plan optimization for next sprint
   </AccordionItem>
   
-  <AccordionItem title="Low Priority Issues">
+  <AccordionItem title="Low Priority Issues (Optimization)">
     **Severity**: Minor - optimization opportunities
     
-    **Types**:
-    - Minor image optimizations
-    - Code splitting opportunities
-    - Third-party script impact
-    - Missing cache headers
-    - Uncompressed assets
+    **Protocol Issues**:
+    - Minor response time (P95 >2s): -5 points
+    - Data transfer (large response sizes): -5 points
+    - Load distribution (high VU variation): -3 points
+    
+    **Browser Issues**:
+    - Minor optimizations (image compression, caching): -3 points
+    - Code splitting (large JavaScript bundles): -5 points
+    - Third-party impact (external script performance): -3 points
     
     **Action**: Address during regular maintenance
   </AccordionItem>
@@ -605,10 +697,10 @@ The manual report (`manual_load_test_report.html`) is generated when:
 
 <Accordion>
   <AccordionItem title="Comparing Test Runs">
-    ```bash
-    # List all test results
-    python scripts/list_test_results.py list
-    
+```bash
+# List all test results
+python scripts/list_test_results.py list
+
     # Compare specific runs
     diff output/site_name/20250811_223723/enhanced_analysis_report.json \
          output/site_name/20250811_215741/enhanced_analysis_report.json

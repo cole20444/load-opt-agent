@@ -17,8 +17,8 @@ Test results are organized by site and timestamp for easy navigation:
 output/
 └── site_name/
     ├── 20250811_223723/                    # Timestamped test run
-    │   ├── protocol_summary.json          # Raw k6 metrics (JSONL)
-    │   ├── browser_summary.json           # Raw browser metrics
+    │   ├── summary_0.json                 # Raw k6 protocol metrics (JSONL)
+    │   ├── playwright_results_0.json      # Raw Playwright browser metrics
     │   ├── enhanced_analysis_report.json  # Protocol analysis
     │   ├── browser_summary_analysis.json  # Browser analysis
     │   ├── load_test_report.html          # Interactive HTML report
@@ -30,8 +30,8 @@ output/
 
 <Accordion>
   <AccordionItem title="Raw Data Files">
-    - **`protocol_summary.json`**: Raw k6 metrics in JSONL format
-    - **`browser_summary.json`**: Raw xk6-browser metrics
+    - **`summary_0.json`**: Raw k6 protocol metrics in JSONL format
+    - **`playwright_results_0.json`**: Raw Playwright browser metrics
     - **Size**: 50MB-1GB depending on test duration and VUs
   </AccordionItem>
   
@@ -87,24 +87,25 @@ Our primary HTML report provides a comprehensive view of test results:
   </AccordionItem>
   
   <AccordionItem title="Browser Test Results">
-    - **Core Web Vitals**: FCP, LCP, FID, CLS, TTI, TBT
-    - **Resource Analysis**: Page weight, resource counts
-    - **Performance Issues**: Detected problems and severity
-    - **Visual Charts**: Core Web Vitals timeline, resource waterfall
+    - **Core Web Vitals & Performance Scores**: FCP, LCP, FID, CLS, TTI, TBT with grades
+    - **Advanced Performance Metrics**: TTFB, DOM loaded, memory usage
+    - **Memory & Rendering Performance**: JS heap, blocking time, long tasks
+    - **Network & Resource Performance**: DNS, TCP, SSL, resource analysis
+    - **Response Time Distribution**: Browser response time analysis
+    - **HTTP Request Breakdown**: Browser request analysis
+    - **Core Web Vitals Performance**: Detailed CWV analysis
+    - **Network Performance Breakdown**: Connection timing analysis
+    - **Memory Usage**: JavaScript heap analysis
+    - **Status Code Distribution**: HTTP status code analysis
+    - **Interactive Tooltips**: Educational content for all metrics
   </AccordionItem>
   
   <AccordionItem title="Enhanced Performance Analysis">
-    - **Performance Issues**: Detailed problem analysis
-    - **Recommendations**: Prioritized optimization actions
-    - **Insights Panel**: Key findings and observations
-    - **Implementation Guidance**: Step-by-step improvement steps
-  </AccordionItem>
-  
-  <AccordionItem title="Enhanced Browser Performance Analysis">
-    - **Core Web Vitals**: Detailed breakdown of each metric
-    - **Resource Analysis**: Detailed resource loading insights
-    - **Performance Issues**: Browser-specific problems
-    - **Optimization Opportunities**: Front-end improvements
+    - **Unified Performance Overview**: Combined protocol and browser insights
+    - **Performance Issues & Insights**: Priority-categorized problem detection
+    - **Performance Recommendations**: Actionable optimization steps
+    - **Detailed Performance Metrics**: Comprehensive metric breakdown
+    - **Interactive Tooltips**: Educational content for all sections
   </AccordionItem>
 </Accordion>
 
@@ -191,28 +192,37 @@ The HTML report displays comprehensive protocol metrics:
   </AccordionItem>
 </Accordion>
 
-## 🌐 Browser Test Results
+## 🌐 Browser Test Results (Playwright)
 
-### Core Web Vitals Display
+### Core Web Vitals & Performance Scores
 
-The HTML report shows detailed Core Web Vitals metrics:
+The HTML report shows comprehensive Core Web Vitals and advanced metrics:
 
 ```json
 {
   "core_web_vitals": {
-    "fcp": { "avg": 470.6, "p75": 563.5, "p95": 967.0, "grade": "A" },
-    "lcp": { "avg": 705.9, "p75": 845.3, "p95": 1450.4, "grade": "A" },
-    "fid": { "avg": 588.3, "p75": 704.4, "p95": 1208.7, "grade": "C" },
-    "cls": { "avg": 0.1, "p75": 0.1, "p95": 0.2, "grade": "B" },
-    "tti": { "avg": 882.5, "p75": 1056.6, "p95": 1813.0, "grade": "A" },
-    "tbt": { "avg": 65.8, "p75": 70.4, "p95": 120.9, "grade": "A" }
+    "fcp": { "avg": 470.6, "p75": 563.5, "p95": 967.0, "grade": "A", "score": 95 },
+    "lcp": { "avg": 705.9, "p75": 845.3, "p95": 1450.4, "grade": "A", "score": 90 },
+    "fid": { "avg": 588.3, "p75": 704.4, "p95": 1208.7, "grade": "C", "score": 60 },
+    "cls": { "avg": 0.1, "p75": 0.1, "p95": 0.2, "grade": "B", "score": 80 },
+    "tti": { "avg": 882.5, "p75": 1056.6, "p95": 1813.0, "grade": "A", "score": 95 },
+    "tbt": { "avg": 65.8, "p75": 70.4, "p95": 120.9, "grade": "A", "score": 90 }
+  },
+  "advanced_metrics": {
+    "ttfb": { "avg": 245.2, "p75": 312.1, "p95": 456.8 },
+    "dom_loaded": { "avg": 1234.5, "p75": 1456.7, "p95": 1890.2 },
+    "load_complete": { "avg": 2456.8, "p75": 2789.1, "p95": 3456.7 },
+    "js_heap_used": { "avg": 25.4, "p75": 28.7, "p95": 32.1 },
+    "js_heap_total": { "avg": 75.2, "p75": 82.3, "p95": 89.5 }
   },
   "resource_analysis": {
     "total_requests": 1298,
     "total_page_weight_mb": 86.42,
     "resource_types": {
       "image": 886,
-      "css": 325
+      "css": 325,
+      "javascript": 45,
+      "font": 12
     }
   }
 }
@@ -244,34 +254,66 @@ The HTML report shows detailed Core Web Vitals metrics:
   </AccordionItem>
 </Accordion>
 
-## 📈 Enhanced Analysis Results
+## 📈 Enhanced Performance Analysis
 
-### Performance Issues
+### Unified Performance Overview
 
-The enhanced analysis identifies and categorizes performance problems:
+The enhanced analysis provides comprehensive insights across protocol and browser tests:
 
 ```json
 {
-  "issues": {
-    "high": [
+  "unified_overview": {
+    "overall_score": 82,
+    "protocol_score": 95,
+    "browser_score": 85,
+    "total_issues": 2,
+    "high_priority": 0,
+    "medium_priority": 1,
+    "low_priority": 1
+  },
+  "performance_issues": {
+    "high": [],
+    "medium": [
       {
-        "type": "timing",
-        "severity": "high",
-        "category": "Server Processing",
-        "issue": "Slow server processing (avg: 8496.3ms)",
-        "recommendation": "Optimize server processing, database queries, or caching"
+        "type": "throughput",
+        "severity": "medium",
+        "category": "Protocol Performance",
+        "issue": "Low throughput (3.95 req/s)",
+        "recommendation": "Optimize Protocol Throughput"
       }
     ],
-    "medium": [],
-    "low": []
+    "low": [
+      {
+        "type": "response_time",
+        "severity": "low",
+        "category": "Browser Performance",
+        "issue": "Slow browser response time (2975ms)",
+        "recommendation": "Optimize Browser Response Times"
+      }
+    ]
   },
-  "summary": {
-    "total_issues": 1,
-    "high_priority": 1,
-    "medium_priority": 0,
-    "low_priority": 0,
-    "performance_score": 80
-  }
+  "recommendations": [
+    {
+      "title": "Optimize Protocol Throughput",
+      "priority": "medium",
+      "actions": [
+        "Implement connection pooling",
+        "Optimize database queries",
+        "Add caching layers",
+        "Scale horizontally"
+      ]
+    },
+    {
+      "title": "Optimize Browser Response Times",
+      "priority": "low",
+      "actions": [
+        "Optimize page load performance",
+        "Implement lazy loading",
+        "Compress images and assets",
+        "Use CDN for static resources"
+      ]
+    }
+  ]
 }
 ```
 
@@ -347,6 +389,28 @@ Protocol summary data uses JSONL format for efficient processing:
 {"type":"Metric","data":{"name":"vus","type":"gauge","contains":"default","thresholds":[],"submetrics":null},"metric":"vus"}
 {"metric":"vus","type":"Point","data":{"time":"2025-08-12T05:37:27.201614783Z","value":0,"tags":{}}}
 {"metric":"http_reqs","type":"Point","data":{"time":"2025-08-12T05:37:27.201614783Z","value":1,"tags":{}}}
+```
+
+### JSON Format (Playwright Browser Data)
+
+Playwright browser data uses structured JSON format with comprehensive metrics:
+
+```json
+{
+  "metrics": {
+    "browser_fcp": [{"time": "2025-08-12T05:37:27Z", "value": 470.6}],
+    "browser_lcp": [{"time": "2025-08-12T05:37:27Z", "value": 705.9}],
+    "browser_fid": [{"time": "2025-08-12T05:37:27Z", "value": 588.3}],
+    "browser_cls": [{"time": "2025-08-12T05:37:27Z", "value": 0.1}],
+    "browser_ttfb": [{"time": "2025-08-12T05:37:27Z", "value": 245.2}],
+    "browser_js_heap_used": [{"time": "2025-08-12T05:37:27Z", "value": 25.4}]
+  },
+  "summary": {
+    "total_requests": 1298,
+    "total_page_weight_mb": 86.42,
+    "avg_response_time": 2975.2
+  }
+}
 ```
 
 ### JSON Format (Analysis Data)

@@ -3,40 +3,84 @@ title: Metrics Reference
 description: Complete reference for all k6 metrics and performance indicators
 ---
 
-# Metrics Reference
+# Comprehensive Metrics Reference
 
-Complete reference for all k6 metrics, performance indicators, and analysis data points.
+Complete reference for all k6 protocol metrics, Playwright browser metrics, performance indicators, and comprehensive analysis data points.
 
-## 📊 k6 Core Metrics
+## 📊 Protocol Metrics (k6)
 
 ### HTTP Request Metrics
 
-| Metric | Description | Unit | Example |
-|--------|-------------|------|---------|
-| `http_req_duration` | Total request duration | ms | 529ms |
-| `http_req_failed` | Failed request rate | % | 0.30% |
-| `http_reqs` | Total requests | count | 1,963 |
-| `http_req_rate` | Requests per second | req/s | 16.4 |
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `http_req_duration` | Total request duration | ms | "&lt;2000ms" | 529ms | User experience |
+| `http_req_failed` | Failed request rate | % | "&lt;0.05" | 0.30% | Reliability |
+| `http_reqs` | Total requests | count | - | 1,963 | Throughput |
+| `http_req_rate` | Requests per second | req/s | "&gt;50" | 16.4 | Performance |
 
 ### HTTP Timing Breakdown
 
-| Metric | Description | Unit | Example |
-|--------|-------------|------|---------|
-| `http_req_dns` | DNS resolution time | ms | 6.4ms |
-| `http_req_connecting` | TCP connection time | ms | 1.4ms |
-| `http_req_tls_handshaking` | TLS handshake time | ms | 3.6ms |
-| `http_req_sending` | Request sending time | ms | 0.8ms |
-| `http_req_waiting` | Server processing time | ms | 494.8ms |
-| `http_req_receiving` | Response receiving time | ms | 58.5ms |
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `http_req_dns` | DNS resolution time | ms | "&lt;50ms" | 6.4ms | Network performance |
+| `http_req_connecting` | TCP connection time | ms | "&lt;100ms" | 1.4ms | Connection setup |
+| `http_req_tls_handshaking` | TLS handshake time | ms | "&lt;200ms" | 3.6ms | Security overhead |
+| `http_req_sending` | Request sending time | ms | "&lt;10ms" | 0.8ms | Data transmission |
+| `http_req_waiting` | Server processing time | ms | "&lt;1000ms" | 494.8ms | Backend performance |
+| `http_req_receiving` | Response receiving time | ms | "&lt;500ms" | 58.5ms | Data reception |
 
 ### Data Transfer Metrics
 
-| Metric | Description | Unit | Example |
-|--------|-------------|------|---------|
-| `data_sent` | Total bytes sent | bytes | 1,234,567 |
-| `data_received` | Total bytes received | bytes | 5,678,901 |
-| `http_req_size` | Request size | bytes | 1,234 |
-| `http_resp_size` | Response size | bytes | 5,678 |
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `data_sent` | Total bytes sent | bytes | - | 1,234,567 | Request efficiency |
+| `data_received` | Total bytes received | bytes | - | 5,678,901 | Response size |
+| `http_req_size` | Request size | bytes | "&lt;1KB" | 1,234 | Request optimization |
+| `http_resp_size` | Response size | bytes | "&lt;100KB" | 5,678 | Response optimization |
+
+## 🌐 Browser Metrics (Playwright)
+
+### Core Web Vitals
+
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `FCP` | First Contentful Paint | ms | "&lt;1800ms" | 470ms | Initial load perception |
+| `LCP` | Largest Contentful Paint | ms | "&lt;2500ms" | 705ms | Main content load |
+| `FID` | First Input Delay | ms | "&lt;100ms" | 588ms | Interactivity |
+| `CLS` | Cumulative Layout Shift | score | "&lt;0.1" | 0.1 | Visual stability |
+| `TTI` | Time to Interactive | ms | "&lt;3800ms" | 882ms | Full interactivity |
+| `TBT` | Total Blocking Time | ms | "&lt;200ms" | 65ms | Main thread blocking |
+
+### Advanced Browser Metrics
+
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `TTFB` | Time to First Byte | ms | "&lt;800ms" | 245ms | Server response |
+| `DOM Loaded` | DOM content loaded | ms | "&lt;2000ms" | 1,234ms | Document ready |
+| `Load Complete` | Full page load | ms | "&lt;3000ms" | 2,456ms | Complete loading |
+| `JS Heap Used` | JavaScript memory usage | MB | "&lt;50MB" | 25MB | Memory efficiency |
+| `JS Heap Total` | Total JS heap size | MB | "&lt;100MB" | 75MB | Memory allocation |
+| `JS Heap Limit` | JS heap size limit | MB | - | 2,048MB | Memory constraints |
+
+### Network & Resource Metrics
+
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `Resource Count` | Number of resources | count | "&lt;50" | 1298 | Resource optimization |
+| `Page Weight` | Total resource size | MB | "&lt;2MB" | 86.42MB | Download efficiency |
+| `DNS Time` | DNS resolution time | ms | "&lt;50ms" | 12ms | Network performance |
+| `TCP Time` | TCP connection time | ms | "&lt;100ms" | 8ms | Connection setup |
+| `SSL Time` | SSL handshake time | ms | "&lt;200ms" | 45ms | Security overhead |
+
+### Rendering Performance Metrics
+
+| Metric | Description | Unit | Target | Example | Impact |
+|--------|-------------|------|--------|---------|--------|
+| `Layout Duration` | Layout calculation time | ms | "&lt;10ms" | 5ms | Rendering performance |
+| `Recalc Duration` | Style recalculation time | ms | "&lt;5ms" | 2ms | Style processing |
+| `Script Duration` | JavaScript execution time | ms | "&lt;50ms" | 25ms | JS performance |
+| `Paint Duration` | Paint operation time | ms | "&lt;5ms" | 3ms | Visual rendering |
+| `Long Tasks` | Tasks >50ms | count | "&lt;5" | 2 | Main thread blocking |
 
 ## 🎯 Performance Indicators
 
@@ -59,23 +103,37 @@ Complete reference for all k6 metrics, performance indicators, and analysis data
 | 5-10% | Warning | Optimize |
 | > 10% | Critical | Immediate action |
 
-## 📈 Analysis Metrics
+## 📈 Comprehensive Performance Scoring
 
-### Performance Scoring
+### Protocol Performance Score
 
-| Score Range | Grade | Description |
-|-------------|-------|-------------|
-| 90-100 | A | Excellent performance |
-| 80-89 | B | Good performance |
-| 70-79 | C | Acceptable performance |
-| 60-69 | D | Needs improvement |
-| < 60 | F | Critical issues |
+| Category | Weight | Deduction Range | Examples |
+|----------|--------|-----------------|----------|
+| **Error Rate** | 30% | 0-30 points | >5% errors: -30 points |
+| **Response Time** | 25% | 0-25 points | >2s avg: -15 points |
+| **Throughput** | 15% | 0-15 points | <50 req/s: -10 points |
+| **Connection Performance** | 20% | 0-20 points | Slow server: -15 points |
+| **Data Transfer** | 10% | 0-10 points | Large responses: -5 points |
 
-### Component Scores
+### Browser Performance Score
 
-- **k6 Load Test Score**: Based on response times and error rates
-- **Page Resource Score**: Based on asset optimization
-- **AI Analysis Score**: Based on optimization recommendations
+| Category | Weight | Deduction Range | Examples |
+|----------|--------|-----------------|----------|
+| **Core Web Vitals** | 45% | 0-45 points | Poor LCP: -15 points |
+| **Page Load Performance** | 25% | 0-25 points | >3s load: -20 points |
+| **Network Performance** | 20% | 0-20 points | Slow TTFB: -10 points |
+| **Memory Usage** | 15% | 0-15 points | High heap: -10 points |
+| **Resource Loading** | 10% | 0-10 points | Many resources: -5 points |
+
+### Overall Performance Grades
+
+| Score Range | Grade | Description | Action Required |
+|-------------|-------|-------------|-----------------|
+| 90-100 | A+ | Excellent performance | Monitor and maintain |
+| 80-89 | A | Good performance | Minor optimizations |
+| 70-79 | B | Fair performance | Moderate improvements |
+| 60-69 | C | Poor performance | Significant optimization |
+| < 60 | D | Critical issues | Immediate attention |
 
 ## 🔍 HTTP Status Codes
 
@@ -144,23 +202,40 @@ Complete reference for all k6 metrics, performance indicators, and analysis data
 - **10+ resource types** examined
 - **Technology-specific** patterns applied
 
-## 📁 Data Collection
+## 📁 Comprehensive Data Collection
 
-### Metrics Collection
+### Protocol Metrics Collection (k6)
 
 - **Real-time collection** during test execution
-- **Streaming JSON** output for efficiency
+- **Streaming JSONL** output for efficiency
 - **Comprehensive coverage** of all k6 metrics
 - **Automatic aggregation** and analysis
 
+### Browser Metrics Collection (Playwright)
+
+- **Advanced performance monitoring** with Playwright
+- **Core Web Vitals** measurement
+- **Memory usage tracking** (JS heap, blocking time)
+- **Network performance** analysis (DNS, TCP, SSL, TTFB)
+- **Resource loading** metrics (count, size, efficiency)
+- **Rendering performance** tracking (layout, paint, script)
+
 ### Data Points per Test
 
-| Test Duration | Virtual Users | Data Points |
-|---------------|---------------|-------------|
-| 1 minute | 25 | ~1,500 |
-| 2 minutes | 25 | ~3,000 |
-| 5 minutes | 50 | ~7,500 |
-| 15 minutes | 50 | ~22,500 |
+| Test Duration | Virtual Users | Protocol Data Points | Browser Data Points |
+|---------------|---------------|---------------------|-------------------|
+| 1 minute | 25 | ~1,500 | ~50 |
+| 2 minutes | 25 | ~3,000 | ~100 |
+| 5 minutes | 50 | ~7,500 | ~250 |
+| 15 minutes | 50 | ~22,500 | ~750 |
+
+### Enhanced Analysis Coverage
+
+- **50+ metrics** analyzed across protocol and browser tests
+- **Comprehensive scoring** with detailed deductions
+- **Priority-based issue detection** (High/Medium/Low)
+- **Actionable recommendations** with specific optimization steps
+- **Interactive tooltips** for educational content
 
 ## 🔗 Related Documentation
 

@@ -93,7 +93,7 @@ cd docker
 docker build -f Dockerfile.worker -t loadtestregistry.azurecr.io/k6-worker:latest .
 
 # Build browser worker image
-docker build -f Dockerfile.browser-worker -t loadtestregistry.azurecr.io/xk6-browser-worker:latest .
+docker build -f Dockerfile.playwright-worker -t loadtestregistry.azurecr.io/playwright-worker:latest .
 ```
 
 ### 2. Push Images to ACR
@@ -103,7 +103,7 @@ docker build -f Dockerfile.browser-worker -t loadtestregistry.azurecr.io/xk6-bro
 docker push loadtestregistry.azurecr.io/k6-worker:latest
 
 # Push browser worker image
-docker push loadtestregistry.azurecr.io/xk6-browser-worker:latest
+docker push loadtestregistry.azurecr.io/playwright-worker:latest
 ```
 
 ## Install Azure Dependencies
