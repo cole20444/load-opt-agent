@@ -1,0 +1,53 @@
+# Worker Dockerfile for Azure Distributed Load Testing - Browser Tests
+FROM grafana/k6:latest
+
+# Switch to root for package installation
+USER root
+
+# Install Chromium and runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    python3 \
+    py3-pip \
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    fontconfig \
+    ttf-dejavu
+
+# Set Chrome path and browser environment variables for k6 browser module
+ENV CHROME_PATH=/usr/bin/chromium-browser
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROME_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Install Azure CLI for blob storage operations
+RUN pip3 install --break-system-packages azure-cli
+
+# Verify Chromium installation
+RUN chromium-browser --version || echo "Chromium verification failed"
+
+# Create working directory
+WORKDIR /app
+
+# Copy worker entrypoint script and browser test file
+COPY docker/worker_entrypoint.sh /app/worker_entrypoint.sh
+COPY tests/browser_load_test.js /app/browser_load_test.js
+RUN chmod +x /app/worker_entrypoint.sh
+
+# Set environment variables for browser testing
+ENV K6_DISABLE_COMPRESSION=true
+ENV K6_DISABLE_HTTP2=true
+
+# Enable k6 browser module (CRITICAL for browser functionality)
+ENV K6_BROWSER_ENABLED=true
+ENV K6_BROWSER_HEADLESS=true
+
+# Set entrypoint
+ENTRYPOINT ["/app/worker_entrypoint.sh"]

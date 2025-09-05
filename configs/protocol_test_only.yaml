@@ -1,0 +1,57 @@
+# Protocol Test Only Configuration
+# For debugging protocol worker issues
+
+target: https://wearepop.com
+vus: 20
+duration: 2m
+test_type: protocol  # Only protocol tests
+
+# Site description
+description: "Protocol-only load test for debugging"
+
+# Technology tags for analysis
+tags: ['protocol', 'debug', 'http']
+
+# Analysis settings - Technical only, no AI
+analysis_settings:
+  run_page_resource_analysis: true
+  run_enhanced_performance_analysis: true
+  run_ai_analysis: false  # Disabled for technical analysis only
+  generate_readable_reports: true
+  combine_results: true
+
+# Protocol test settings (k6)
+protocol_settings:
+  vus: 20
+  duration: 2m
+  thresholds:
+    http_req_duration: ['p(95)<10000']
+    http_req_failed: ['rate<0.3']
+
+browser_settings:
+  vus: 0  # Disable browser tests
+  duration: 0m
+
+# Azure Distributed Testing Configuration
+azure:
+  subscription_id: "73680a18-9795-402d-bfa2-fd739ae160c1"
+  resource_group: "POP-Tools"
+  location: "eastus"
+  storage_account: "poploadteststorage"
+  container_name: "results"
+  container_registry: "poploadtestregistry.azurecr.io"
+
+# Distribution settings for Azure distributed testing
+distribution:
+  total_vus: 20
+  duration: "2m"
+  vus_per_container:
+    protocol: 10  # 10 VUs per protocol worker container
+    browser: 0    # Disable browser workers
+  resources:
+    protocol:
+      cpu: 1.0
+      memory: 2.0
+    browser:
+      cpu: 0.0
+      memory: 0.0

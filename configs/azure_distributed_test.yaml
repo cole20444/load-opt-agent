@@ -1,10 +1,7 @@
-# POP Website Load Test Configuration
-# Updated with latest features - 2-minute Azure distributed test
-# Technical analysis only (no AI insights)
+# Azure Distributed Load Test Configuration
+# Template for running distributed load tests in Azure
 
-target: https://wearepop.com
-vus: 20  # 20 virtual users for Azure test
-duration: 2m  # 2-minute test
+target: https://pop-website-2024-dev.azurewebsites.net
 test_type: both  # Run both protocol and browser tests
 
 # Site description
@@ -20,28 +17,24 @@ tags:
   - "javascript"
   - "api-driven"
   - "pop-website"
-  - "comprehensive-test"
+  - "distributed-test"
 
-# Analysis settings - Technical only, no AI
+# Analysis settings
 analysis_settings:
   run_page_resource_analysis: true
   run_enhanced_performance_analysis: true
-  run_ai_analysis: false  # Disabled for technical analysis only
+  run_ai_analysis: false
   generate_readable_reports: true
   combine_results: true
 
-# Protocol test settings (k6)
+# Protocol test settings (k6) - These will be overridden by distribution settings
 protocol_settings:
-  vus: 20  # 20 virtual users for Azure test
-  duration: 2m
   thresholds:
-    http_req_duration: ['p(95)<10000']  # Increased to 10s for high load
-    http_req_failed: ['rate<0.3']       # Increased error rate tolerance for ramp-up
+    http_req_duration: ['p(95)<10000']
+    http_req_failed: ['rate<0.3']
 
-# Browser test settings (xk6-browser) - Enabled for both tests
+# Browser test settings (xk6-browser) - These will be overridden by distribution settings
 browser_settings:
-  vus: 10  # 10 virtual users for browser test
-  duration: 2m  # 2-minute browser test
   viewport:
     width: 1920
     height: 1080
@@ -66,7 +59,7 @@ user_interactions:
   scroll_page: true
   wait_between_actions: 1000  # ms
 
-# Azure Distributed Testing Configuration
+# Azure Configuration - REQUIRED for distributed testing
 azure:
   subscription_id: "73680a18-9795-402d-bfa2-fd739ae160c1"
   resource_group: "POP-Tools"
@@ -75,17 +68,17 @@ azure:
   container_name: "results"
   container_registry: "poploadtestregistry.azurecr.io"
 
-# Distribution settings for Azure distributed testing - Both test types enabled
+# Distribution settings for Azure distributed testing
 distribution:
-  total_vus: 20  # Total VUs across all workers
-  duration: "2m"  # Test duration
+  total_vus: 100  # Total VUs across all workers
+  duration: "5m"  # Test duration
   vus_per_container:
-    protocol: 10  # VUs per protocol worker container
-    browser: 5    # VUs per browser worker container
+    protocol: 20  # VUs per protocol worker container
+    browser: 25   # VUs per browser worker container (fewer containers to stay under quota)
   resources:
     protocol:
       cpu: 1.0
       memory: 2.0
     browser:
       cpu: 2.0
-      memory: 4.0 
+      memory: 4.0

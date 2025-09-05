@@ -1,0 +1,33 @@
+# Playwright-based browser worker for Azure Distributed Load Testing
+FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
+
+# Switch to root for package installation
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Azure CLI
+RUN pip3 install azure-cli
+
+# Install Playwright browsers
+RUN playwright install chromium
+RUN playwright install-deps chromium
+
+# Create working directory
+WORKDIR /app
+
+# Copy test script and entrypoint
+COPY tests/playwright_browser_test.py /app/playwright_browser_test.py
+COPY docker/playwright_entrypoint.sh /app/playwright_entrypoint.sh
+RUN chmod +x /app/playwright_entrypoint.sh
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Set entrypoint
+ENTRYPOINT ["/app/playwright_entrypoint.sh"]

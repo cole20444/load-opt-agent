@@ -3,6 +3,7 @@
 Load Testing & Optimization Agent - Phase 1
 Python runner for k6 load tests with YAML configuration
 Enhanced with xk6-browser support for comprehensive front-end performance testing
+Extended with Azure distributed testing capabilities
 """
 
 import subprocess
@@ -11,8 +12,25 @@ import os
 import sys
 import json
 import logging
+import asyncio
+import argparse
+import signal
+import sys
 from datetime import datetime
 from pathlib import Path
+
+# Import Azure integration components
+try:
+    from azure_integration.azure_client import AzureClient
+    from azure_integration.workload_distributor import WorkloadDistributor
+    from azure_integration.container_manager import ContainerManager
+    from azure_integration.result_aggregator import ResultAggregator
+    AZURE_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    AZURE_INTEGRATION_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Azure integration not available: {e}")
+    logger.warning("Install requirements-azure.txt for distributed testing")
 
 # Import AI Analysis components
 try:
@@ -23,6 +41,37 @@ except ImportError:
     logger = logging.getLogger(__name__)
     logger.warning("AI Analysis not available - skipping optimization recommendations")
 
+# Global variable to track containers for cleanup
+active_containers = []
+
+def signal_handler(signum, frame):
+    """Handle interrupt signals to ensure cleanup"""
+    logger.warning(f"Received signal {signum}, cleaning up containers...")
+    if active_containers:
+        try:
+            # Import here to avoid circular imports
+            from azure_integration.azure_client import AzureClient
+            from azure_integration.container_manager import ContainerManager
+            from azure_integration.workload_distributor import WorkloadDistributor
+            
+            # Initialize cleanup components
+            azure_config = {}  # This would need to be passed from the main function
+            azure_client = AzureClient(azure_config)
+            workload_distributor = WorkloadDistributor({})
+            container_manager = ContainerManager(azure_client, workload_distributor)
+            
+            cleanup_status = container_manager.cleanup_containers(active_containers)
+            successful_cleanup = sum(1 for status in cleanup_status.values() if status)
+            logger.info(f"Signal cleanup: {successful_cleanup}/{len(cleanup_status)} containers")
+        except Exception as e:
+            logger.error(f"Signal cleanup failed: {e}")
+    
+    sys.exit(1)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +81,11 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
+
+# Reduce Azure SDK logging to reduce noise
+logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+logging.getLogger('azure.identity').setLevel(logging.WARNING)
+logging.getLogger('azure.mgmt').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 def load_config(config_path):
@@ -40,19 +94,43 @@ def load_config(config_path):
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
         
-        # Validate required fields
-        required_fields = ['target', 'vus', 'duration']
-        for field in required_fields:
-            if field not in config:
-                raise ValueError(f"Missing required field: {field}")
+        # Check if this is an Azure distributed config
+        is_azure_config = 'azure' in config and 'distribution' in config
         
-        # Validate data types
-        if not isinstance(config['target'], str):
-            raise ValueError("target must be a string URL")
-        if not isinstance(config['vus'], int) or config['vus'] <= 0:
-            raise ValueError("vus must be a positive integer")
-        if not isinstance(config['duration'], str):
-            raise ValueError("duration must be a string (e.g., '30s', '5m')")
+        if is_azure_config:
+            # Azure distributed config validation
+            required_fields = ['target', 'test_type']
+            for field in required_fields:
+                if field not in config:
+                    raise ValueError(f"Missing required field: {field}")
+            
+            # Validate Azure configuration
+            azure_config = config.get('azure', {})
+            required_azure_fields = ['subscription_id', 'resource_group', 'storage_account', 'container_registry']
+            for field in required_azure_fields:
+                if field not in azure_config:
+                    raise ValueError(f"Missing required Azure field: {field}")
+            
+            # Validate distribution configuration
+            distribution_config = config.get('distribution', {})
+            required_dist_fields = ['total_vus', 'duration', 'vus_per_container']
+            for field in required_dist_fields:
+                if field not in distribution_config:
+                    raise ValueError(f"Missing required distribution field: {field}")
+        else:
+            # Local config validation
+            required_fields = ['target', 'vus', 'duration']
+            for field in required_fields:
+                if field not in config:
+                    raise ValueError(f"Missing required field: {field}")
+            
+            # Validate data types for local config
+            if not isinstance(config['target'], str):
+                raise ValueError("target must be a string URL")
+            if not isinstance(config['vus'], int) or config['vus'] <= 0:
+                raise ValueError("vus must be a positive integer")
+            if not isinstance(config['duration'], str):
+                raise ValueError("duration must be a string (e.g., '30s', '5m')")
         
         # Set default values for optional fields
         if 'description' not in config:
@@ -508,6 +586,42 @@ def run_ai_analysis(config, output_dir):
         logger.error(f"❌ Error in AI analysis: {e}")
         return None
 
+def aggregate_worker_summaries(summary_files):
+    """Aggregate multiple worker summary files into a single summary"""
+    try:
+        all_data = []
+        
+        for summary_file in summary_files:
+            try:
+                with open(summary_file, 'r') as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        all_data.extend(data)
+                    else:
+                        all_data.append(data)
+            except Exception as e:
+                logger.warning(f"Failed to load {summary_file}: {e}")
+        
+        if not all_data:
+            return None
+        
+        # Create aggregated summary
+        aggregated = {
+            'test_summary': {
+                'total_requests': sum(item.get('total_requests', 0) for item in all_data if isinstance(item, dict)),
+                'failed_requests': sum(item.get('failed_requests', 0) for item in all_data if isinstance(item, dict)),
+                'average_response_time': sum(item.get('average_response_time', 0) for item in all_data if isinstance(item, dict)) / len([item for item in all_data if isinstance(item, dict)]) if all_data else 0,
+                'error_rate': sum(item.get('error_rate', 0) for item in all_data if isinstance(item, dict)) / len([item for item in all_data if isinstance(item, dict)]) if all_data else 0,
+            },
+            'raw_data': all_data
+        }
+        
+        return aggregated
+        
+    except Exception as e:
+        logger.error(f"Error aggregating worker summaries: {e}")
+        return None
+
 def combine_test_results(config, output_dir):
     """Combine protocol and browser test results into a comprehensive report"""
     logger.info("🔗 Combining test results...")
@@ -516,8 +630,8 @@ def combine_test_results(config, output_dir):
         'test_metadata': {
             'site_name': config['target'],
             'test_timestamp': datetime.now().isoformat(),
-            'test_duration': config['duration'],
-            'virtual_users': config['vus'],
+            'test_duration': config.get('duration', config.get('distribution', {}).get('duration', '5m')),
+            'virtual_users': config.get('vus', config.get('distribution', {}).get('total_vus', 0)),
             'description': config.get('description', ''),
             'tags': config.get('tags', []),
             'test_types': ['protocol', 'browser'],
@@ -784,15 +898,178 @@ def generate_technical_html_report(technical_report, output_dir):
     
     logger.info(f"✅ Technical HTML report generated: {html_path}")
 
+def run_azure_distributed_test(config, output_dir):
+    """
+    Run distributed load test in Azure using multiple worker containers
+    
+    Args:
+        config: Test configuration dictionary
+        output_dir: Local output directory for results
+        
+    Returns:
+        bool: True if test completed successfully
+    """
+    if not AZURE_INTEGRATION_AVAILABLE:
+        logger.error("Azure integration not available. Install requirements-azure.txt")
+        return False
+    
+    try:
+        # Initialize Azure components
+        azure_config = config.get('azure', {})
+        if not azure_config:
+            logger.error("Azure configuration not found in config file")
+            return False
+        
+        azure_client = AzureClient(azure_config)
+        workload_distributor = WorkloadDistributor(config)
+        container_manager = ContainerManager(azure_client, workload_distributor)
+        result_aggregator = ResultAggregator(azure_client)
+        
+        # Validate configuration
+        if not workload_distributor.validate_configuration():
+            logger.error("Invalid distribution configuration")
+            return False
+        
+        # Generate run ID
+        run_id = workload_distributor.generate_run_id()
+        logger.info(f"Starting Azure distributed test with run ID: {run_id}")
+        
+        # Determine test types to run
+        test_types = []
+        if config.get('test_type') in ['protocol', 'both']:
+            test_types.append('protocol')
+        if config.get('test_type') in ['browser', 'both']:
+            test_types.append('browser')
+        
+        all_container_names = []
+        
+        # Update global container tracking
+        global active_containers
+        active_containers = all_container_names
+        
+        # Run tests for each type
+        for test_type in test_types:
+            logger.info(f"=== Starting {test_type} distributed test ===")
+            
+            # Create worker containers
+            container_names = asyncio.run(container_manager.create_workers(test_type, run_id))
+            if not container_names:
+                logger.error(f"Failed to create {test_type} worker containers")
+                return False
+            
+            all_container_names.extend(container_names)
+            active_containers = all_container_names  # Update global tracking
+            logger.info(f"Created {len(container_names)} {test_type} worker containers")
+            
+            # Wait for containers to complete with timeout
+            try:
+                completion_status = asyncio.run(container_manager.wait_for_completion(container_names))
+            except asyncio.TimeoutError:
+                logger.error(f"Timeout waiting for {test_type} containers to complete")
+                # Clean up containers on timeout
+                cleanup_status = container_manager.cleanup_containers(container_names)
+                successful_cleanup = sum(1 for status in cleanup_status.values() if status)
+                logger.info(f"Timeout cleanup: {successful_cleanup}/{len(cleanup_status)} containers")
+                return False
+            
+            # Check completion status
+            successful_containers = sum(1 for status in completion_status.values() if status)
+            total_containers = len(completion_status)
+            
+            if successful_containers == 0:
+                logger.error(f"All {test_type} containers failed")
+                return False
+            elif successful_containers < total_containers:
+                logger.warning(f"Only {successful_containers}/{total_containers} {test_type} containers completed successfully")
+            
+            logger.info(f"=== {test_type} distributed test completed ===")
+            
+            # Clean up containers for this test type before starting the next one
+            logger.info(f"=== Cleaning up {test_type} containers ===")
+            cleanup_status = container_manager.cleanup_containers(container_names)
+            successful_cleanup = sum(1 for status in cleanup_status.values() if status)
+            logger.info(f"Cleaned up {successful_cleanup}/{len(cleanup_status)} {test_type} containers")
+            
+            # Wait a moment to ensure containers are fully terminated
+            import time
+            time.sleep(30)
+        
+        # Download and aggregate results
+        logger.info("=== Downloading and aggregating results ===")
+        
+        for test_type in test_types:
+            worker_count = workload_distributor.calculate_worker_count(test_type)
+            
+            # Download worker results
+            downloaded_files = result_aggregator.download_worker_results(
+                run_id, worker_count, test_type, output_dir
+            )
+            
+            if not downloaded_files:
+                logger.warning(f"No results downloaded for {test_type} test")
+                continue
+            
+            # Aggregate summaries
+            summary_files = [f for f in downloaded_files if 'summary_' in f and f.endswith('.json')]
+            if summary_files:
+                aggregated_summary = result_aggregator.aggregate_summaries(summary_files, test_type)
+                if aggregated_summary:
+                    # Save aggregated summary locally
+                    summary_path = os.path.join(output_dir, f"{test_type}_summary.json")
+                    with open(summary_path, 'w') as f:
+                        json.dump(aggregated_summary, f, indent=2)
+                    
+                    # Upload aggregated result back to Azure
+                    result_aggregator.upload_aggregated_result(aggregated_summary, run_id, test_type)
+                    
+                    logger.info(f"✅ Aggregated {test_type} summary saved to {summary_path}")
+                else:
+                    logger.error(f"Failed to aggregate {test_type} summaries")
+            else:
+                logger.warning(f"No summary files found for {test_type} test")
+        
+        # Final cleanup (in case any containers are still running)
+        logger.info("=== Final cleanup of any remaining Azure containers ===")
+        if all_container_names:
+            cleanup_status = container_manager.cleanup_containers(all_container_names)
+            successful_cleanup = sum(1 for status in cleanup_status.values() if status)
+            logger.info(f"Final cleanup: {successful_cleanup}/{len(cleanup_status)} containers")
+        else:
+            logger.info("No containers remaining for final cleanup")
+        
+        # Clear global container tracking
+        active_containers.clear()
+        
+        logger.info("✅ Azure distributed test completed successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Azure distributed test failed: {e}")
+        # Clean up containers even on failure
+        try:
+            logger.info("=== Emergency cleanup of Azure containers ===")
+            cleanup_status = container_manager.cleanup_containers(all_container_names)
+            successful_cleanup = sum(1 for status in cleanup_status.values() if status)
+            logger.info(f"Emergency cleanup: {successful_cleanup}/{len(cleanup_status)} containers")
+        except Exception as cleanup_error:
+            logger.error(f"Emergency cleanup failed: {cleanup_error}")
+        return False
+
 def main():
     """Main function to orchestrate the load test"""
     logger.info("=== Load Testing & Optimization Agent - Enhanced with Browser Testing ===")
     
-    # Load configuration
-    config_path = "configs/pop_website_test.yaml"
-    if len(sys.argv) > 1:
-        config_path = sys.argv[1]
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Load Testing & Optimization Agent')
+    parser.add_argument('config', nargs='?', default="configs/pop_website_test.yaml", 
+                       help='Path to configuration file')
+    parser.add_argument('--mode', choices=['local', 'azure'], default='local',
+                       help='Test execution mode (local or azure)')
     
+    args = parser.parse_args()
+    
+    # Load configuration
+    config_path = args.config
     config = load_config(config_path)
     test_type = config.get('test_type', 'protocol')
     analysis_settings = config.get('analysis_settings', {})
@@ -810,10 +1087,42 @@ def main():
     # Create output directory first
     output_dir = create_output_directory(config)
     
-    # Run the appropriate test(s)
-    success = run_k6_test(config, output_dir)
+    # Run the appropriate test(s) based on mode
+    if args.mode == 'azure':
+        logger.info("🚀 Running in Azure distributed mode")
+        success = run_azure_distributed_test(config, output_dir)
+    else:
+        logger.info("🏠 Running in local mode")
+        success = run_k6_test(config, output_dir)
     
     if success:
+        # For Azure distributed tests, we need to aggregate the worker summaries first
+        if args.mode == 'azure':
+            logger.info("🔗 Aggregating Azure distributed test results...")
+            try:
+                # Find all summary files from workers
+                summary_files = []
+                for i in range(10):  # Check for up to 10 workers
+                    summary_file = os.path.join(output_dir, f"summary_{i}.json")
+                    if os.path.exists(summary_file):
+                        summary_files.append(summary_file)
+                
+                if summary_files:
+                    logger.info(f"Found {len(summary_files)} worker summary files")
+                    # Create aggregated protocol summary
+                    aggregated_summary = aggregate_worker_summaries(summary_files)
+                    if aggregated_summary:
+                        protocol_summary_path = os.path.join(output_dir, "protocol_summary.json")
+                        with open(protocol_summary_path, 'w') as f:
+                            json.dump(aggregated_summary, f, indent=2)
+                        logger.info(f"✅ Aggregated protocol summary saved to {protocol_summary_path}")
+                    else:
+                        logger.warning("⚠️ Failed to aggregate worker summaries")
+                else:
+                    logger.warning("⚠️ No worker summary files found")
+            except Exception as e:
+                logger.warning(f"⚠️ Error aggregating worker summaries: {e}")
+        
         # Generate test report
         report = generate_test_report(config, output_dir)
         if report:

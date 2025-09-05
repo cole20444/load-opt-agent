@@ -1,0 +1,36 @@
+# Worker Dockerfile for Azure Distributed Load Testing - Protocol Tests
+FROM grafana/k6:latest
+
+# Switch to root for package installation
+USER root
+
+# Install Azure CLI for blob storage operations
+RUN apk add --no-cache \
+    curl \
+    gnupg \
+    bash \
+    python3 \
+    py3-pip \
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev
+
+# Install Azure CLI
+RUN pip3 install --break-system-packages azure-cli
+
+# Create working directory
+WORKDIR /app
+
+# Copy worker entrypoint script and protocol test file
+COPY docker/worker_entrypoint.sh /app/worker_entrypoint.sh
+COPY tests/load_test.js /app/load_test.js
+RUN chmod +x /app/worker_entrypoint.sh
+
+# Set environment variables
+ENV K6_DISABLE_COMPRESSION=true
+ENV K6_DISABLE_HTTP2=true
+
+# Set entrypoint
+ENTRYPOINT ["/app/worker_entrypoint.sh"]

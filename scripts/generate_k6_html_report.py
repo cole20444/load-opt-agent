@@ -11,27 +11,57 @@ from datetime import datetime
 from pathlib import Path
 
 def load_k6_summary(file_path):
-    """Load k6 summary JSONL file"""
+    """Load k6 summary file - handles both JSONL and aggregated JSON formats"""
     try:
-        data = []
-        with open(file_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    data.append(json.loads(line))
-        return data
+        # First, try to load as a single JSON object (aggregated format)
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                # Check if this is the aggregated k6 summary format
+                if isinstance(data, dict) and 'state' in data and 'metrics' in data:
+                    print(f"Loaded aggregated k6 summary format from {file_path}")
+                    return data
+                else:
+                    print(f"Loaded single JSON object from {file_path}")
+                    return data
+        except json.JSONDecodeError:
+            pass
+        
+        # If that fails, try to load as JSONL (line-by-line JSON)
+        try:
+            data = []
+            with open(file_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        data.append(json.loads(line))
+            if data:
+                print(f"Loaded JSONL format from {file_path} ({len(data)} lines)")
+                return data
+        except Exception:
+            pass
+        
+        print(f"Error: Could not parse {file_path} as either JSON or JSONL")
+        return None
+        
     except Exception as e:
         print(f"Error loading {file_path}: {e}")
         return None
 
 def extract_metrics(summary_data):
-    """Extract comprehensive metrics from k6 summary data"""
+    """Extract comprehensive metrics from k6 summary data - handles both JSONL and aggregated formats"""
     metrics = {}
     
     if not summary_data:
         return metrics
     
-    print(f"Processing {len(summary_data)} data points...")
+    # Check if this is aggregated k6 summary format
+    if isinstance(summary_data, dict) and 'state' in summary_data and 'metrics' in summary_data:
+        print(f"Processing aggregated k6 summary format...")
+        return extract_metrics_from_aggregated(summary_data)
+    
+    # Handle JSONL format (original implementation)
+    print(f"Processing {len(summary_data)} data points from JSONL...")
     
     # Group data points by metric type
     metric_groups = {}
@@ -256,6 +286,91 @@ def extract_metrics(summary_data):
     print(f"Final metrics: {metrics}")
     return metrics
 
+def extract_metrics_from_aggregated(summary_data):
+    """Extract metrics from aggregated k6 summary format"""
+    metrics = {}
+    
+    if not summary_data or not isinstance(summary_data, dict):
+        return metrics
+    
+    state = summary_data.get('state', {})
+    k6_metrics = summary_data.get('metrics', {})
+    
+    print(f"Processing aggregated k6 summary with {len(k6_metrics)} metric types...")
+    
+    # Extract basic state information
+    metrics['test_duration'] = state.get('testRunDuration', '0ms')
+    metrics['virtual_users'] = state.get('vus', 0)
+    metrics['max_virtual_users'] = state.get('vusMax', 0)
+    metrics['iterations'] = state.get('iterationCount', 0)
+    
+    # Extract HTTP metrics
+    if 'http_reqs' in k6_metrics:
+        http_reqs = k6_metrics['http_reqs']
+        metrics['total_requests'] = http_reqs.get('count', 0)
+        metrics['requests_per_second'] = http_reqs.get('rate', 0.0)
+        
+        # Calculate duration from testRunDuration
+        duration_str = state.get('testRunDuration', '0ms')
+        try:
+            if 'm' in duration_str:
+                minutes = int(duration_str.split('m')[0])
+                seconds = int(duration_str.split('m')[1].replace('s', '')) if 's' in duration_str.split('m')[1] else 0
+                metrics['test_duration_seconds'] = minutes * 60 + seconds
+            elif 's' in duration_str:
+                seconds = int(duration_str.replace('s', ''))
+                metrics['test_duration_seconds'] = seconds
+            else:
+                metrics['test_duration_seconds'] = 0
+        except:
+            metrics['test_duration_seconds'] = 0
+    
+    # Extract response time metrics
+    if 'http_req_duration' in k6_metrics:
+        duration_metric = k6_metrics['http_req_duration']
+        metrics['avg_response_time'] = duration_metric.get('avg', 0)
+        metrics['min_response_time'] = duration_metric.get('min', 0)
+        metrics['max_response_time'] = duration_metric.get('max', 0)
+        metrics['p50_response_time'] = duration_metric.get('p(50)', 0)
+        metrics['p75_response_time'] = duration_metric.get('p(75)', 0)
+        metrics['p90_response_time'] = duration_metric.get('p(90)', 0)
+        metrics['p95_response_time'] = duration_metric.get('p(95)', 0)
+        metrics['p99_response_time'] = duration_metric.get('p(99)', 0)
+        
+        print(f"Response time metrics: {metrics.get('avg_response_time', 0):.0f}ms avg, {metrics.get('p95_response_time', 0):.0f}ms p95")
+    
+    # Extract failure rate
+    if 'http_req_failed' in k6_metrics:
+        failed_metric = k6_metrics['http_req_failed']
+        failed_count = failed_metric.get('count', 0)
+        total_requests = metrics.get('total_requests', 0)
+        
+        if total_requests > 0:
+            metrics['error_rate'] = (failed_count / total_requests) * 100
+            metrics['failed_requests_count'] = failed_count
+        else:
+            metrics['error_rate'] = 0.0
+            metrics['failed_requests_count'] = 0
+    
+    # Extract data transfer metrics
+    if 'data_received' in k6_metrics:
+        data_received = k6_metrics['data_received']
+        metrics['data_received_bytes'] = data_received.get('sum', 0)
+        metrics['data_received_rate'] = data_received.get('rate', 0.0)
+    
+    if 'data_sent' in k6_metrics:
+        data_sent = k6_metrics['data_sent']
+        metrics['data_sent_bytes'] = data_sent.get('sum', 0)
+        metrics['data_sent_rate'] = data_sent.get('rate', 0.0)
+    
+    # Extract iteration metrics
+    if 'iterations' in k6_metrics:
+        iterations = k6_metrics['iterations']
+        metrics['iterations_count'] = iterations.get('count', 0)
+        metrics['iterations_per_second'] = iterations.get('rate', 0.0)
+    
+    return metrics
+
 def generate_recommendations_html(recommendations):
     """Generate HTML for recommendations"""
     if not recommendations:
@@ -470,6 +585,11 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
                         <div class="unit">ms</div>
                     </div>
                     <div class="metric">
+                        <h3>First Input Delay</h3>
+                        <div class="value">{fid_ms:.0f}</div>
+                        <div class="unit">ms</div>
+                    </div>
+                    <div class="metric">
                         <h3>Total Blocking Time</h3>
                         <div class="value">{tbt_ms:.0f}</div>
                         <div class="unit">ms</div>
@@ -546,6 +666,7 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
             fcp_ms=browser_summary.get('fcp_ms', 0),
             cls_score=browser_summary.get('cls_score', 0),
             tti_ms=browser_summary.get('tti_ms', 0),
+            fid_ms=browser_summary.get('fid_ms', 0),
             tbt_ms=browser_summary.get('tbt_ms', 0),
             performance_score=browser_analysis.get('performance_score', 0),
             total_page_weight=browser_summary.get('total_page_weight_mb', 0),

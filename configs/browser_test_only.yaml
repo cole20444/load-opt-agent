@@ -1,0 +1,42 @@
+target: https://wearepop.com
+vus: 20
+duration: 2m
+test_type: browser  # Only browser tests
+description: "Browser-only load test for debugging"
+tags: ['browser', 'debug', 'selenium']
+
+protocol_settings:
+  vus: 0  # Disable protocol tests
+  duration: 0m
+
+browser_settings:
+  vus: 20
+  duration: 2m
+  viewport:
+    width: 1920
+    height: 1080
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  wait_until: "networkidle"
+  timeout: "30s"
+
+azure:
+  subscription_id: "73680a18-9795-402d-bfa2-fd739ae160c1"
+  resource_group: "POP-Tools"
+  location: "eastus"
+  storage_account: "poploadteststorage"
+  container_name: "results"
+  container_registry: "poploadtestregistry.azurecr.io"
+
+distribution:
+  total_vus: 20
+  duration: "2m"
+  vus_per_container:
+    protocol: 0    # Disable protocol workers
+    browser: 5     # 5 VUs per browser worker container
+  resources:
+    protocol:
+      cpu: 0.0
+      memory: 0.0
+    browser:
+      cpu: 2.0
+      memory: 4.0

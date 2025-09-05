@@ -1,0 +1,55 @@
+# Azure Browser Test Configuration - Single Worker Debug
+target: https://pop-website-2024-dev.azurewebsites.net
+test_type: browser  # Only browser test
+
+# Site description
+description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
+
+# Technology tags for analysis
+tags:
+  - "svelte"
+  - "strapi"
+  - "azure"
+  - "app-service"
+  - "headless-cms"
+  - "javascript"
+  - "api-driven"
+  - "pop-website"
+  - "distributed-test"
+
+# Analysis settings
+analysis_settings:
+  run_page_resource_analysis: true
+  run_enhanced_performance_analysis: true
+  run_ai_analysis: false
+  generate_readable_reports: true
+  combine_results: true
+
+# Browser test settings
+browser_settings:
+  viewport:
+    width: 1920
+    height: 1080
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  wait_until: "networkidle"
+  timeout: "30s"
+
+# Azure Configuration
+azure:
+  subscription_id: "73680a18-9795-402d-bfa2-fd739ae160c1"
+  resource_group: "POP-Tools"
+  location: "eastus"
+  storage_account: "poploadteststorage"
+  container_name: "results"
+  container_registry: "poploadtestregistry.azurecr.io"
+
+# Distribution settings - Single browser worker
+distribution:
+  total_vus: 10  # Small test
+  duration: "5m"  # 5 minutes for better visibility
+  vus_per_container:
+    browser: 10   # 10 VUs per browser worker container
+  resources:
+    browser:
+      cpu: 2.0
+      memory: 4.0
