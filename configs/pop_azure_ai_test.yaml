@@ -1,0 +1,81 @@
+# POP Website Azure Distributed Test with AI Analysis
+# Quick test to verify Azure distributed testing with AI analysis
+
+target: https://wearepop.com
+test_type: both  # Run both protocol and browser tests
+
+# Site description
+description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
+
+# Technology tags for analysis
+tags:
+  - "svelte"
+  - "strapi"
+  - "azure"
+  - "app-service"
+  - "headless-cms"
+  - "javascript"
+  - "api-driven"
+  - "pop-website"
+  - "ai-test"
+
+# Analysis settings - Enable AI analysis for testing
+analysis_settings:
+  run_page_resource_analysis: true
+  run_enhanced_performance_analysis: true
+  run_ai_analysis: true  # Enable AI analysis
+  generate_readable_reports: true
+  combine_results: true
+
+# Azure Configuration - REQUIRED for distributed testing
+azure:
+  subscription_id: "73680a18-9795-402d-bfa2-fd739ae160c1"
+  resource_group: "POP-Tools"
+  location: "eastus"
+  storage_account: "poploadteststorage"
+  container_name: "results"
+  container_registry: "poploadtestregistry.azurecr.io"
+
+# Distribution settings for Azure distributed testing - Quick test
+distribution:
+  total_vus: 20   # Total VUs across all workers
+  duration: "1m"  # 1-minute quick test
+  vus_per_container:
+    protocol: 5   # VUs per protocol worker container (4 containers × 5 = 20)
+    browser: 2    # VUs per browser worker container (1 container × 2 = 2)
+  resources:
+    protocol:
+      cpu: 1.0
+      memory: 2.0
+    browser:
+      cpu: 1.0
+      memory: 2.0
+
+# Protocol test settings (k6)
+protocol_settings:
+  thresholds:
+    http_req_duration: ['p(95)<10000']  # 10s threshold for quick test
+    http_req_failed: ['rate<0.3']       # 30% error rate tolerance for quick test
+
+# Browser test settings (xk6-browser)
+browser_settings:
+  viewport:
+    width: 1920
+    height: 1080
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  wait_until: "networkidle"
+  timeout: "30s"
+
+# Performance thresholds for browser metrics
+browser_thresholds:
+  first_contentful_paint: 1800  # 1.8s
+  largest_contentful_paint: 2500  # 2.5s
+  first_input_delay: 100  # 100ms
+  cumulative_layout_shift: 0.1
+
+# User interaction simulation
+user_interactions:
+  enabled: true
+  click_elements: true
+  scroll_page: true
+  wait_between_actions: 1000  # ms

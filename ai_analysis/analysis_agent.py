@@ -7,6 +7,7 @@ Processes test results and generates optimization recommendations
 import yaml
 import json
 import logging
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
@@ -236,9 +237,21 @@ class PerformanceAnalyzer:
 class AIAnalysisAgent:
     """Main AI Analysis Agent that orchestrates the analysis process"""
     
-    def __init__(self):
+    def __init__(self, use_enhanced_analysis: bool = True):
         self.template_manager = TechnologyTemplateManager()
         self.performance_analyzer = PerformanceAnalyzer()
+        self.use_enhanced_analysis = use_enhanced_analysis
+        
+        # Import enhanced AI agent if available
+        if use_enhanced_analysis:
+            try:
+                from .enhanced_ai_agent import EnhancedAIAnalysisAgent
+                self.enhanced_agent = EnhancedAIAnalysisAgent()
+            except ImportError:
+                logger.warning("Enhanced AI agent not available, falling back to basic analysis")
+                self.enhanced_agent = None
+        else:
+            self.enhanced_agent = None
     
     def analyze_test_results(self, 
                            test_results_path: str,
@@ -377,6 +390,101 @@ class AIAnalysisAgent:
                     return True
         
         return False
+    
+    def analyze_with_enhanced_data(self,
+                                 enhanced_analysis_path: str,
+                                 browser_analysis_path: str,
+                                 config: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze using enhanced performance analysis data"""
+        
+        logger.info("Starting enhanced AI analysis...")
+        
+        # Load enhanced analysis data
+        try:
+            with open(enhanced_analysis_path, 'r') as f:
+                enhanced_analysis = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load enhanced analysis: {e}")
+            enhanced_analysis = {}
+        
+        try:
+            with open(browser_analysis_path, 'r') as f:
+                browser_analysis = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load browser analysis: {e}")
+            browser_analysis = {}
+        
+        # Use enhanced AI agent if available
+        if self.enhanced_agent:
+            # Load protocol and browser metrics to get performance deductions
+            protocol_metrics = None
+            browser_metrics = None
+            
+            # Try to load protocol metrics
+            try:
+                protocol_file = os.path.join(os.path.dirname(enhanced_analysis_path), "protocol_summary.json")
+                if os.path.exists(protocol_file):
+                    with open(protocol_file, 'r') as f:
+                        protocol_data = json.load(f)
+                    # Extract metrics using the same logic as the HTML report generator
+                    protocol_metrics = self._extract_metrics_from_data(protocol_data)
+            except Exception as e:
+                logger.warning(f"Could not load protocol metrics: {e}")
+            
+            # Try to load browser metrics
+            try:
+                browser_file = os.path.join(os.path.dirname(enhanced_analysis_path), "browser_summary.json")
+                if os.path.exists(browser_file):
+                    with open(browser_file, 'r') as f:
+                        browser_data = json.load(f)
+                    # Extract metrics using the same logic as the HTML report generator
+                    browser_metrics = self._extract_metrics_from_data(browser_data)
+            except Exception as e:
+                logger.warning(f"Could not load browser metrics: {e}")
+            
+            return self.enhanced_agent.analyze_with_enhanced_recommendations(
+                enhanced_analysis, browser_analysis, config, protocol_metrics, browser_metrics
+            )
+    
+    def _extract_metrics_from_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract key metrics from k6/Playwright summary data"""
+        metrics = {}
+        
+        if 'metrics' in data:
+            metrics_data = data['metrics']
+            
+            # Extract protocol metrics
+            if 'http_req_duration' in metrics_data:
+                duration_metric = metrics_data['http_req_duration']
+                metrics['avg_response_time'] = duration_metric.get('avg', 0)
+                metrics['p95_response_time'] = duration_metric.get('p95', 0)
+                metrics['p99_response_time'] = duration_metric.get('p99', 0)
+            
+            if 'http_req_failed' in metrics_data:
+                failed_metric = metrics_data['http_req_failed']
+                metrics['error_rate'] = failed_metric.get('rate', 0)
+            
+            if 'http_reqs' in metrics_data:
+                reqs_metric = metrics_data['http_reqs']
+                metrics['throughput'] = reqs_metric.get('rate', 0)
+            
+            # Extract Playwright metrics
+            if 'playwright_page_load_time' in metrics_data:
+                page_load_metric = metrics_data['playwright_page_load_time']
+                metrics['playwright_page_load_time'] = {
+                    'avg': page_load_metric.get('avg', 0),
+                    'p95': page_load_metric.get('p95', 0),
+                    'p99': page_load_metric.get('p99', 0)
+                }
+            
+            if 'playwright_iterations' in metrics_data:
+                iterations_metric = metrics_data['playwright_iterations']
+                metrics['playwright_iterations'] = {
+                    'count': iterations_metric.get('count', 0),
+                    'rate': iterations_metric.get('rate', 0)
+                }
+        
+        return metrics
 
 def main():
     """Main function for standalone execution"""

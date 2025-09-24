@@ -11,40 +11,57 @@ from collections import defaultdict
 from typing import Dict, List, Any
 import statistics
 import re
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class BrowserMetricsAnalyzer:
     def __init__(self, browser_summary_file: str):
         self.browser_summary_file = browser_summary_file
         self.metrics_data = []
+        self.playwright_data = None
         self.core_web_vitals = {}
         self.performance_insights = []
         self.resource_analysis = {}
         self.performance_score = 0
         
     def load_data(self):
-        """Load browser metrics data from xk6-browser output (JSONL format)"""
+        """Load browser metrics data from xk6-browser output (JSONL format) or aggregated Playwright results"""
         try:
             with open(self.browser_summary_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line:  # Skip empty lines
-                        try:
-                            data = json.loads(line)
-                            if data.get('type') == 'Point':
-                                self.metrics_data.append(data)
-                        except json.JSONDecodeError:
-                            continue
+                content = f.read().strip()
+                
+            # Try to parse as aggregated Playwright results first
+            try:
+                data = json.loads(content)
+                if 'summary' in data and 'total_iterations' in data['summary']:
+                    print("📊 Detected aggregated Playwright results format")
+                    return self._load_aggregated_playwright_data(data)
+            except json.JSONDecodeError:
+                pass
+            
+            # Fallback to JSONL format (original k6 output)
+            self.metrics_data = []
+            for line in content.split('\n'):
+                line = line.strip()
+                if line:  # Skip empty lines
+                    try:
+                        data = json.loads(line)
+                        if data.get('type') == 'Point':
+                            self.metrics_data.append(data)
+                    except json.JSONDecodeError:
+                        continue
             
             if not self.metrics_data:
                 print(f"⚠️  No valid browser metrics found in {self.browser_summary_file}")
                 # Check if this is a failed browser test
                 if os.path.exists(self.browser_summary_file):
                     try:
-                        with open(self.browser_summary_file, 'r') as f:
-                            content = f.read().strip()
-                            if '"browser_test_failed"' in content:
-                                print("📝 Detected failed browser test - generating minimal report")
-                                return self._generate_failed_test_report()
+                        if '"browser_test_failed"' in content:
+                            print("📝 Detected failed browser test - generating minimal report")
+                            return self._generate_failed_test_report()
                     except:
                         pass
                 return False
@@ -57,6 +74,52 @@ class BrowserMetricsAnalyzer:
             return False
         except Exception as e:
             print(f"❌ Error loading browser data: {e}")
+            return False
+    
+    def _load_aggregated_playwright_data(self, data):
+        """Load data from aggregated Playwright results format"""
+        try:
+            summary = data.get('summary', {})
+            
+            # Store the original Playwright data for resource analysis
+            self.playwright_data = data
+            
+            # Convert aggregated metrics to the format expected by the analyzer
+            self.metrics_data = []
+            
+            # Create synthetic data points for each metric type
+            metrics_mapping = {
+                'first_contentful_paint': 'avg_first_contentful_paint',
+                'largest_contentful_paint': 'avg_total_time',  # Use total time as proxy for LCP
+                'first_input_delay': 'avg_time_to_first_byte',  # Use TTFB as proxy for FID
+                'cumulative_layout_shift': 'avg_cumulative_layout_shift',
+                'time_to_interactive': 'avg_load_complete',
+                'total_blocking_time': 'avg_dom_content_loaded',  # Use DOM content loaded as proxy
+                'first_paint': 'avg_first_paint',
+                'dom_content_loaded': 'avg_dom_content_loaded',
+                'load_complete': 'avg_load_complete',
+                'time_to_first_byte': 'avg_time_to_first_byte'
+            }
+            
+            for metric_name, summary_key in metrics_mapping.items():
+                if summary_key in summary:
+                    value = summary[summary_key]
+                    # Create a synthetic data point
+                    data_point = {
+                        'type': 'Point',
+                        'metric': metric_name,
+                        'value': value,
+                        'time': 0,  # Synthetic timestamp
+                        'tags': {}
+                    }
+                    self.metrics_data.append(data_point)
+                    print(f"  📊 {metric_name}: {value}ms")
+            
+            print(f"✅ Loaded aggregated Playwright data with {len(self.metrics_data)} metrics")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error loading aggregated Playwright data: {e}")
             return False
     
     def analyze_core_web_vitals(self):
@@ -79,14 +142,17 @@ class BrowserMetricsAnalyzer:
             'total_blocking_time': {'name': 'Total Blocking Time (TBT)', 'good': 200, 'poor': 600},
         }
         
+        # Resource analysis
+        self.resource_analysis = self._analyze_resources()
+        
         # Estimate Core Web Vitals from HTTP timing data if not directly available
         http_durations = []
         if 'http_req_duration' in metrics_by_name:
-            http_durations = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name['http_req_duration']]
+            http_durations = [dp.get('value', 0) for dp in metrics_by_name['http_req_duration']]
         
         for metric, config in core_vitals.items():
             if metric in metrics_by_name:
-                values = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name[metric]]
+                values = [dp.get('value', 0) for dp in metrics_by_name[metric]]
             else:
                 # Estimate from HTTP timing data
                 if http_durations:
@@ -329,6 +395,239 @@ class BrowserMetricsAnalyzer:
         
         return score
     
+    def _analyze_resources(self) -> Dict[str, Any]:
+        """Analyze resource loading patterns and identify performance bottlenecks"""
+        resource_analysis = {
+            'total_requests': 0,
+            'total_page_weight_mb': 0,
+            'avg_resource_load_time': 0,
+            'max_resource_load_time': 0,
+            'resource_count_stats': {},
+            'load_time_distribution': {},
+            'performance_issues': [],
+            'recommendations': []
+        }
+        
+        if not self.metrics_data:
+            return resource_analysis
+        
+        # Extract resource data from Playwright results
+        resource_counts = []
+        resource_sizes = []
+        load_times = []
+        max_load_times = []
+        
+        # Check if we have detailed results (Playwright format)
+        if hasattr(self, 'playwright_data') and self.playwright_data:
+            detailed_results = self.playwright_data.get('detailed_results', [])
+            for result in detailed_results:
+                if 'resource_count' in result:
+                    resource_counts.append(result['resource_count'])
+                if 'total_resource_size' in result:
+                    resource_sizes.append(result['total_resource_size'])
+                if 'avg_resource_load_time' in result:
+                    load_times.append(result['avg_resource_load_time'])
+                if 'max_resource_load_time' in result:
+                    max_load_times.append(result['max_resource_load_time'])
+            
+            # Extract individual resource details if available
+            self._extract_individual_resources(detailed_results)
+        else:
+            # Fallback to metrics_data format
+            for data in self.metrics_data:
+                if 'resource_count' in data:
+                    resource_counts.append(data['resource_count'])
+                if 'total_resource_size' in data:
+                    resource_sizes.append(data['total_resource_size'])
+                if 'avg_resource_load_time' in data:
+                    load_times.append(data['avg_resource_load_time'])
+                if 'max_resource_load_time' in data:
+                    max_load_times.append(data['max_resource_load_time'])
+        
+        if resource_counts:
+            resource_analysis['total_requests'] = sum(resource_counts)
+            resource_analysis['resource_count_stats'] = {
+                'avg': statistics.mean(resource_counts),
+                'min': min(resource_counts),
+                'max': max(resource_counts),
+                'p95': sorted(resource_counts)[int(len(resource_counts) * 0.95)] if len(resource_counts) > 1 else resource_counts[0]
+            }
+        
+        if resource_sizes:
+            total_size_bytes = sum(resource_sizes)
+            resource_analysis['total_page_weight_mb'] = total_size_bytes / (1024 * 1024)
+        
+        if load_times:
+            resource_analysis['avg_resource_load_time'] = statistics.mean(load_times)
+            resource_analysis['load_time_distribution'] = {
+                'avg': statistics.mean(load_times),
+                'min': min(load_times),
+                'max': max(load_times),
+                'p95': sorted(load_times)[int(len(load_times) * 0.95)] if len(load_times) > 1 else load_times[0]
+            }
+        
+        if max_load_times:
+            resource_analysis['max_resource_load_time'] = max(max_load_times)
+        
+        # Identify performance issues
+        if resource_analysis['avg_resource_load_time'] > 100:
+            resource_analysis['performance_issues'].append({
+                'type': 'slow_resource_loading',
+                'severity': 'high',
+                'description': f"Average resource load time is {resource_analysis['avg_resource_load_time']:.1f}ms, which is above the recommended 100ms",
+                'impact': 'Significantly impacts page load performance and user experience'
+            })
+        
+        if resource_analysis['max_resource_load_time'] > 500:
+            resource_analysis['performance_issues'].append({
+                'type': 'blocking_resources',
+                'severity': 'critical',
+                'description': f"Some resources take up to {resource_analysis['max_resource_load_time']:.1f}ms to load",
+                'impact': 'Blocking resources can severely impact page load times'
+            })
+        
+        if resource_analysis['total_page_weight_mb'] > 2:
+            resource_analysis['performance_issues'].append({
+                'type': 'large_page_size',
+                'severity': 'medium',
+                'description': f"Total page weight is {resource_analysis['total_page_weight_mb']:.1f}MB, above the recommended 2MB",
+                'impact': 'Large page sizes increase load times, especially on slower connections'
+            })
+        
+        if resource_analysis['resource_count_stats'].get('avg', 0) > 50:
+            resource_analysis['performance_issues'].append({
+                'type': 'too_many_requests',
+                'severity': 'medium',
+                'description': f"Average of {resource_analysis['resource_count_stats']['avg']:.1f} requests per page, above the recommended 50",
+                'impact': 'Too many HTTP requests increase load times and server load'
+            })
+        
+        # Generate recommendations
+        if resource_analysis['avg_resource_load_time'] > 100:
+            resource_analysis['recommendations'].append({
+                'category': 'Resource Optimization',
+                'priority': 'High',
+                'action': 'Optimize resource loading times',
+                'details': 'Implement resource bundling, compression, and CDN usage to reduce load times'
+            })
+        
+        if resource_analysis['max_resource_load_time'] > 500:
+            resource_analysis['recommendations'].append({
+                'category': 'Critical Resources',
+                'priority': 'Critical',
+                'action': 'Identify and optimize blocking resources',
+                'details': 'Use browser dev tools to identify which specific resources are causing delays'
+            })
+        
+        if resource_analysis['total_page_weight_mb'] > 2:
+            resource_analysis['recommendations'].append({
+                'category': 'Page Size',
+                'priority': 'Medium',
+                'action': 'Reduce page weight',
+                'details': 'Optimize images, minify CSS/JS, and remove unused resources'
+            })
+        
+        if resource_analysis['resource_count_stats'].get('avg', 0) > 50:
+            resource_analysis['recommendations'].append({
+                'category': 'Request Optimization',
+                'priority': 'Medium',
+                'action': 'Reduce number of HTTP requests',
+                'details': 'Bundle CSS/JS files, use CSS sprites, and implement resource combining'
+            })
+        
+        return resource_analysis
+    
+    def _extract_individual_resources(self, detailed_results):
+        """Extract individual resource details from Playwright results"""
+        self.individual_resources = []
+        
+        for result in detailed_results:
+            # Check if this result has individual resource data
+            if 'resources' in result:
+                for resource in result['resources']:
+                    # Calculate load time if not provided
+                    load_time = resource.get('loadTime', 0)
+                    if load_time == 0 and 'timestamp' in resource:
+                        # Estimate load time based on when the request was made
+                        load_time = 100  # Default estimate
+                    
+                    self.individual_resources.append({
+                        'url': resource.get('url', 'Unknown'),
+                        'resourceType': resource.get('resourceType', 'Unknown'),
+                        'size': resource.get('size', 0),
+                        'loadTime': load_time,
+                        'status': resource.get('status', 0)
+                    })
+    
+    def _analyze_performance_culprits(self) -> Dict[str, Any]:
+        """Analyze and identify the top performance culprits"""
+        culprits_analysis = {
+            'slowest_resources': [],
+            'largest_resources': [],
+            'most_requests_by_type': {},
+            'api_calls': [],
+            'images': [],
+            'scripts': [],
+            'stylesheets': [],
+            'recommendations': []
+        }
+        
+        if not hasattr(self, 'individual_resources') or not self.individual_resources:
+            return culprits_analysis
+        
+        resources = self.individual_resources
+        
+        # Find slowest resources (load time > 100ms)
+        slow_resources = [r for r in resources if r.get('loadTime', 0) > 100]
+        culprits_analysis['slowest_resources'] = sorted(slow_resources, key=lambda x: x.get('loadTime', 0), reverse=True)[:10]
+        
+        # Find largest resources (size > 100KB)
+        large_resources = [r for r in resources if r.get('size', 0) > 100000]  # 100KB
+        culprits_analysis['largest_resources'] = sorted(large_resources, key=lambda x: x.get('size', 0), reverse=True)[:10]
+        
+        # Count requests by type
+        type_counts = {}
+        for resource in resources:
+            resource_type = resource.get('resourceType', 'unknown')
+            type_counts[resource_type] = type_counts.get(resource_type, 0) + 1
+        culprits_analysis['most_requests_by_type'] = dict(sorted(type_counts.items(), key=lambda x: x[1], reverse=True))
+        
+        # Categorize resources
+        culprits_analysis['api_calls'] = [r for r in resources if r.get('resourceType') in ['xhr', 'fetch']]
+        culprits_analysis['images'] = [r for r in resources if r.get('resourceType') == 'image']
+        culprits_analysis['scripts'] = [r for r in resources if r.get('resourceType') == 'script']
+        culprits_analysis['stylesheets'] = [r for r in resources if r.get('resourceType') == 'stylesheet']
+        
+        # Generate recommendations based on findings
+        if culprits_analysis['slowest_resources']:
+            culprits_analysis['recommendations'].append({
+                'type': 'slow_resources',
+                'priority': 'High',
+                'title': 'Slow Loading Resources Detected',
+                'description': f"Found {len(culprits_analysis['slowest_resources'])} resources taking over 100ms to load",
+                'action': 'Optimize or defer slow-loading resources'
+            })
+        
+        if culprits_analysis['largest_resources']:
+            culprits_analysis['recommendations'].append({
+                'type': 'large_resources',
+                'priority': 'Medium',
+                'title': 'Large Resources Detected',
+                'description': f"Found {len(culprits_analysis['largest_resources'])} resources over 100KB",
+                'action': 'Compress or optimize large resources'
+            })
+        
+        if len(culprits_analysis['api_calls']) > 10:
+            culprits_analysis['recommendations'].append({
+                'type': 'too_many_api_calls',
+                'priority': 'Medium',
+                'title': 'Excessive API Calls',
+                'description': f"Found {len(culprits_analysis['api_calls'])} API calls, consider batching or caching",
+                'action': 'Implement API batching or caching strategies'
+            })
+        
+        return culprits_analysis
+    
     def generate_browser_report(self):
         """Generate comprehensive browser performance report"""
         print("\n📋 GENERATING BROWSER PERFORMANCE REPORT...")
@@ -339,9 +638,13 @@ class BrowserMetricsAnalyzer:
         self.analyze_performance_issues()
         self.calculate_performance_score()
         
+        # Analyze performance culprits
+        self.performance_culprits = self._analyze_performance_culprits()
+        
         report = {
             'core_web_vitals': self.core_web_vitals,
             'resource_analysis': self.resource_analysis,
+            'performance_culprits': self.performance_culprits,
             'performance_insights': self.performance_insights,
             'performance_score': self.performance_score,
             'summary': {
@@ -412,7 +715,79 @@ class BrowserMetricsAnalyzer:
             print(f"\n📦 Resource Analysis:")
             print(f"  • Total Requests: {report['summary']['total_requests']}")
             print(f"  • Total Page Weight: {report['summary']['total_page_weight_mb']:.2f}MB")
-            print(f"  • Resource Types: {', '.join([f'{k}: {v}' for k, v in report['resource_analysis'].get('resource_counts', {}).items()])}")
+            
+            # Show resource count statistics
+            if report['resource_analysis'].get('resource_count_stats'):
+                stats = report['resource_analysis']['resource_count_stats']
+                print(f"  • Resource Count Stats: Avg={stats.get('avg', 0):.1f}, Min={stats.get('min', 0)}, Max={stats.get('max', 0)}, P95={stats.get('p95', 0)}")
+            
+            # Show load time statistics
+            if report['resource_analysis'].get('load_time_distribution'):
+                load_stats = report['resource_analysis']['load_time_distribution']
+                print(f"  • Load Time Distribution: Avg={load_stats.get('avg', 0):.1f}ms, Max={load_stats.get('max', 0):.1f}ms, P95={load_stats.get('p95', 0):.1f}ms")
+            
+            # Show performance issues related to resources
+            if report['resource_analysis'].get('performance_issues'):
+                print(f"\n🚨 Resource Performance Issues:")
+                for issue in report['resource_analysis']['performance_issues']:
+                    severity_icon = "🔴" if issue['severity'] == 'critical' else "🟡" if issue['severity'] == 'high' else "🟠" if issue['severity'] == 'medium' else "🟢"
+                    print(f"  {severity_icon} {issue['severity'].upper()}: {issue['description']}")
+                    print(f"    Impact: {issue['impact']}")
+            
+            # Show resource optimization recommendations
+            if report['resource_analysis'].get('recommendations'):
+                print(f"\n💡 Resource Optimization Recommendations:")
+                for rec in report['resource_analysis']['recommendations']:
+                    priority_icon = "🔴" if rec['priority'] == 'Critical' else "🟡" if rec['priority'] == 'High' else "🟠" if rec['priority'] == 'Medium' else "🟢"
+                    print(f"  {priority_icon} {rec['priority']} - {rec['action']}")
+                    print(f"    {rec['details']}")
+        
+        # Performance Culprits Analysis
+        if report.get('performance_culprits'):
+            culprits = report['performance_culprits']
+            print(f"\n🐌 Performance Culprits Analysis:")
+            
+            # Show slowest resources
+            if culprits.get('slowest_resources'):
+                print(f"\n⏱️  Slowest Resources (>100ms):")
+                for i, resource in enumerate(culprits['slowest_resources'][:5], 1):
+                    load_time = resource.get('loadTime', 0)
+                    resource_type = resource.get('resourceType', 'Unknown')
+                    url = resource.get('url', 'Unknown')
+                    print(f"  {i}. {resource_type}: {load_time:.0f}ms - {url[:60]}...")
+            
+            # Show largest resources
+            if culprits.get('largest_resources'):
+                print(f"\n📦 Largest Resources (>100KB):")
+                for i, resource in enumerate(culprits['largest_resources'][:5], 1):
+                    size_kb = resource.get('size', 0) / 1024
+                    resource_type = resource.get('resourceType', 'Unknown')
+                    url = resource.get('url', 'Unknown')
+                    print(f"  {i}. {resource_type}: {size_kb:.1f}KB - {url[:60]}...")
+            
+            # Show request breakdown by type
+            if culprits.get('most_requests_by_type'):
+                print(f"\n📊 Requests by Type:")
+                for resource_type, count in list(culprits['most_requests_by_type'].items())[:5]:
+                    print(f"  • {resource_type}: {count} requests")
+            
+            # Show API calls summary
+            if culprits.get('api_calls'):
+                api_calls = culprits['api_calls']
+                print(f"\n🔗 API Calls: {len(api_calls)} total")
+                if len(api_calls) > 0:
+                    slow_apis = [api for api in api_calls if api.get('loadTime', 0) > 200]
+                    if slow_apis:
+                        print(f"  • {len(slow_apis)} slow API calls (>200ms)")
+            
+            # Show performance culprit recommendations
+            if culprits.get('recommendations'):
+                print(f"\n🎯 Performance Culprit Recommendations:")
+                for rec in culprits['recommendations']:
+                    priority_icon = "🔴" if rec['priority'] == 'High' else "🟡" if rec['priority'] == 'Medium' else "🟢"
+                    print(f"  {priority_icon} {rec['priority']} - {rec['title']}")
+                    print(f"    {rec['description']}")
+                    print(f"    Action: {rec['action']}")
         
         # Performance Issues
         if report['performance_insights']:
@@ -430,21 +805,37 @@ def main():
         sys.exit(1)
     
     browser_summary_file = sys.argv[1]
+    logger.info(f"Starting browser analysis for file: {browser_summary_file}")
+    
+    # Check if file exists
+    if not os.path.exists(browser_summary_file):
+        logger.error(f"Browser summary file does not exist: {browser_summary_file}")
+        print(f"❌ Browser summary file does not exist: {browser_summary_file}")
+        sys.exit(1)
+    
     analyzer = BrowserMetricsAnalyzer(browser_summary_file)
     
-    if analyzer.load_data():
-        analyzer.print_report()
-        
-        # Save detailed report to JSON file
-        report = analyzer.generate_browser_report()
-        output_file = browser_summary_file.replace('.json', '_analysis.json')
-        
-        with open(output_file, 'w') as f:
-            json.dump(report, f, indent=2)
-        
-        print(f"\n✅ Detailed report saved to: {output_file}")
-    else:
-        print("❌ Failed to load browser metrics data")
+    try:
+        if analyzer.load_data():
+            logger.info("Successfully loaded browser data")
+            analyzer.print_report()
+            
+            # Save detailed report to JSON file
+            report = analyzer.generate_browser_report()
+            output_file = browser_summary_file.replace('.json', '_analysis.json')
+            
+            with open(output_file, 'w') as f:
+                json.dump(report, f, indent=2)
+            
+            logger.info(f"Detailed report saved to: {output_file}")
+            print(f"\n✅ Detailed report saved to: {output_file}")
+        else:
+            logger.error("Failed to load browser metrics data")
+            print("❌ Failed to load browser metrics data")
+            sys.exit(1)
+    except Exception as e:
+        logger.error(f"Error during browser analysis: {e}")
+        print(f"❌ Error during browser analysis: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

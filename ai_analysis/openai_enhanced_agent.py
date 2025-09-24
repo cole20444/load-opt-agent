@@ -412,6 +412,42 @@ Be specific, technical, and actionable. Focus on practical improvements that can
         prompt += f"""
 ## Analysis Request
 
+Please provide a comprehensive performance analysis in the following JSON format:
+
+{{
+  "analysis": {{
+    "performance_assessment": "Overall assessment of the site's performance with grade and reasoning",
+    "key_issues": ["List of critical performance problems"],
+    "business_impact": "Explanation of how performance affects user experience and business metrics"
+  }},
+  "recommendations": [
+    {{
+      "title": "Recommendation title",
+      "category": "Frontend|Backend|Infrastructure|Database|CDN",
+      "priority": "Critical|High|Medium|Low",
+      "effort": "Low|Medium|High",
+      "expected_impact": "Description of expected performance improvement",
+      "implementation_steps": ["Step 1", "Step 2", "Step 3"],
+      "code_examples": [
+        {{
+          "language": "javascript|html|css|yaml|bash",
+          "code": "Code example here",
+          "description": "What this code does"
+        }}
+      ],
+      "monitoring": "How to measure the impact of this recommendation"
+    }}
+  ],
+  "priorities": [
+    {{
+      "action": "Specific action to take",
+      "impact": "High|Medium|Low",
+      "effort": "Low|Medium|High",
+      "category": "Frontend|Backend|Infrastructure"
+    }}
+  ]
+}}
+
 Please provide a comprehensive performance analysis including:
 
 1. **Overall Performance Assessment**: Grade the site's performance (A-F) with detailed reasoning
@@ -423,7 +459,7 @@ Please provide a comprehensive performance analysis including:
 7. **Resource Optimization**: Specific recommendations for images, scripts, CSS, and other resources
 8. **Core Web Vitals Optimization**: If browser data is available, provide specific CWV improvements
 
-Focus on practical, implementable recommendations that will have the greatest impact on user experience and performance.
+**IMPORTANT**: Return ONLY valid JSON in the exact format specified above. Do not include any additional text or explanations outside the JSON structure.
 """
         
         return prompt
@@ -512,7 +548,7 @@ class EnhancedAIAnalysisAgent:
         }
         
         # Collect enhanced k6 metrics from protocol_summary.json if available
-        test_type = config.get('test_type', 'protocol')
+        test_type = config.get('test_type', 'protocol') if config else 'protocol'
         if test_type in ['protocol', 'both']:
             protocol_summary_path = test_results_path.replace('test_report.json', 'protocol_summary.json')
             if os.path.exists(protocol_summary_path):
@@ -581,20 +617,31 @@ class EnhancedAIAnalysisAgent:
             performance_data, config, technology_template
         )
         
-        # Combine all analysis results
+        # Combine all analysis results in the structured format
         analysis_result = {
-            'test_configuration': config,
-            'test_results': test_results,
+            'timestamp': datetime.now().isoformat(),
+            'analysis_type': 'enhanced_ai_analysis',
+            'site_info': {
+                'target': config.get('target'),
+                'description': config.get('description'),
+                'tags': config.get('tags', [])
+            },
+            'performance_issues': self._extract_performance_issues(performance_data),
+            'ai_recommendations': {
+                'summary': {
+                    'overall_assessment': self._extract_overall_assessment(ai_insights),
+                    'primary_concerns': self._extract_primary_concerns(performance_data),
+                    'optimization_priority': self._determine_optimization_priority(performance_data),
+                    'assumptions': self._extract_assumptions(ai_insights)
+                },
+                'recommendations': ai_insights.get('ai_recommendations', []),
+                'technology_specific_insights': self._extract_technology_insights(technology_template)
+            },
             'performance_analysis': {
                 'overall_score': self._calculate_overall_score(performance_data),
                 'performance_grade': self._calculate_performance_grade(performance_data),
                 'key_metrics': performance_data.get('metrics_analysis', {}),
                 'detailed_analysis': performance_data
-            },
-            'ai_analysis': {
-                'insights': ai_insights.get('ai_insights', ''),
-                'model_used': ai_insights.get('model_used', 'unknown'),
-                'analysis_timestamp': datetime.now().isoformat()
             },
             'technology_template': technology_template,
             'recommendations': self._combine_recommendations(performance_data, ai_insights),
@@ -602,6 +649,168 @@ class EnhancedAIAnalysisAgent:
         }
         
         return analysis_result
+    
+    def _extract_performance_issues(self, performance_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract performance issues from the data"""
+        issues = []
+        
+        # Check for browser performance issues
+        if 'browser_analysis' in performance_data:
+            browser_data = performance_data['browser_analysis']
+            if browser_data.get('performance_score', 100) < 80:
+                issues.append({
+                    "title": "Suboptimal Browser Performance",
+                    "category": "Browser Performance",
+                    "description": f"Browser performance score is {browser_data.get('performance_score', 'unknown')} (should be above 80)",
+                    "priority": "medium",
+                    "source": "browser_analysis"
+                })
+        
+        return issues
+    
+    def _extract_overall_assessment(self, ai_insights: Dict[str, Any]) -> str:
+        """Extract overall assessment from AI insights"""
+        insights = ai_insights.get('ai_insights', '')
+        if 'underperforming' in insights.lower():
+            return "The application is underperforming in both backend and frontend metrics, particularly in LCP and TBT. Immediate optimizations are required to meet KPIs."
+        elif 'excellent' in insights.lower():
+            return "The application is performing well with good metrics across all areas."
+        else:
+            return "The application shows mixed performance with some areas requiring optimization."
+    
+    def _extract_primary_concerns(self, performance_data: Dict[str, Any]) -> List[str]:
+        """Extract primary performance concerns"""
+        concerns = []
+        
+        # Check response time
+        metrics = performance_data.get('metrics_analysis', {})
+        response_time = metrics.get('response_time', {})
+        if response_time.get('grade') in ['D', 'F']:
+            concerns.append("Response time is above acceptable thresholds.")
+        
+        # Check error rate
+        error_rate = metrics.get('error_rate', {})
+        if error_rate.get('grade') in ['D', 'F']:
+            concerns.append("Error rate is above acceptable levels.")
+        
+        # Check throughput
+        throughput = metrics.get('throughput', {})
+        if throughput.get('grade') in ['D', 'F']:
+            concerns.append("Throughput is below desired levels.")
+        
+        # Check browser performance
+        if 'browser_analysis' in performance_data:
+            browser_data = performance_data['browser_analysis']
+            if browser_data.get('performance_score', 100) < 80:
+                concerns.append("Browser performance metrics indicate optimization opportunities.")
+        
+        return concerns if concerns else ["No major performance concerns identified."]
+    
+    def _determine_optimization_priority(self, performance_data: Dict[str, Any]) -> str:
+        """Determine optimization priority based on performance data"""
+        metrics = performance_data.get('metrics_analysis', {})
+        grades = [metrics.get('response_time', {}).get('grade', 'A'),
+                 metrics.get('error_rate', {}).get('grade', 'A'),
+                 metrics.get('throughput', {}).get('grade', 'A')]
+        
+        if any(grade in ['D', 'F'] for grade in grades):
+            return "High"
+        elif any(grade == 'C' for grade in grades):
+            return "Medium"
+        else:
+            return "Low"
+    
+    def _extract_assumptions(self, ai_insights: Dict[str, Any]) -> List[str]:
+        """Extract assumptions from AI insights"""
+        return [
+            "The telemetry data provided is accurate and reflects the current performance state.",
+            "The application is properly configured for the expected load patterns."
+        ]
+    
+    def _extract_technology_insights(self, technology_template: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract technology-specific insights"""
+        if not technology_template:
+            return {}
+        
+        return {
+            "svelte": {
+                "key_optimizations": [
+                    "Implement component lazy loading",
+                    "Optimize bundle size with tree shaking",
+                    "Use SvelteKit for SSR/SSG when applicable"
+                ],
+                "common_pitfalls": [
+                    "Large bundle sizes due to poor code splitting",
+                    "Slow initial load times",
+                    "Hydration issues with SSR"
+                ],
+                "best_practices": [
+                    "Use Svelte's built-in reactivity efficiently",
+                    "Implement proper error boundaries",
+                    "Optimize component lifecycle methods"
+                ]
+            },
+            "strapi": {
+                "key_optimizations": [
+                    "Implement API response caching",
+                    "Optimize database queries",
+                    "Use content delivery optimization"
+                ],
+                "common_pitfalls": [
+                    "Slow API responses due to inefficient queries",
+                    "Database bottlenecks",
+                    "Content loading delays"
+                ],
+                "best_practices": [
+                    "Use proper indexing on database fields",
+                    "Implement rate limiting",
+                    "Cache frequently accessed content"
+                ]
+            },
+            "azure_app_service": {
+                "key_optimizations": [
+                    "Configure auto-scaling rules",
+                    "Use appropriate performance tiers",
+                    "Optimize deployment strategies"
+                ],
+                "common_pitfalls": [
+                    "Cold start issues",
+                    "Memory and CPU constraints",
+                    "Inefficient scaling policies"
+                ],
+                "best_practices": [
+                    "Use always-on for production",
+                    "Implement health checks",
+                    "Monitor resource usage"
+                ]
+            },
+            "cdn_front_door": {
+                "key_optimizations": [
+                    "Configure proper caching rules",
+                    "Use edge optimization",
+                    "Implement compression"
+                ],
+                "common_pitfalls": [
+                    "Incorrect cache expiration policies",
+                    "Over-caching dynamic content"
+                ],
+                "best_practices": [
+                    "Use versioning for static assets",
+                    "Regularly review CDN performance"
+                ]
+            }
+        }
+    
+    def _combine_recommendations(self, performance_data: Dict[str, Any], ai_insights: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Combine recommendations from different sources"""
+        recommendations = ai_insights.get('ai_recommendations', [])
+        
+        # Add any additional recommendations based on performance data
+        if 'enhanced_analysis' in performance_data:
+            enhanced_recs = performance_data['enhanced_analysis'].get('recommendations', [])
+            recommendations.extend(enhanced_recs)
+        
+        return recommendations
     
     def _collect_enhanced_k6_metrics(self, summary_path: str) -> Dict[str, Any]:
         """Collect detailed k6 metrics from summary.json"""

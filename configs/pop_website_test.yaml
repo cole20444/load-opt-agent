@@ -1,10 +1,10 @@
 # POP Website Load Test Configuration
-# Updated with latest features - 2-minute Azure distributed test
-# Technical analysis only (no AI insights)
+# Updated with latest features - 30-minute comprehensive Azure distributed test
+# Enhanced AI analysis enabled
 
 target: https://wearepop.com
-vus: 20  # 20 virtual users for Azure test
-duration: 5m  # 5-minute test
+vus: 10  # 10 virtual users for 2-minute test
+duration: 2m  # 2-minute test
 test_type: both  # Run both protocol and browser tests
 
 # Site description
@@ -19,35 +19,47 @@ tags:
   - "headless-cms"
   - "javascript"
   - "api-driven"
-  - "pop-website"
-  - "comprehensive-test"
 
 # Analysis settings - Technical only, no AI
 analysis_settings:
   run_page_resource_analysis: true
   run_enhanced_performance_analysis: true
-  run_ai_analysis: false  # Disabled for technical analysis only
-  generate_readable_reports: true
-  combine_results: true
+  run_ai_analysis: true  # Enable enhanced AI analysis
 
-# Protocol test settings (k6)
+
+# Protocol test settings (k6) - 30-minute comprehensive test
 protocol_settings:
-  vus: 20  # 20 virtual users for Azure test
-  duration: 5m
+  vus: 8   # 8 virtual users for 2-minute test
+  duration: 2m
+  stages:
+    - duration: "30s"  # Warm-up phase
+      target: 5        # Gradually ramp to 5 VUs
+    - duration: "1m"   # Sustained load phase
+      target: 8        # Maintain 8 VUs
+    - duration: "30s"  # Cool-down phase
+      target: 0        # Gradually reduce to 0
   thresholds:
-    http_req_duration: ['p(95)<10000']  # Increased to 10s for high load
-    http_req_failed: ['rate<0.3']       # Increased error rate tolerance for ramp-up
+    http_req_duration: ['p(95)<5000']   # 5s threshold for 30-min test
+    http_req_failed: ['rate<0.1']       # 10% error rate tolerance
+    http_reqs: ['rate>10']              # Minimum 10 req/s throughput
 
-# Browser test settings (xk6-browser) - Enabled for both tests
+# Browser test settings (Playwright) - 30-minute comprehensive test
 browser_settings:
-  vus: 10  # 10 virtual users for browser test
-  duration: 5m  # 2-minute browser test
+  vus: 2   # 2 virtual users for 2-minute browser test
+  duration: 2m
+  stages:
+    - duration: "30s"  # Warm-up phase
+      target: 1        # Gradually ramp to 1 VU
+    - duration: "1m"   # Sustained load phase
+      target: 2        # Maintain 2 VUs
+    - duration: "30s"  # Cool-down phase
+      target: 0        # Gradually reduce to 0
   viewport:
     width: 1920
     height: 1080
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   wait_until: "networkidle"
-  timeout: "30s"
+  timeout: "45s"  # Increased timeout for 30-min test
 
 # Performance thresholds for browser metrics
 browser_thresholds:
@@ -59,12 +71,14 @@ browser_thresholds:
   dom_content_loaded: 2000  # 2s
   load_complete: 3000  # 3s
 
-# User interaction simulation
+# User interaction simulation - Enhanced for 30-minute test
 user_interactions:
   enabled: true
   click_elements: true
   scroll_page: true
-  wait_between_actions: 1000  # ms
+  wait_between_actions: 2000  # Increased to 2s for realistic user behavior
+  random_delays: true  # Add random delays between 1-3 seconds
+  simulate_reading: true  # Simulate users reading content
 
 # Azure Distributed Testing Configuration
 azure:
@@ -75,17 +89,17 @@ azure:
   container_name: "results"
   container_registry: "poploadtestregistry.azurecr.io"
 
-# Distribution settings for Azure distributed testing - Both test types enabled
+# Distribution settings for Azure distributed testing - 30-minute comprehensive test
 distribution:
-  total_vus: 20  # Total VUs across all workers
-  duration: "5m"  # Test duration
+  total_vus: 10   # Total VUs across all workers (8 protocol + 2 browser)
+  duration: "2m"  # 2-minute test duration
   vus_per_container:
-    protocol: 10  # VUs per protocol worker container
-    browser: 5    # VUs per browser worker container
+    protocol: 4   # VUs per protocol worker container (2 containers × 4 = 8)
+    browser: 2    # VUs per browser worker container (1 container × 2 = 2)
   resources:
     protocol:
-      cpu: 1.0
-      memory: 2.0
+      cpu: 1.0    # Reduced CPU to fit quota
+      memory: 2.0 # Reduced memory to fit quota
     browser:
-      cpu: 2.0
-      memory: 4.0 
+      cpu: 1.0    # Reduced CPU to fit quota
+      memory: 2.0 # Reduced memory to fit quota 

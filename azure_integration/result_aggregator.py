@@ -481,12 +481,14 @@ class ResultAggregator:
                                 start_time = dt
                             if end_time is None or dt > end_time:
                                 end_time = dt
-                        except:
+                        except Exception as e:
+                            logger.debug(f"Failed to parse timestamp: {time_str} - {e}")
                             pass
             
             # Calculate test duration
             if start_time and end_time:
                 duration_seconds = (end_time - start_time).total_seconds()
+                logger.info(f"Calculated test duration: {duration_seconds}s (start: {start_time}, end: {end_time})")
                 if duration_seconds > 0:
                     if duration_seconds >= 60:
                         minutes = int(duration_seconds // 60)
@@ -494,8 +496,11 @@ class ResultAggregator:
                         state['testRunDuration'] = f"{minutes}m{seconds}s"
                     else:
                         state['testRunDuration'] = f"{int(duration_seconds)}s"
+            else:
+                logger.warning(f"Could not calculate test duration - start_time: {start_time}, end_time: {end_time}")
             
             # Process each metric type
+            logger.info(f"Processing {len(metric_data_points)} metric types with {sum(len(points) for points in metric_data_points.values())} total data points")
             for metric_name, data_points in metric_data_points.items():
                 if not data_points:
                     continue

@@ -222,7 +222,7 @@ sudo usermod -aG docker $USER
     
     # Remove corrupted files and re-run test
     rm output/site_name/latest/protocol_summary.json
-    python run_test.py configs/your-config.yaml
+    python main.py configs/your-config.yaml
     ```
     
     **Prevention**: Ensure stable network and sufficient disk space
@@ -492,7 +492,7 @@ free -h
   <AccordionItem title="Application Logs">
     ```bash
     # Check Python script output
-    python run_test.py configs/your-config.yaml 2>&1 | tee test.log
+    python main.py configs/your-config.yaml 2>&1 | tee test.log
     
     # Check specific script logs
     python scripts/enhanced_performance_analyzer.py input.json 2>&1 | tee analysis.log
@@ -581,7 +581,7 @@ free -h
     duration: 1m
     
     # Re-run test
-    python run_test.py configs/your-config.yaml
+    python main.py configs/your-config.yaml
     ```
   </AccordionItem>
   
@@ -659,7 +659,7 @@ free -h
   <AccordionItem title="Built-in Help">
     ```bash
     # Script help
-    python run_test.py --help
+    python main.py --help
     
     # List available configurations
     ls configs/

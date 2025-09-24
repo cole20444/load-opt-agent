@@ -1,0 +1,66 @@
+# Enhanced AI Analysis Test Configuration
+# Tests the new targeted prompt system with performance recommendations and site tags
+
+target: https://wearepop.com
+vus: 10  # Lower VUs for testing
+duration: 2m  # Shorter duration for testing
+test_type: both  # Run both protocol and browser tests
+
+# Site description for AI analysis
+description: "Frontend is built with Svelte and the Backend is built with Strapi. The frontend application gets its data from the strapi api. This app is an App Service that lives on azure."
+
+# Technology tags for targeted AI analysis
+tags:
+  - "svelte"
+  - "strapi"
+  - "azure"
+  - "app-service"
+  - "headless-cms"
+  - "javascript"
+  - "api-driven"
+  - "pop-website"
+  - "enhanced-ai-test"
+
+# Analysis settings - Enable AI analysis
+analysis_settings:
+  run_page_resource_analysis: true
+  run_enhanced_performance_analysis: true
+  run_ai_analysis: true  # Enable AI analysis for testing
+  generate_readable_reports: true
+  combine_results: true
+
+# Protocol test settings (k6)
+protocol_settings:
+  vus: 10
+  duration: 2m
+  thresholds:
+    http_req_duration: ['p(95)<10000']
+    http_req_failed: ['rate<0.3']
+
+# Browser test settings (Playwright)
+browser_settings:
+  vus: 5
+  duration: 2m
+  viewport:
+    width: 1920
+    height: 1080
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  wait_until: "networkidle"
+  timeout: "30s"
+
+# Performance thresholds for browser metrics
+browser_thresholds:
+  first_contentful_paint: 1800  # 1.8s
+  largest_contentful_paint: 2500  # 2.5s
+  first_input_delay: 100  # 100ms
+  cumulative_layout_shift: 0.1
+  time_to_interactive: 3800  # 3.8s
+  dom_content_loaded: 2000  # 2s
+  load_complete: 3000  # 3s
+
+# User interaction simulation
+user_interactions:
+  enabled: true
+  click_elements: true
+  scroll_page: true
+  wait_between_actions: 1000  # ms

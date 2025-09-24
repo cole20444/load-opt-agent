@@ -462,7 +462,7 @@ def main():
     
     if not os.path.exists(summary_file):
         print(f"❌ Summary file not found: {summary_file}")
-        print("Please run a load test first using: python run_test.py")
+        print("Please run a load test first using: python main.py")
         return
     
     analyzer = EnhancedPerformanceAnalyzer(summary_file, test_report_file)

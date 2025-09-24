@@ -85,16 +85,16 @@ cp env.example .env
 3. **Run a comprehensive load test**:
 ```bash
 # Run both protocol and browser tests with AI analysis
-python run_test.py configs/comprehensive_test.yaml
+python main.py configs/comprehensive_test.yaml
 
 # Run technical analysis only (no AI, faster, no API costs)
-python run_test.py configs/technical_analysis.yaml
+python main.py configs/technical_analysis.yaml
 
 # Run only protocol testing (traditional k6)
-python run_test.py configs/pop_website_test.yaml
+python main.py configs/pop_website_test.yaml
 
 # Run only browser testing (front-end performance)
-python run_test.py configs/browser_test.yaml
+python main.py configs/browser_test.yaml
 ```
 
 4. **Check results**:
@@ -359,7 +359,7 @@ load-opt-agent/
 │           ├── page_resource_analysis.json # Page analysis
 │           ├── enhanced_analysis_report.json # Enhanced analysis
 │           └── ai_analysis_report.json # AI recommendations
-├── 📄 run_test.py             # Main test runner
+├── 📄 main.py                 # Main test runner
 ├── 📋 requirements.txt        # Python dependencies
 ├── 🔑 env.example             # Environment variables template
 ├── 🚫 .gitignore             # Git ignore rules
@@ -372,11 +372,11 @@ The system is designed for easy extension:
 
 1. **New Test Types**: Add new k6 test scripts in `tests/`
 2. **Browser Extensions**: Extend xk6-browser functionality in `tests/browser_load_test.js`
-3. **Configuration Options**: Extend YAML schema in `run_test.py`
+3. **Configuration Options**: Extend YAML schema in `main.py`
 4. **Metrics**: Add custom k6 metrics in `tests/load_test.js`
 5. **Analysis Scripts**: Add new analysis tools in `scripts/`
 6. **AI Templates**: Extend technology patterns in `ai_analysis/technology_templates.yaml`
-7. **Output Formats**: Extend reporting in `run_test.py`
+7. **Output Formats**: Extend reporting in `main.py`
 8. **Documentation**: Add new guides in `docs/`
 
 ## Troubleshooting
@@ -387,7 +387,7 @@ The system is designed for easy extension:
 2. **Permission errors**: Run with appropriate Docker permissions
 3. **Network issues**: Check target URL accessibility
 4. **Browser test failures**: Ensure sufficient system resources for Chromium
-5. **Timeout errors**: Increase timeout in `run_test.py`
+5. **Timeout errors**: Increase timeout in `main.py`
 
 ### Browser Testing Tips
 

@@ -22,6 +22,41 @@ class PlaywrightBrowserTest:
         """Run a single browser test and collect comprehensive metrics"""
         start_time = time.time()
         
+        # Track individual resources
+        resources = []
+        
+        # Listen to network requests
+        async def handle_request(request):
+            resources.append({
+                'url': request.url,
+                'method': request.method,
+                'resourceType': request.resource_type,
+                'timestamp': time.time()
+            })
+        
+        async def handle_response(response):
+            try:
+                request = response.request
+                # Find the corresponding request in our resources list
+                for resource in resources:
+                    if resource['url'] == request.url and resource['method'] == request.method:
+                        resource['status'] = response.status
+                        resource['size'] = 0  # We'll try to get size from headers
+                        try:
+                            headers = await response.all_headers()
+                            content_length = headers.get('content-length')
+                            if content_length:
+                                resource['size'] = int(content_length)
+                        except:
+                            pass
+                        break
+            except Exception as e:
+                print(f"Error handling response: {e}")
+        
+        # Set up network listeners
+        page.on('request', handle_request)
+        page.on('response', handle_response)
+        
         try:
             # Navigate to the page
             response = await page.goto(self.target_url, wait_until='networkidle')
@@ -155,6 +190,9 @@ class PlaywrightBrowserTest:
             end_time = time.time()
             metrics['total_time'] = end_time - start_time
             metrics['status'] = response.status if response else 0
+            
+            # Add individual resources to the result
+            metrics['resources'] = resources
             
             return metrics
             

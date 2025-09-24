@@ -856,7 +856,431 @@ def generate_resource_types_html(resource_counts):
         '''
     return html
 
-def generate_html_report(protocol_metrics, browser_metrics, output_path):
+def generate_resource_performance_issues_html(resource_analysis):
+    """Generate HTML for resource performance issues"""
+    if not resource_analysis or not resource_analysis.get('performance_issues'):
+        return ''
+    
+    issues = resource_analysis['performance_issues']
+    html = f'''
+    <h3>Resource Performance Issues</h3>
+    <div class="issues-list">
+    '''
+    
+    for issue in issues:
+        severity_class = f"severity-{issue['severity']}"
+        severity_icon = "🔴" if issue['severity'] == 'critical' else "🟡" if issue['severity'] == 'high' else "🟠" if issue['severity'] == 'medium' else "🟢"
+        
+        html += f'''
+        <div class="issue-item {severity_class}">
+            <div class="issue-header">
+                <span class="severity-icon">{severity_icon}</span>
+                <span class="severity-badge">{issue['severity'].upper()}</span>
+                <span class="issue-type">{issue['type'].replace('_', ' ').title()}</span>
+            </div>
+            <div class="issue-description">{issue['description']}</div>
+            <div class="issue-impact"><strong>Impact:</strong> {issue['impact']}</div>
+        </div>
+        '''
+    
+    html += '''
+    </div>
+    '''
+    
+    return html
+
+def generate_resource_recommendations_html(resource_analysis):
+    """Generate HTML for resource optimization recommendations"""
+    if not resource_analysis or not resource_analysis.get('recommendations'):
+        return ''
+    
+    recommendations = resource_analysis['recommendations']
+    html = f'''
+    <h3>Resource Optimization Recommendations</h3>
+    <div class="recommendations-list">
+    '''
+    
+    for rec in recommendations:
+        priority_class = f"priority-{rec['priority'].lower()}"
+        priority_icon = "🔴" if rec['priority'] == 'Critical' else "🟡" if rec['priority'] == 'High' else "🟠" if rec['priority'] == 'Medium' else "🟢"
+        
+        html += f'''
+        <div class="recommendation-item {priority_class}">
+            <div class="recommendation-header">
+                <span class="priority-icon">{priority_icon}</span>
+                <span class="priority-badge">{rec['priority']}</span>
+                <span class="recommendation-category">{rec['category']}</span>
+            </div>
+            <div class="recommendation-action"><strong>Action:</strong> {rec['action']}</div>
+            <div class="recommendation-details">{rec['details']}</div>
+        </div>
+        '''
+    
+    html += '''
+    </div>
+    '''
+    
+    return html
+
+def generate_performance_culprits_html(performance_culprits):
+    """Generate HTML for performance culprits analysis"""
+    if not performance_culprits:
+        return ''
+    
+    html = '''
+    <div class="card">
+        <h2>🐌 Performance Culprits</h2>
+        <p>Resources and requests that are impacting page load performance the most.</p>
+    '''
+    
+    # Slowest Resources Section
+    if performance_culprits.get('slowest_resources'):
+        html += '''
+        <h3>⏱️ Slowest Resources (>100ms)</h3>
+        <div class="culprits-list">
+        '''
+        
+        for i, resource in enumerate(performance_culprits['slowest_resources'][:10], 1):
+            load_time = resource.get('loadTime', 0)
+            resource_type = resource.get('resourceType', 'Unknown')
+            url = resource.get('url', 'Unknown')
+            size_kb = resource.get('size', 0) / 1024
+            
+            # Determine severity color
+            if load_time > 1000:
+                severity_class = 'critical'
+                severity_icon = '🔴'
+            elif load_time > 500:
+                severity_class = 'high'
+                severity_icon = '🟡'
+            else:
+                severity_class = 'medium'
+                severity_icon = '🟠'
+            
+            html += f'''
+            <div class="culprit-item {severity_class}">
+                <div class="culprit-header">
+                    <span class="culprit-rank">#{i}</span>
+                    <span class="severity-icon">{severity_icon}</span>
+                    <span class="resource-type">{resource_type}</span>
+                    <span class="load-time">{load_time:.0f}ms</span>
+                </div>
+                <div class="culprit-details">
+                    <div class="resource-url">{url}</div>
+                    <div class="resource-size">Size: {size_kb:.1f}KB</div>
+                </div>
+            </div>
+            '''
+        
+        html += '''
+        </div>
+        '''
+    
+    # Largest Resources Section
+    if performance_culprits.get('largest_resources'):
+        html += '''
+        <h3>📦 Largest Resources (>100KB)</h3>
+        <div class="culprits-list">
+        '''
+        
+        for i, resource in enumerate(performance_culprits['largest_resources'][:10], 1):
+            size_kb = resource.get('size', 0) / 1024
+            resource_type = resource.get('resourceType', 'Unknown')
+            url = resource.get('url', 'Unknown')
+            load_time = resource.get('loadTime', 0)
+            
+            # Determine severity color based on size
+            if size_kb > 1000:  # >1MB
+                severity_class = 'critical'
+                severity_icon = '🔴'
+            elif size_kb > 500:  # >500KB
+                severity_class = 'high'
+                severity_icon = '🟡'
+            else:
+                severity_class = 'medium'
+                severity_icon = '🟠'
+            
+            html += f'''
+            <div class="culprit-item {severity_class}">
+                <div class="culprit-header">
+                    <span class="culprit-rank">#{i}</span>
+                    <span class="severity-icon">{severity_icon}</span>
+                    <span class="resource-type">{resource_type}</span>
+                    <span class="resource-size">{size_kb:.1f}KB</span>
+                </div>
+                <div class="culprit-details">
+                    <div class="resource-url">{url}</div>
+                    <div class="load-time">Load Time: {load_time:.0f}ms</div>
+                </div>
+            </div>
+            '''
+        
+        html += '''
+        </div>
+        '''
+    
+    # Request Breakdown Section
+    if performance_culprits.get('most_requests_by_type'):
+        html += '''
+        <h3>📊 Requests by Type</h3>
+        <div class="request-breakdown">
+        '''
+        
+        for resource_type, count in list(performance_culprits['most_requests_by_type'].items())[:8]:
+            html += f'''
+            <div class="request-type">
+                <span class="type-name">{resource_type}</span>
+                <span class="type-count">{count} requests</span>
+            </div>
+            '''
+        
+        html += '''
+        </div>
+        '''
+    
+    # API Calls Summary
+    if performance_culprits.get('api_calls'):
+        api_calls = performance_culprits['api_calls']
+        slow_apis = [api for api in api_calls if api.get('loadTime', 0) > 200]
+        
+        html += f'''
+        <h3>🔗 API Calls Summary</h3>
+        <div class="api-summary">
+            <div class="api-stat">
+                <span class="stat-label">Total API Calls:</span>
+                <span class="stat-value">{len(api_calls)}</span>
+            </div>
+            <div class="api-stat">
+                <span class="stat-label">Slow API Calls (>200ms):</span>
+                <span class="stat-value">{len(slow_apis)}</span>
+            </div>
+        </div>
+        '''
+    
+    # Performance Culprit Recommendations
+    if performance_culprits.get('recommendations'):
+        html += '''
+        <h3>🎯 Recommendations</h3>
+        <div class="culprit-recommendations">
+        '''
+        
+        for rec in performance_culprits['recommendations']:
+            priority_icon = "🔴" if rec['priority'] == 'High' else "🟡" if rec['priority'] == 'Medium' else "🟢"
+            priority_class = rec['priority'].lower()
+            
+            html += f'''
+            <div class="culprit-recommendation {priority_class}">
+                <div class="recommendation-header">
+                    <span class="priority-icon">{priority_icon}</span>
+                    <span class="priority-badge">{rec['priority']}</span>
+                    <span class="recommendation-title">{rec['title']}</span>
+                </div>
+                <div class="recommendation-description">{rec['description']}</div>
+                <div class="recommendation-action"><strong>Action:</strong> {rec['action']}</div>
+            </div>
+            '''
+        
+        html += '''
+        </div>
+        '''
+    
+    html += '''
+    </div>
+    '''
+    
+    return html
+
+def generate_enhanced_ai_analysis_section(enhanced_ai_analysis):
+    """Generate HTML section for enhanced AI analysis results"""
+    if not enhanced_ai_analysis:
+        return ''
+    
+    # Check which format we're dealing with
+    if 'ai_recommendations' in enhanced_ai_analysis:
+        # Handle the older enhanced AI analysis format with structured recommendations
+        return generate_structured_ai_analysis(enhanced_ai_analysis)
+    elif 'ai_analysis' in enhanced_ai_analysis:
+        # Handle the newer AI analysis format with raw insights
+        return generate_insights_ai_analysis(enhanced_ai_analysis)
+    else:
+        return ''
+
+def generate_structured_ai_analysis(enhanced_ai_analysis):
+    """Generate HTML for the older structured AI analysis format"""
+    ai_recommendations = enhanced_ai_analysis.get('ai_recommendations', {})
+    if not ai_recommendations:
+        return ''
+    
+    # Generate summary section
+    summary = ai_recommendations.get('summary', {})
+    overall_assessment = summary.get('overall_assessment', 'No assessment available')
+    optimization_priority = summary.get('optimization_priority', 'Unknown')
+    primary_concerns = summary.get('primary_concerns', [])
+    
+    # Generate recommendations HTML
+    recommendations_html = ''
+    recommendations = ai_recommendations.get('recommendations', [])
+    for rec in recommendations:
+        priority_icon = "🔴" if rec.get('priority') == 'Critical' else "🟡" if rec.get('priority') == 'High' else "🟢" if rec.get('priority') == 'Medium' else "🔵"
+        effort_icon = "⚡" if rec.get('effort') == 'Low' else "🔧" if rec.get('effort') == 'Medium' else "🏗️"
+        
+        # Generate implementation steps
+        steps_html = ''
+        for step in rec.get('implementation_steps', []):
+            steps_html += f'<li>{step}</li>'
+        
+        # Generate code examples if available
+        code_examples_html = ''
+        code_examples = rec.get('code_examples', [])
+        if code_examples and isinstance(code_examples, list):
+            for example in code_examples:
+                if example.get('code'):
+                    code_examples_html += f'''
+                    <div class="code-example">
+                        <h5>Code Example ({example.get('language', 'code')}):</h5>
+                        <pre><code>{example.get('code', '')}</code></pre>
+                        <p><em>{example.get('description', '')}</em></p>
+                    </div>
+                    '''
+        elif code_examples and isinstance(code_examples, dict) and code_examples.get('code'):
+            # Handle legacy format for backward compatibility
+            code_examples_html = f'''
+            <div class="code-example">
+                <h5>Code Example ({code_examples.get('language', 'code')}):</h5>
+                <pre><code>{code_examples.get('code', '')}</code></pre>
+                <p><em>{code_examples.get('description', '')}</em></p>
+            </div>
+            '''
+        
+        recommendations_html += f'''
+        <div class="ai-recommendation-item">
+            <h4>{priority_icon} {rec.get('title', 'AI Recommendation')}</h4>
+            <div class="recommendation-meta">
+                <span class="category">📂 {rec.get('category', 'General')}</span>
+                <span class="priority">🎯 {rec.get('priority', 'Medium')}</span>
+                <span class="effort">{effort_icon} {rec.get('effort', 'Medium')} Effort</span>
+            </div>
+            <p><strong>Expected Impact:</strong> {rec.get('expected_impact', 'No impact description available')}</p>
+            <div class="implementation-steps">
+                <h5>Implementation Steps:</h5>
+                <ul>{steps_html}</ul>
+            </div>
+            {code_examples_html}
+            <div class="monitoring">
+                <h5>📊 Monitoring:</h5>
+                <p>{rec.get('monitoring', 'No monitoring guidance provided')}</p>
+            </div>
+        </div>
+        '''
+    
+    # Generate primary concerns list
+    concerns_html = ''
+    if primary_concerns:
+        concerns_html = f'''
+        <div class="primary-concerns">
+            <h4>🎯 Primary Performance Concerns</h4>
+            <ul>
+                {''.join([f'<li>{concern}</li>' for concern in primary_concerns])}
+            </ul>
+        </div>
+        '''
+    
+    return f'''
+    <div class="card" id="enhanced-ai-analysis">
+        <h2>🤖 Enhanced AI Analysis
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    <h4>Enhanced AI Analysis</h4>
+                    <p>AI-powered analysis using performance recommendations and site-specific technology tags.</p>
+                    <p><span class="good-range">Good:</span> Targeted, actionable recommendations</p>
+                    <p><span class="bad-range">Poor:</span> Generic or missing recommendations</p>
+                    <p>Provides architecture-specific optimization guidance based on your technology stack.</p>
+                </div>
+            </div>
+        </h2>
+        
+        <!-- AI Analysis Summary -->
+        <div class="ai-summary">
+            <h3>📊 Overall Assessment</h3>
+            <p><strong>Assessment:</strong> {overall_assessment}</p>
+            <p><strong>Optimization Priority:</strong> <span class="priority-{optimization_priority.lower()}">{optimization_priority}</span></p>
+            {concerns_html}
+        </div>
+        
+        <!-- AI Recommendations -->
+        <div class="ai-recommendations">
+            <h3>💡 AI-Powered Recommendations</h3>
+            <p>Targeted recommendations based on your specific technology stack and performance issues.</p>
+            {recommendations_html}
+        </div>
+    </div>
+    '''
+
+def generate_insights_ai_analysis(enhanced_ai_analysis):
+    """Generate HTML for the newer insights-based AI analysis format"""
+    ai_analysis = enhanced_ai_analysis.get('ai_analysis', {})
+    performance_analysis = enhanced_ai_analysis.get('performance_analysis', {})
+    technology_template = enhanced_ai_analysis.get('technology_template', {})
+    
+    if not ai_analysis:
+        return ''
+    
+    # Extract key information from the actual data structure
+    insights = ai_analysis.get('insights', 'No insights available')
+    model_used = ai_analysis.get('model_used', 'Unknown')
+    analysis_timestamp = ai_analysis.get('analysis_timestamp', 'Unknown')
+    
+    # Extract performance grade and score
+    performance_grade = performance_analysis.get('performance_grade', 'Unknown')
+    overall_score = performance_analysis.get('overall_score', 0)
+    
+    # Extract technology information
+    tech_name = technology_template.get('name', 'Unknown Technology Stack')
+    tech_description = technology_template.get('description', 'No description available')
+    
+    # Convert insights markdown to HTML (basic conversion)
+    insights_html = insights.replace('\n', '<br>').replace('**', '<strong>').replace('**', '</strong>').replace('###', '<h3>').replace('####', '<h4>')
+    
+    return f'''
+    <div class="card" id="enhanced-ai-analysis">
+        <h2>🤖 Enhanced AI Analysis
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-content">
+                    <h4>Enhanced AI Analysis</h4>
+                    <p>AI-powered analysis using performance recommendations and site-specific technology tags.</p>
+                    <p><span class="good-range">Good:</span> Targeted, actionable recommendations</p>
+                    <p><span class="bad-range">Poor:</span> Generic or missing recommendations</p>
+                    <p>Provides architecture-specific optimization guidance based on your technology stack.</p>
+                </div>
+            </div>
+        </h2>
+        
+        <!-- AI Analysis Summary -->
+        <div class="ai-summary">
+            <h3>📊 Overall Assessment</h3>
+            <div class="performance-grade-display">
+                <div class="grade-badge grade-{performance_grade.lower()}">{performance_grade}</div>
+                <div class="score-display">{overall_score:.1f}/100</div>
+            </div>
+            <p><strong>Technology Stack:</strong> {tech_name}</p>
+            <p><strong>Description:</strong> {tech_description}</p>
+            <p><strong>Analysis Model:</strong> {model_used}</p>
+            <p><strong>Analysis Time:</strong> {analysis_timestamp}</p>
+        </div>
+        
+        <!-- AI Insights -->
+        <div class="ai-insights">
+            <h3>💡 AI Insights & Recommendations</h3>
+            <div class="insights-content">
+                {insights_html}
+            </div>
+        </div>
+    </div>
+    '''
+
+def generate_html_report(protocol_metrics, browser_metrics, output_path, enhanced_ai_analysis=None):
     """Generate a comprehensive HTML report with Plotly visualizations"""
     
     # Load enhanced analysis reports if available
@@ -875,7 +1299,7 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
             pass
     
     # Try to load browser analysis
-    browser_file = os.path.join(output_dir, "browser_summary_analysis.json")
+    browser_file = os.path.join(output_dir, "browser_analysis_report.json")
     if os.path.exists(browser_file):
         try:
             with open(browser_file, 'r') as f:
@@ -963,6 +1387,9 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
     
     # Generate unified enhanced analysis section
     unified_enhanced_analysis_section = generate_unified_enhanced_analysis(enhanced_analysis, browser_metrics, protocol_metrics)
+    
+    # Generate enhanced AI analysis section
+    enhanced_ai_analysis_section = generate_enhanced_ai_analysis_section(enhanced_ai_analysis)
     
     # Generate browser analysis section
     browser_analysis_section = ''
@@ -1063,7 +1490,16 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
                 <div class="summary-stats">
                     {resource_types_html}
                 </div>
+                
+                <!-- Resource Performance Issues -->
+                {resource_performance_issues_html}
+                
+                <!-- Resource Optimization Recommendations -->
+                {resource_recommendations_html}
             </div>
+            
+            <!-- Performance Culprits Section -->
+            {performance_culprits_html}
             
             <!-- Performance Issues Section -->
             <div class="card">
@@ -1104,6 +1540,9 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
             largest_resource=resource_analysis.get('largest_resource_kb', 0),
             avg_resource_size=resource_analysis.get('average_resource_size_kb', 0),
             resource_types_html=generate_resource_types_html(resource_analysis.get('resource_counts', {})),
+            resource_performance_issues_html=generate_resource_performance_issues_html(resource_analysis),
+            resource_recommendations_html=generate_resource_recommendations_html(resource_analysis),
+            performance_culprits_html=generate_performance_culprits_html(browser_analysis.get('performance_culprits', {})),
             total_issues=browser_summary.get('issues_count', 0),
             high_issues=browser_summary.get('high_severity_issues', 0),
             medium_issues=browser_summary.get('medium_severity_issues', 0),
@@ -1426,6 +1865,443 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
             background: #f0fff4;
         }}
         
+        /* Resource Analysis Styles */
+        .issues-list {{
+            margin: 20px 0;
+        }}
+        
+        .issue-item {{
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #e53e3e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        
+        .issue-item.severity-critical {{
+            border-left-color: #e53e3e;
+            background: #fed7d7;
+        }}
+        
+        .issue-item.severity-high {{
+            border-left-color: #dd6b20;
+            background: #feebc8;
+        }}
+        
+        .issue-item.severity-medium {{
+            border-left-color: #d69e2e;
+            background: #faf089;
+        }}
+        
+        .issue-item.severity-low {{
+            border-left-color: #38a169;
+            background: #c6f6d5;
+        }}
+        
+        .issue-header {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }}
+        
+        .severity-badge {{
+            background: #e53e3e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }}
+        
+        .issue-type {{
+            font-weight: 600;
+            color: #2d3748;
+        }}
+        
+        .issue-description {{
+            margin-bottom: 8px;
+            color: #4a5568;
+        }}
+        
+        .issue-impact {{
+            font-size: 14px;
+            color: #718096;
+        }}
+        
+        .recommendations-list {{
+            margin: 20px 0;
+        }}
+        
+        .recommendation-item {{
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #e53e3e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        
+        .recommendation-item.priority-critical {{
+            border-left-color: #e53e3e;
+            background: #fed7d7;
+        }}
+        
+        .recommendation-item.priority-high {{
+            border-left-color: #dd6b20;
+            background: #feebc8;
+        }}
+        
+        .recommendation-item.priority-medium {{
+            border-left-color: #d69e2e;
+            background: #faf089;
+        }}
+        
+        .recommendation-item.priority-low {{
+            border-left-color: #38a169;
+            background: #c6f6d5;
+        }}
+        
+        .recommendation-header {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }}
+        
+        .priority-badge {{
+            background: #e53e3e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }}
+        
+        .recommendation-category {{
+            font-weight: 600;
+            color: #2d3748;
+        }}
+        
+        .recommendation-action {{
+            margin-bottom: 8px;
+            color: #4a5568;
+        }}
+        
+        .recommendation-details {{
+            font-size: 14px;
+            color: #718096;
+        }}
+        
+        /* Enhanced AI Analysis Styles */
+        .ai-recommendation-item {{
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #8b5cf6;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }}
+        
+        .ai-recommendation-item:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }}
+        
+        .recommendation-meta {{
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }}
+        
+        .recommendation-meta span {{
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #4a5568;
+        }}
+        
+        .implementation-steps {{
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }}
+        
+        .implementation-steps h5 {{
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }}
+        
+        .implementation-steps ul {{
+            margin: 0;
+            padding-left: 20px;
+        }}
+        
+        .implementation-steps li {{
+            margin: 8px 0;
+            color: #4a5568;
+        }}
+        
+        .code-example {{
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            color: #e2e8f0;
+        }}
+        
+        .code-example h5 {{
+            color: #63b3ed;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }}
+        
+        .code-example pre {{
+            background: #2d3748;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }}
+        
+        .code-example code {{
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }}
+        
+        .monitoring {{
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }}
+        
+        .monitoring h5 {{
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }}
+        
+        .monitoring p {{
+            color: #4a5568;
+            margin: 0;
+        }}
+        
+        .ai-summary {{
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #0ea5e9;
+        }}
+        
+        .ai-summary h3 {{
+            color: #0c4a6e;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }}
+        
+        .ai-summary p {{
+            margin: 10px 0;
+            color: #0f172a;
+        }}
+        
+        .performance-grade-display {{
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }}
+        
+        .grade-badge {{
+            font-size: 2em;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            min-width: 60px;
+        }}
+        
+        .grade-badge.grade-a {{
+            background: #10b981;
+        }}
+        
+        .grade-badge.grade-b {{
+            background: #3b82f6;
+        }}
+        
+        .grade-badge.grade-c {{
+            background: #f59e0b;
+        }}
+        
+        .grade-badge.grade-d {{
+            background: #ef4444;
+        }}
+        
+        .grade-badge.grade-f {{
+            background: #dc2626;
+        }}
+        
+        .score-display {{
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #374151;
+        }}
+        
+        .ai-insights {{
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #6366f1;
+        }}
+        
+        .ai-insights h3 {{
+            color: #4338ca;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }}
+        
+        .insights-content {{
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            line-height: 1.6;
+        }}
+        
+        .insights-content h3 {{
+            color: #1f2937;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }}
+        
+        .insights-content h4 {{
+            color: #374151;
+            margin: 15px 0 8px 0;
+            font-size: 1.1em;
+        }}
+        
+        .insights-content strong {{
+            color: #1f2937;
+            font-weight: 600;
+        }}
+        
+        .priority-high {{
+            color: #dc2626;
+            font-weight: bold;
+        }}
+        
+        .priority-medium {{
+            color: #d97706;
+            font-weight: bold;
+        }}
+        
+        .priority-low {{
+            color: #059669;
+            font-weight: bold;
+        }}
+        
+        .primary-concerns {{
+            background: #fef3c7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }}
+        
+        .primary-concerns h4 {{
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }}
+        
+        .primary-concerns ul {{
+            margin: 0;
+            padding-left: 20px;
+        }}
+        
+        .primary-concerns li {{
+            margin: 8px 0;
+            color: #78350f;
+        }}
+        
+        .tech-insights {{
+            background: #f0fdf4;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #22c55e;
+        }}
+        
+        .tech-insights h4 {{
+            color: #166534;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }}
+        
+        .insights-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }}
+        
+        .tech-details {{
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }}
+        
+        .tech-section {{
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+        }}
+        
+        .tech-section h6 {{
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: 1em;
+            font-weight: 600;
+        }}
+        
+        .insight-category {{
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }}
+        
+        .insight-category h5 {{
+            color: #166534;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }}
+        
+        .insight-category ul {{
+            margin: 0;
+            padding-left: 20px;
+        }}
+        
+        .insight-category li {{
+            margin: 8px 0;
+            color: #365314;
+        }}
+        
         /* Tooltip Styles */
         .tooltip-container {{
             position: relative;
@@ -1609,6 +2485,212 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
                 grid-template-columns: repeat(2, 1fr);
             }}
         }}
+        
+        /* Performance Culprits Styles */
+        .culprits-list {{
+            margin: 15px 0;
+        }}
+        
+        .culprit-item {{
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin: 10px 0;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }}
+        
+        .culprit-item:hover {{
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }}
+        
+        .culprit-item.critical {{
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }}
+        
+        .culprit-item.high {{
+            border-left: 4px solid #fd7e14;
+            background: #fff8f0;
+        }}
+        
+        .culprit-item.medium {{
+            border-left: 4px solid #ffc107;
+            background: #fffdf0;
+        }}
+        
+        .culprit-header {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }}
+        
+        .culprit-rank {{
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }}
+        
+        .severity-icon {{
+            font-size: 1.2em;
+        }}
+        
+        .resource-type {{
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }}
+        
+        .load-time {{
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }}
+        
+        .resource-size {{
+            background: #17a2b8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }}
+        
+        .culprit-details {{
+            margin-top: 8px;
+        }}
+        
+        .resource-url {{
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #495057;
+            word-break: break-all;
+            margin-bottom: 4px;
+        }}
+        
+        .request-breakdown {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }}
+        
+        .request-type {{
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        
+        .type-name {{
+            font-weight: bold;
+            color: #495057;
+        }}
+        
+        .type-count {{
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }}
+        
+        .api-summary {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }}
+        
+        .api-stat {{
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        
+        .stat-label {{
+            font-weight: bold;
+            color: #495057;
+        }}
+        
+        .stat-value {{
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+        }}
+        
+        .culprit-recommendations {{
+            margin: 15px 0;
+        }}
+        
+        .culprit-recommendation {{
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin: 10px 0;
+            padding: 15px;
+        }}
+        
+        .culprit-recommendation.high {{
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }}
+        
+        .culprit-recommendation.medium {{
+            border-left: 4px solid #ffc107;
+            background: #fffdf0;
+        }}
+        
+        .culprit-recommendation.low {{
+            border-left: 4px solid #28a745;
+            background: #f0fff4;
+        }}
+        
+        .recommendation-header {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }}
+        
+        .priority-icon {{
+            font-size: 1.2em;
+        }}
+        
+        .recommendation-title {{
+            font-weight: bold;
+            color: #495057;
+        }}
+        
+        .recommendation-description {{
+            color: #6c757d;
+            margin-bottom: 8px;
+        }}
+        
+        .recommendation-action {{
+            color: #495057;
+            font-size: 0.9em;
+        }}
     </style>
 </head>
 <body>
@@ -1626,6 +2708,7 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
                 <a href="#protocol-test-results" class="nav-link">Protocol Test Results</a>
                 <a href="#browser-test-results" class="nav-link">Browser Test Results</a>
                 <a href="#unified-enhanced-performance-analysis" class="nav-link">Enhanced Performance Analysis</a>
+                <a href="#enhanced-ai-analysis" class="nav-link">🤖 AI Analysis</a>
             </div>
         </div>
         
@@ -2125,6 +3208,9 @@ def generate_html_report(protocol_metrics, browser_metrics, output_path):
         
         <!-- Unified Enhanced Performance Analysis Section -->
         {unified_enhanced_analysis_section}
+        
+        <!-- Enhanced AI Analysis Section -->
+        {enhanced_ai_analysis_section}
     </div>
     
     <script>
@@ -2914,9 +4000,24 @@ def main():
     protocol_metrics = extract_metrics(protocol_data)
     browser_metrics = extract_metrics(browser_data)
     
+    # Load enhanced AI analysis results if available
+    enhanced_ai_analysis = None
+    # Try both possible filenames for AI analysis
+    ai_files = ["ai_analysis_report.json", "enhanced_ai_analysis_report.json"]
+    for ai_file in ai_files:
+        ai_file_path = os.path.join(output_dir, ai_file)
+        if os.path.exists(ai_file_path):
+            try:
+                with open(ai_file_path, 'r') as f:
+                    enhanced_ai_analysis = json.load(f)
+                print(f"✅ Loaded AI analysis results from {ai_file}")
+                break
+            except Exception as e:
+                print(f"⚠️  Could not load AI analysis from {ai_file}: {e}")
+    
     # Generate HTML report
     html_file = os.path.join(output_dir, "load_test_report.html")
-    generate_html_report(protocol_metrics, browser_metrics, html_file)
+    generate_html_report(protocol_metrics, browser_metrics, html_file, enhanced_ai_analysis)
 
 if __name__ == "__main__":
     main()

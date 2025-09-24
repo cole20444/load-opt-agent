@@ -413,9 +413,13 @@ def generate_test_report(config, output_dir):
                 values = [dp.get('data', {}).get('value', 0) for dp in metrics_by_name[metric_name]]
                 performance_metrics[metric_name] = calculate_stats(values)
         
+        # Get duration and VUs from config (handle both local and Azure distributed configs)
+        duration = config.get('duration', config.get('distribution', {}).get('duration', '1m'))
+        vus = config.get('vus', config.get('distribution', {}).get('total_vus', 1))
+        
         # Generate test summary
         test_summary = {
-            'total_requests': int(performance_metrics.get('http_reqs', {}).get('avg', 0) * int(config['duration'].replace('s', '').replace('m', '000'))),
+            'total_requests': int(performance_metrics.get('http_reqs', {}).get('avg', 0) * int(duration.replace('s', '').replace('m', '000'))),
             'successful_requests': 0,
             'failed_requests': 0,
             'average_response_time': performance_metrics.get('http_req_duration', {}).get('avg', 0),
@@ -430,8 +434,8 @@ def generate_test_report(config, output_dir):
             'test_metadata': {
                 'site_name': config['target'],
                 'test_timestamp': datetime.now().isoformat(),
-                'test_duration': config['duration'],
-                'virtual_users': config['vus'],
+                'test_duration': duration,
+                'virtual_users': vus,
                 'description': config.get('description', ''),
                 'tags': config.get('tags', []),
                 'test_type': test_type,
@@ -464,9 +468,23 @@ def run_browser_analysis(config, output_dir):
         return None
     
     try:
+        # Find individual Playwright result files for browser analysis
+        playwright_files = []
+        for file in os.listdir(output_dir):
+            if file.startswith('playwright_results_') and file.endswith('.json'):
+                playwright_files.append(os.path.join(output_dir, file))
+        
+        if not playwright_files:
+            logger.warning("No individual Playwright result files found, using aggregated summary")
+            playwright_files = [browser_summary_file]
+        
+        # Use the first Playwright result file for analysis (contains Core Web Vitals)
+        analysis_file = playwright_files[0]
+        logger.info(f"Using {analysis_file} for browser analysis")
+        
         # Run browser metrics analyzer
         result = subprocess.run([
-            'python', 'scripts/browser_metrics_analyzer.py', browser_summary_file
+            'python', 'scripts/browser_metrics_analyzer.py', analysis_file
         ], capture_output=True, text=True, timeout=120)
         
         if result.returncode == 0:
@@ -486,7 +504,9 @@ def run_browser_analysis(config, output_dir):
                 logger.info(f"✅ Browser analysis report saved to: {browser_report_path}")
                 return analysis_report
         else:
-            logger.error(f"Browser analysis failed: {result.stderr}")
+            logger.error(f"Browser analysis failed with return code: {result.returncode}")
+            logger.error(f"Browser analysis stdout: {result.stdout}")
+            logger.error(f"Browser analysis stderr: {result.stderr}")
             return None
             
     except Exception as e:
@@ -569,7 +589,7 @@ def run_ai_analysis(config, output_dir):
         
         if analysis_result:
             # Save the comprehensive analysis report
-            ai_report_path = os.path.join(output_dir, "ai_analysis_report.json")
+            ai_report_path = os.path.join(output_dir, "enhanced_ai_analysis_report.json")
             with open(ai_report_path, 'w') as f:
                 json.dump(analysis_result, f, indent=2)
             
@@ -586,41 +606,6 @@ def run_ai_analysis(config, output_dir):
         logger.error(f"❌ Error in AI analysis: {e}")
         return None
 
-def aggregate_worker_summaries(summary_files):
-    """Aggregate multiple worker summary files into a single summary"""
-    try:
-        all_data = []
-        
-        for summary_file in summary_files:
-            try:
-                with open(summary_file, 'r') as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        all_data.extend(data)
-                    else:
-                        all_data.append(data)
-            except Exception as e:
-                logger.warning(f"Failed to load {summary_file}: {e}")
-        
-        if not all_data:
-            return None
-        
-        # Create aggregated summary
-        aggregated = {
-            'test_summary': {
-                'total_requests': sum(item.get('total_requests', 0) for item in all_data if isinstance(item, dict)),
-                'failed_requests': sum(item.get('failed_requests', 0) for item in all_data if isinstance(item, dict)),
-                'average_response_time': sum(item.get('average_response_time', 0) for item in all_data if isinstance(item, dict)) / len([item for item in all_data if isinstance(item, dict)]) if all_data else 0,
-                'error_rate': sum(item.get('error_rate', 0) for item in all_data if isinstance(item, dict)) / len([item for item in all_data if isinstance(item, dict)]) if all_data else 0,
-            },
-            'raw_data': all_data
-        }
-        
-        return aggregated
-        
-    except Exception as e:
-        logger.error(f"Error aggregating worker summaries: {e}")
-        return None
 
 def combine_test_results(config, output_dir):
     """Combine protocol and browser test results into a comprehensive report"""
@@ -935,10 +920,11 @@ def run_azure_distributed_test(config, output_dir):
         logger.info(f"Starting Azure distributed test with run ID: {run_id}")
         
         # Determine test types to run
+        test_type = config.get('test_type', 'protocol')
         test_types = []
-        if config.get('test_type') in ['protocol', 'both']:
+        if test_type in ['protocol', 'both']:
             test_types.append('protocol')
-        if config.get('test_type') in ['browser', 'both']:
+        if test_type in ['browser', 'both']:
             test_types.append('browser')
         
         all_container_names = []
@@ -948,24 +934,24 @@ def run_azure_distributed_test(config, output_dir):
         active_containers = all_container_names
         
         # Run tests for each type
-        for test_type in test_types:
-            logger.info(f"=== Starting {test_type} distributed test ===")
+        for current_test_type in test_types:
+            logger.info(f"=== Starting {current_test_type} distributed test ===")
             
             # Create worker containers
-            container_names = asyncio.run(container_manager.create_workers(test_type, run_id))
+            container_names = asyncio.run(container_manager.create_workers(current_test_type, run_id))
             if not container_names:
-                logger.error(f"Failed to create {test_type} worker containers")
+                logger.error(f"Failed to create {current_test_type} worker containers")
                 return False
             
             all_container_names.extend(container_names)
             active_containers = all_container_names  # Update global tracking
-            logger.info(f"Created {len(container_names)} {test_type} worker containers")
+            logger.info(f"Created {len(container_names)} {current_test_type} worker containers")
             
             # Wait for containers to complete with timeout
             try:
                 completion_status = asyncio.run(container_manager.wait_for_completion(container_names))
             except asyncio.TimeoutError:
-                logger.error(f"Timeout waiting for {test_type} containers to complete")
+                logger.error(f"Timeout waiting for {current_test_type} containers to complete")
                 # Clean up containers on timeout
                 cleanup_status = container_manager.cleanup_containers(container_names)
                 successful_cleanup = sum(1 for status in cleanup_status.values() if status)
@@ -977,18 +963,18 @@ def run_azure_distributed_test(config, output_dir):
             total_containers = len(completion_status)
             
             if successful_containers == 0:
-                logger.error(f"All {test_type} containers failed")
+                logger.error(f"All {current_test_type} containers failed")
                 return False
             elif successful_containers < total_containers:
-                logger.warning(f"Only {successful_containers}/{total_containers} {test_type} containers completed successfully")
+                logger.warning(f"Only {successful_containers}/{total_containers} {current_test_type} containers completed successfully")
             
-            logger.info(f"=== {test_type} distributed test completed ===")
+            logger.info(f"=== {current_test_type} distributed test completed ===")
             
             # Clean up containers for this test type before starting the next one
-            logger.info(f"=== Cleaning up {test_type} containers ===")
+            logger.info(f"=== Cleaning up {current_test_type} containers ===")
             cleanup_status = container_manager.cleanup_containers(container_names)
             successful_cleanup = sum(1 for status in cleanup_status.values() if status)
-            logger.info(f"Cleaned up {successful_cleanup}/{len(cleanup_status)} {test_type} containers")
+            logger.info(f"Cleaned up {successful_cleanup}/{len(cleanup_status)} {current_test_type} containers")
             
             # Wait a moment to ensure containers are fully terminated
             import time
@@ -997,39 +983,39 @@ def run_azure_distributed_test(config, output_dir):
         # Download and aggregate results
         logger.info("=== Downloading and aggregating results ===")
         
-        for test_type in test_types:
-            worker_count = workload_distributor.calculate_worker_count(test_type)
+        for current_test_type in test_types:
+            worker_count = workload_distributor.calculate_worker_count(current_test_type)
             
             # Download worker results
             downloaded_files = result_aggregator.download_worker_results(
-                run_id, worker_count, test_type, output_dir
+                run_id, worker_count, current_test_type, output_dir
             )
             
             if not downloaded_files:
-                logger.warning(f"No results downloaded for {test_type} test")
+                logger.warning(f"No results downloaded for {current_test_type} test")
                 continue
             
             # Aggregate summaries
-            if test_type == 'browser':
+            if current_test_type == 'browser':
                 summary_files = [f for f in downloaded_files if 'playwright_results_' in f and f.endswith('.json')]
             else:
                 summary_files = [f for f in downloaded_files if 'summary_' in f and f.endswith('.json')]
             if summary_files:
-                aggregated_summary = result_aggregator.aggregate_summaries(summary_files, test_type)
+                aggregated_summary = result_aggregator.aggregate_summaries(summary_files, current_test_type)
                 if aggregated_summary:
                     # Save aggregated summary locally
-                    summary_path = os.path.join(output_dir, f"{test_type}_summary.json")
+                    summary_path = os.path.join(output_dir, f"{current_test_type}_summary.json")
                     with open(summary_path, 'w') as f:
                         json.dump(aggregated_summary, f, indent=2)
                     
                     # Upload aggregated result back to Azure
-                    result_aggregator.upload_aggregated_result(aggregated_summary, run_id, test_type)
+                    result_aggregator.upload_aggregated_result(aggregated_summary, run_id, current_test_type)
                     
-                    logger.info(f"✅ Aggregated {test_type} summary saved to {summary_path}")
+                    logger.info(f"✅ Aggregated {current_test_type} summary saved to {summary_path}")
                 else:
-                    logger.error(f"Failed to aggregate {test_type} summaries")
+                    logger.error(f"Failed to aggregate {current_test_type} summaries")
             else:
-                logger.warning(f"No summary files found for {test_type} test")
+                logger.warning(f"No summary files found for {current_test_type} test")
         
         # Final cleanup (in case any containers are still running)
         logger.info("=== Final cleanup of any remaining Azure containers ===")
@@ -1099,32 +1085,8 @@ def main():
         success = run_k6_test(config, output_dir)
     
     if success:
-        # For Azure distributed tests, we need to aggregate the worker summaries first
-        if args.mode == 'azure':
-            logger.info("🔗 Aggregating Azure distributed test results...")
-            try:
-                # Find all summary files from workers
-                summary_files = []
-                for i in range(10):  # Check for up to 10 workers
-                    summary_file = os.path.join(output_dir, f"summary_{i}.json")
-                    if os.path.exists(summary_file):
-                        summary_files.append(summary_file)
-                
-                if summary_files:
-                    logger.info(f"Found {len(summary_files)} worker summary files")
-                    # Create aggregated protocol summary
-                    aggregated_summary = aggregate_worker_summaries(summary_files)
-                    if aggregated_summary:
-                        protocol_summary_path = os.path.join(output_dir, "protocol_summary.json")
-                        with open(protocol_summary_path, 'w') as f:
-                            json.dump(aggregated_summary, f, indent=2)
-                        logger.info(f"✅ Aggregated protocol summary saved to {protocol_summary_path}")
-                    else:
-                        logger.warning("⚠️ Failed to aggregate worker summaries")
-                else:
-                    logger.warning("⚠️ No worker summary files found")
-            except Exception as e:
-                logger.warning(f"⚠️ Error aggregating worker summaries: {e}")
+        # Azure distributed tests already have their results aggregated by the Azure result aggregator
+        # No additional aggregation needed here
         
         # Generate test report
         report = generate_test_report(config, output_dir)
@@ -1205,7 +1167,7 @@ def main():
                         
                         # Fallback to readable reports if comprehensive report fails
                         logger.info("📄 Falling back to readable reports...")
-                        ai_report_path = os.path.join(output_dir, "ai_analysis_report.json")
+                        ai_report_path = os.path.join(output_dir, "enhanced_ai_analysis_report.json")
                         if os.path.exists(ai_report_path):
                             result = subprocess.run([
                                 "python", "scripts/generate_readable_report.py", ai_report_path
@@ -1227,7 +1189,7 @@ def main():
                     logger.warning(f"⚠️  Error generating comprehensive HTML report: {e}")
                     # Fallback to readable reports
                     logger.info("📄 Falling back to readable reports...")
-                    ai_report_path = os.path.join(output_dir, "ai_analysis_report.json")
+                    ai_report_path = os.path.join(output_dir, "enhanced_ai_analysis_report.json")
                     if os.path.exists(ai_report_path):
                         result = subprocess.run([
                             "python", "scripts/generate_readable_report.py", ai_report_path

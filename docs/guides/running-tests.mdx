@@ -9,13 +9,13 @@ description: Complete guide to running load tests with protocol testing, browser
 
 ```bash
 # Run a comprehensive test (protocol + browser)
-python run_test.py configs/pop_website_test.yaml
+python main.py configs/pop_website_test.yaml
 
 # Run a quick protocol-only test
-python run_test.py configs/quick_test.yaml
+python main.py configs/quick_test.yaml
 
 # Run a browser-only test
-python run_test.py configs/browser_test.yaml
+python main.py configs/browser_test.yaml
 ```
 
 ### Test Execution Flow
@@ -257,7 +257,7 @@ export K6_DURATION=10m
 export OPENAI_API_KEY=your-api-key-here
 
 # Run test
-python run_test.py configs/your-config.yaml
+python main.py configs/your-config.yaml
 ```
 
 ### Custom Test Scripts
@@ -515,7 +515,7 @@ jobs:
       
       - name: Run load test
         run: |
-          python run_test.py configs/ci-test.yaml
+          python main.py configs/ci-test.yaml
       
       - name: Upload results
         uses: actions/upload-artifact@v2

@@ -48,7 +48,7 @@ cp env.example .env
 
 ```bash
 # Run a comprehensive test (protocol + browser)
-python run_test.py configs/pop_website_test.yaml
+python main.py configs/pop_website_test.yaml
 ```
 
 This will:
@@ -123,16 +123,16 @@ tags: ["react", "nodejs", "aws"]
 
 ```bash
 # Quick protocol-only test
-python run_test.py configs/quick_test.yaml
+python main.py configs/quick_test.yaml
 
 # Browser-only test
-python run_test.py configs/browser_test.yaml
+python main.py configs/browser_test.yaml
 
 # High-load test (200 VUs, 30 minutes)
-python run_test.py configs/pop_website_test.yaml
+python main.py configs/pop_website_test.yaml
 
 # Test your custom configuration
-python run_test.py configs/my-app.yaml
+python main.py configs/my-app.yaml
 ```
 
 ### Explore Advanced Features

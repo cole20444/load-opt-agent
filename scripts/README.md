@@ -81,7 +81,7 @@ python scripts/generate_manual_report.py <output_directory>
 
 ## Integration
 
-All these scripts are automatically called by the main `run_test.py` application in the correct sequence:
+All these scripts are automatically called by the main `main.py` application in the correct sequence:
 1. Enhanced performance analysis runs after protocol tests
 2. Browser metrics analysis runs after browser tests
 3. HTML report generation runs after all analysis is complete

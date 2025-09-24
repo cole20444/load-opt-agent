@@ -66,9 +66,53 @@ export default async function () {
     const page = await browser.newPage();
     console.log('✅ Browser page created successfully');
 
+    // Track network requests and resources
+    const resources = [];
+    const networkRequests = [];
+    
+    // Listen to network requests
+    page.on('request', (request) => {
+      networkRequests.push({
+        url: request.url(),
+        method: request.method(),
+        resourceType: request.resourceType(),
+        timestamp: Date.now()
+      });
+    });
+    
+    // Listen to network responses
+    page.on('response', async (response) => {
+      try {
+        const request = response.request();
+        const url = request.url();
+        const resourceType = request.resourceType();
+        
+        // Get response size if available
+        const headers = response.headers();
+        const contentLength = headers['content-length'];
+        const size = contentLength ? parseInt(contentLength) : 0;
+        
+        resources.push({
+          url: url,
+          resourceType: resourceType,
+          status: response.status(),
+          size: size,
+          timestamp: Date.now(),
+          loadTime: 0 // Will be calculated later
+        });
+      } catch (error) {
+        console.log('Error tracking response:', error.message);
+      }
+    });
+
     const startTime = Date.now();
     await page.goto(targetUrl, { waitUntil: 'load' });
     const loadTime = Date.now() - startTime;
+
+    // Calculate load times for resources
+    resources.forEach(resource => {
+      resource.loadTime = loadTime - (resource.timestamp - startTime);
+    });
 
     // Record simple metrics
     pageLoadTime.add(loadTime);
@@ -81,6 +125,20 @@ export default async function () {
     });
 
     console.log(`📊 Page loaded in ${loadTime}ms`);
+    console.log(`📊 Captured ${resources.length} resources and ${networkRequests.length} network requests`);
+
+    // Log slowest resources
+    const slowestResources = resources
+      .filter(r => r.loadTime > 0)
+      .sort((a, b) => b.loadTime - a.loadTime)
+      .slice(0, 5);
+    
+    if (slowestResources.length > 0) {
+      console.log('🐌 Slowest resources:');
+      slowestResources.forEach((resource, index) => {
+        console.log(`  ${index + 1}. ${resource.resourceType}: ${resource.loadTime.toFixed(0)}ms - ${resource.url.substring(0, 80)}...`);
+      });
+    }
 
     await page.close();
     console.log('✅ Browser page closed successfully');
